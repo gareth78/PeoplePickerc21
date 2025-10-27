@@ -102,35 +102,33 @@ export default function SearchSection() {
                   <div className={styles.selectedAvatar}>
                     {`${selectedUser.firstName?.charAt(0) ?? ''}${selectedUser.lastName?.charAt(0) ?? ''}` || selectedUser.displayName.charAt(0)}
                   </div>
+                  <div className={styles.selectedName}>{selectedUser.displayName}</div>
+
+                  <div className={styles.quickConnectLinks}>
+                    <a
+                      href={`mailto:${selectedUser.email}`}
+                      className={styles.quickConnectLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Email
+                    </a>
+                    <a
+                      href={`https://teams.microsoft.com/l/chat/0/0?users=${selectedUser.email}`}
+                      className={styles.quickConnectLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Teams
+                    </a>
+                  </div>
+
                   <div className={styles.selectedInfo}>
-                    <div className={styles.selectedName}>{selectedUser.displayName}</div>
                     {selectedUser.title && <p><strong>Title:</strong> {selectedUser.title}</p>}
                     {selectedUser.department && <p><strong>Department:</strong> {selectedUser.department}</p>}
                     {selectedUser.officeLocation && <p><strong>Location:</strong> {selectedUser.officeLocation}</p>}
                     <p><strong>Email:</strong> {selectedUser.email}</p>
                     {selectedUser.mobilePhone && <p><strong>Phone:</strong> {selectedUser.mobilePhone}</p>}
-
-                    <div className={styles.quickConnect}>
-                      <strong>Quick Connect:</strong>
-                      <div className={styles.quickConnectLinks}>
-                        <a
-                          href={`mailto:${selectedUser.email}`}
-                          className={styles.quickConnectLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Email
-                        </a>
-                        <a
-                          href={`https://teams.microsoft.com/l/chat/0/0?users=${selectedUser.email}`}
-                          className={styles.quickConnectLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Teams
-                        </a>
-                      </div>
-                    </div>
 
                     <a href={`/user/${selectedUser.id}`} className={styles.viewProfile}>
                       View full profile →

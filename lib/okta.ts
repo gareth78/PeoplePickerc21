@@ -119,7 +119,9 @@ export async function searchUsers(query: string, limit = 10, cursor?: string): P
         }
       }
 
-      const users = data.map(normalizeUser);
+      const users = data
+        .map(normalizeUser)
+        .sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }));
 
       return {
         users,

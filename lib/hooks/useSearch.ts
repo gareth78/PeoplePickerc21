@@ -1,6 +1,10 @@
 import { useCallback, useState } from 'react';
 import type { User } from '../types';
 
+function sortUsers(users: User[]): User[] {
+  return [...users].sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }));
+}
+
 interface UseSearchResult {
   results: User[];
   loading: boolean;
@@ -41,11 +45,12 @@ export function useSearch(): UseSearchResult {
 
       const users: User[] = data.data.users;
 
-      if (cursor) {
-        setResults((prev) => [...prev, ...users]);
-      } else {
-        setResults(users);
-      }
+      setResults((prev) => {
+        if (cursor) {
+          return sortUsers([...prev, ...users]);
+        }
+        return sortUsers(users);
+      });
 
       setNextCursor(data.data.nextCursor);
     } catch (err) {

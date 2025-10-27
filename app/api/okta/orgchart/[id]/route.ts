@@ -31,18 +31,11 @@ export async function GET(
       );
     }
 
-    // Get direct reports (users where manager = this user's email)
-    const allUsers = await searchUsers('', 100); // Get enough users to find reports
-    const reports = allUsers.users.filter(
-      (u) => u.managerEmail === user.email
-    );
-
     const orgChart: OrgChartNode = {
       user,
       manager,
       managersManager,
       peers,
-      reports,
     };
 
     return NextResponse.json({

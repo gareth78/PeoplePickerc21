@@ -86,5 +86,4 @@ export interface OrgChartNode {
   manager: User | null;
   managersManager: User | null;
   peers: User[];
-  reports: User[];
 }

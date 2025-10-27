@@ -1,7 +1,14 @@
 .container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
+}
+
+.diagnosticGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
 }
 
 .navigation {
@@ -11,7 +18,7 @@
   border-top: 1px solid #e0e0e0;
 }
 
-.technicalLink {
+.backLink {
   display: inline-block;
   color: #0066cc;
   font-size: 16px;
@@ -22,13 +29,7 @@
   transition: background 150ms;
 }
 
-.technicalLink:hover {
+.backLink:hover {
   background: #f0f7ff;
   text-decoration: none;
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding: 20px 16px;
-  }
 }

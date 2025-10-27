@@ -153,4 +153,4 @@ This is an internal tool. For issues or suggestions, contact the development tea
 
 ## License
 
-Proprietary - Internal use only
+Proprietary - Internal use only.

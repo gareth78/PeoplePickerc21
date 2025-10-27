@@ -9,6 +9,7 @@ export interface User {
   officeLocation: string | null;
   mobilePhone: string | null;
   avatarUrl: string | null;
+  managerEmail: string | null;
 }
 
 export interface OktaUser {
@@ -24,6 +25,7 @@ export interface OktaUser {
     city?: string;
     officeLocation?: string;
     mobilePhone?: string;
+    managerEmail?: string;
   };
 }
 
@@ -77,4 +79,12 @@ export interface CacheInterface {
   set(key: string, value: unknown, ttlSeconds: number): Promise<void>;
   clear(): Promise<void>;
   stats(): Promise<CacheStats>;
+}
+
+export interface OrgChartNode {
+  user: User;
+  manager: User | null;
+  managersManager: User | null;
+  peers: User[];
+  reports: User[];
 }

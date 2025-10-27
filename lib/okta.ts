@@ -6,11 +6,14 @@ import { User, OktaUser, SearchResult } from './types';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
+const OKTA_ORG_URL = process.env.OKTA_ORG_URL || process.env['okta-org-url'];
+const OKTA_API_TOKEN = process.env.OKTA_API_TOKEN || process.env['okta-api-token'];
+
 function validateOktaConfig(): void {
-  if (!process.env.OKTA_ORG_URL) {
+  if (!OKTA_ORG_URL) {
     throw new Error('OKTA_ORG_URL environment variable is required');
   }
-  if (!process.env.OKTA_API_TOKEN) {
+  if (!OKTA_API_TOKEN) {
     throw new Error('OKTA_API_TOKEN environment variable is required');
   }
 }
@@ -59,7 +62,7 @@ export async function searchUsers(query: string, limit = 10, cursor?: string): P
   return fetchWithRetry(async () => {
     validateOktaConfig();
 
-    const baseUrl = `${process.env.OKTA_ORG_URL}/api/v1/users`;
+    const baseUrl = `${OKTA_ORG_URL}/api/v1/users`;
     const params = new URLSearchParams();
 
     params.append('limit', limit.toString());
@@ -82,7 +85,7 @@ export async function searchUsers(query: string, limit = 10, cursor?: string): P
         method: 'GET',
         headers: {
           Accept: 'application/json',
-          Authorization: `SSWS ${process.env.OKTA_API_TOKEN}`,
+          Authorization: `SSWS ${OKTA_API_TOKEN}`,
         },
         signal: controller.signal,
       });
@@ -120,7 +123,7 @@ export async function getUserById(id: string): Promise<User> {
   return fetchWithRetry(async () => {
     validateOktaConfig();
 
-    const url = `${process.env.OKTA_ORG_URL}/api/v1/users/${id}`;
+    const url = `${OKTA_ORG_URL}/api/v1/users/${id}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
@@ -130,7 +133,7 @@ export async function getUserById(id: string): Promise<User> {
         method: 'GET',
         headers: {
           Accept: 'application/json',
-          Authorization: `SSWS ${process.env.OKTA_API_TOKEN}`,
+          Authorization: `SSWS ${OKTA_API_TOKEN}`,
         },
         signal: controller.signal,
       });

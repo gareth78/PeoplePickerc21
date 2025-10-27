@@ -3,6 +3,11 @@
 
 import type { CacheInterface, CacheStats } from './types';
 
+const CACHE_TYPE = process.env.CACHE_TYPE || process.env['cache-type'] || 'memory';
+const CACHE_TTL_SECONDS = Number(
+  process.env.CACHE_TTL_SECONDS || process.env['cache-ttl-seconds'] || 600
+);
+
 interface CacheEntry {
   value: unknown;
   expires: number;
@@ -45,7 +50,7 @@ class MemoryCache implements CacheInterface {
     const total = this.hits + this.misses;
     return {
       type: 'memory',
-      ttl: parseInt(process.env.CACHE_TTL_SECONDS || '600', 10),
+      ttl: CACHE_TTL_SECONDS,
       entries: this.store.size,
       hitRate: total > 0 ? this.hits / total : 0,
     };
@@ -71,7 +76,7 @@ class RedisCache implements CacheInterface {
 }
 
 function createCache(): CacheInterface {
-  const cacheType = process.env.CACHE_TYPE || 'memory';
+  const cacheType = CACHE_TYPE;
   if (cacheType === 'redis') {
     return new RedisCache();
   }

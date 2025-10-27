@@ -19,13 +19,13 @@ export default function HomePage() {
 
   return (
     <div className={styles.container}>
-      <HeroSection 
+      <SearchSection />
+
+      <HeroSection
         version={version}
         nodeVersion={nodeVersion}
         oktaTenant={oktaTenant}
       />
-
-      <SearchSection />
 
       <div className={styles.diagnosticGrid}>
         <DiagnosticCard

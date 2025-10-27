@@ -1,6 +1,5 @@
-import HeroSection from '@/components/dashboard/HeroSection';
 import DiagnosticCard from '@/components/dashboard/DiagnosticCard';
-import styles from './page.module.css';
+import Link from 'next/link';
 
 export default function TechnicalPage() {
   const version = 'v0.1.0';
@@ -17,14 +16,68 @@ export default function TechnicalPage() {
   }
 
   return (
-    <div className={styles.container}>
-      <HeroSection
-        version={version}
-        nodeVersion={nodeVersion}
-        oktaTenant={oktaTenant}
-      />
+    <div className="max-w-7xl mx-auto px-5 py-10">
+      <div className="mb-8">
+        <Link
+          href="/"
+          className="inline-flex items-center text-sm text-primary hover:text-primary-dark font-medium transition-colors"
+        >
+          ← Back to Search
+        </Link>
+      </div>
 
-      <div className={styles.diagnosticGrid}>
+      <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
+        <p className="text-xs font-semibold text-gray-500 tracking-wider uppercase mb-2">
+          ORG CONTACT LOOKUP
+        </p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          Technical Details
+        </h1>
+        <p className="text-gray-600 leading-relaxed max-w-3xl">
+          System diagnostics, build information, and API connectivity status for the People Picker application.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Build Information</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Version</span>
+              <span className="text-sm text-gray-900 font-mono">{version}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Node Runtime</span>
+              <span className="text-sm text-gray-900 font-mono">{nodeVersion}</span>
+            </div>
+            <div className="flex justify-between py-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Okta Tenant</span>
+              <span className="text-sm text-gray-900 font-mono">{oktaTenant}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h2>
+          <div className="space-y-2">
+            <a
+              href="/diagnostics"
+              className="block px-4 py-2 text-sm text-primary hover:bg-primary-light rounded transition-colors"
+            >
+              View Full Diagnostics →
+            </a>
+            <a
+              href="/api-docs"
+              className="block px-4 py-2 text-sm text-primary hover:bg-primary-light rounded transition-colors"
+            >
+              API Documentation →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">Diagnostic Tools</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DiagnosticCard
           icon="🏥"
           title="Health dashboard"
@@ -44,12 +97,6 @@ export default function TechnicalPage() {
           description="Preview normalized user records for development and QA."
           link="/diagnostics"
         />
-      </div>
-
-      <div className={styles.navigation}>
-        <a href="/" className={styles.backLink}>
-          ← Back to main page
-        </a>
       </div>
     </div>
   );

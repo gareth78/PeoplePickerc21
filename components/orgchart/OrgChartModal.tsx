@@ -162,32 +162,6 @@ export default function OrgChartModal({ userId, onClose, onSelectUser }: OrgChar
                 )}
               </div>
 
-              {/* Direct Reports */}
-              {orgChart.reports.length > 0 && (
-                <>
-                  <div className="w-0.5 h-8 bg-gray-300" />
-                  <div className="flex flex-col items-center">
-                    <div className="text-sm font-semibold text-gray-600 mb-4">
-                      Direct Reports ({orgChart.reports.length})
-                    </div>
-                    <div className="flex gap-4 flex-wrap justify-center">
-                      {orgChart.reports.map((report) => (
-                        <PersonCard key={report.id} user={report} />
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Empty state for reports */}
-              {orgChart.reports.length === 0 && (
-                <>
-                  <div className="w-0.5 h-8 bg-gray-300" />
-                  <div className="text-sm text-gray-500 italic">
-                    No direct reports
-                  </div>
-                </>
-              )}
             </div>
           )}
         </div>

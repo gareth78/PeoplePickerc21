@@ -245,9 +245,45 @@
   margin: 4px 0;
 }
 
+.quickConnect {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.quickConnect strong {
+  font-size: 14px;
+  color: #333;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.quickConnectLinks {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.quickConnectLink {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: #0066cc;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background 150ms;
+}
+
+.quickConnectLink:hover {
+  background: #0052a3;
+}
+
 .viewProfile {
   display: inline-block;
-  margin-top: 8px;
+  margin-top: 16px;
   color: #0066cc;
   font-size: 14px;
   font-weight: 500;

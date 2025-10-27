@@ -109,6 +109,29 @@ export default function SearchSection() {
                     {selectedUser.officeLocation && <p><strong>Location:</strong> {selectedUser.officeLocation}</p>}
                     <p><strong>Email:</strong> {selectedUser.email}</p>
                     {selectedUser.mobilePhone && <p><strong>Phone:</strong> {selectedUser.mobilePhone}</p>}
+
+                    <div className={styles.quickConnect}>
+                      <strong>Quick Connect:</strong>
+                      <div className={styles.quickConnectLinks}>
+                        <a
+                          href={`mailto:${selectedUser.email}`}
+                          className={styles.quickConnectLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Email
+                        </a>
+                        <a
+                          href={`https://teams.microsoft.com/l/chat/0/0?users=${selectedUser.email}`}
+                          className={styles.quickConnectLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Teams
+                        </a>
+                      </div>
+                    </div>
+
                     <a href={`/user/${selectedUser.id}`} className={styles.viewProfile}>
                       View full profile →
                     </a>

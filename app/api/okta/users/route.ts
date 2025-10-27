@@ -33,9 +33,7 @@ export async function GET(request: Request) {
 
     const normalizedQuery = query.trim();
     const cacheKey = `users:${normalizedQuery}:${cursor ?? 'first'}`;
-    const cacheTTL = Number(
-      process.env.CACHE_TTL_SECONDS || process.env['cache-ttl-seconds'] || 600
-    );
+    const cacheTTL = Number(process.env['cache-ttl-seconds'] || 600);
 
     const cached = await cache.get(cacheKey);
     if (isSearchResult(cached)) {

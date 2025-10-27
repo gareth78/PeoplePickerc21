@@ -6,15 +6,15 @@ import { User, OktaUser, SearchResult } from './types';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
-const OKTA_ORG_URL = process.env.OKTA_ORG_URL || process.env['okta-org-url'];
-const OKTA_API_TOKEN = process.env.OKTA_API_TOKEN || process.env['okta-api-token'];
+const OKTA_ORG_URL = process.env['okta-org-url'];
+const OKTA_API_TOKEN = process.env['okta-api-token'];
 
 function validateOktaConfig(): void {
-  if (!OKTA_ORG_URL) {
-    throw new Error('OKTA_ORG_URL environment variable is required');
+  if (!process.env['okta-org-url']) {
+    throw new Error("'okta-org-url' environment variable is required");
   }
-  if (!OKTA_API_TOKEN) {
-    throw new Error('OKTA_API_TOKEN environment variable is required');
+  if (!process.env['okta-api-token']) {
+    throw new Error("'okta-api-token' environment variable is required");
   }
 }
 

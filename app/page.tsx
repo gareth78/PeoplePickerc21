@@ -6,7 +6,7 @@ import styles from './page.module.css';
 export default function HomePage() {
   const version = 'v0.1.0';
   const nodeVersion = process.version;
-  const oktaUrl = process.env.OKTA_ORG_URL || process.env['okta-org-url'];
+  const oktaUrl = process.env['okta-org-url'];
   let oktaTenant = 'Not configured';
 
   if (oktaUrl) {

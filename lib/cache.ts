@@ -1,12 +1,10 @@
 // Memory cache for single-instance development
-// For production with multiple instances, implement RedisCache and set CACHE_TYPE=redis
+// For production with multiple instances, implement RedisCache and set cache-type=redis
 
 import type { CacheInterface, CacheStats } from './types';
 
-const CACHE_TYPE = process.env.CACHE_TYPE || process.env['cache-type'] || 'memory';
-const CACHE_TTL_SECONDS = Number(
-  process.env.CACHE_TTL_SECONDS || process.env['cache-ttl-seconds'] || 600
-);
+const CACHE_TYPE = process.env['cache-type'] || 'memory';
+const CACHE_TTL_SECONDS = Number(process.env['cache-ttl-seconds'] || 600);
 
 interface CacheEntry {
   value: unknown;
@@ -59,19 +57,19 @@ class MemoryCache implements CacheInterface {
 
 class RedisCache implements CacheInterface {
   async get(): Promise<unknown | null> {
-    throw new Error('Redis cache not yet implemented - set CACHE_TYPE=memory');
+    throw new Error('Redis cache not yet implemented - set cache-type=memory');
   }
 
   async set(): Promise<void> {
-    throw new Error('Redis cache not yet implemented - set CACHE_TYPE=memory');
+    throw new Error('Redis cache not yet implemented - set cache-type=memory');
   }
 
   async clear(): Promise<void> {
-    throw new Error('Redis cache not yet implemented - set CACHE_TYPE=memory');
+    throw new Error('Redis cache not yet implemented - set cache-type=memory');
   }
 
   async stats(): Promise<CacheStats> {
-    throw new Error('Redis cache not yet implemented - set CACHE_TYPE=memory');
+    throw new Error('Redis cache not yet implemented - set cache-type=memory');
   }
 }
 

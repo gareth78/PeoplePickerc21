@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - OKTA_ORG_URL=${OKTA_ORG_URL}
+      - OKTA_API_TOKEN=${OKTA_API_TOKEN}
+      - CACHE_TTL_SECONDS=600
+      - CACHE_TYPE=memory
+    env_file:
+      - .env.local
+    restart: unless-stopped

@@ -168,16 +168,20 @@ export default function SearchInterface() {
                 {/* Action Buttons - Centered under photo */}
                 <div className="flex justify-center gap-3 mb-6">
                   <a
-                    href="/diagnostics"
+                    href={`mailto:${selectedUser.email}`}
                     className="px-4 py-2 text-sm font-medium text-primary hover:text-primary-dark border border-primary hover:bg-primary-light rounded-lg transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    Diagnostics
+                    Email
                   </a>
                   <a
-                    href="/api-docs"
+                    href={`https://teams.microsoft.com/l/chat/0/0?users=${selectedUser.email}`}
                     className="px-4 py-2 text-sm font-medium text-primary hover:text-primary-dark border border-primary hover:bg-primary-light rounded-lg transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    API Docs
+                    Teams
                   </a>
                 </div>
 

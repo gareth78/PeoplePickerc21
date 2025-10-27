@@ -72,7 +72,20 @@ export async function searchUsers(query: string, limit = 10, cursor?: string): P
     }
 
     if (query) {
-      params.append('q', query);
+      const trimmedQuery = query.trim();
+      const terms = trimmedQuery.split(/\s+/).filter(Boolean);
+
+      if (terms.length <= 1) {
+        params.append('q', trimmedQuery);
+      } else {
+        const filters = terms.map((term) => {
+          const escapedTerm = term.replace(/"/g, '\\"');
+          return `profile.firstName sw "${escapedTerm}" or profile.lastName sw "${escapedTerm}" or profile.email sw "${escapedTerm}"`;
+        });
+
+        const combinedFilter = filters.map((filter) => `(${filter})`).join(' and ');
+        params.append('search', combinedFilter);
+      }
     }
 
     const url = `${baseUrl}?${params.toString()}`;

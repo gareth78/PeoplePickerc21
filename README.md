@@ -45,10 +45,10 @@ Production-ready containerized people directory application with Okta integratio
 
 4. Add your Okta credentials to .env.local:
 ```
-   OKTA_ORG_URL=https://your-org.okta.com
-   OKTA_API_TOKEN=your_token_here
-   CACHE_TTL_SECONDS=600
-   CACHE_TYPE=memory
+   okta-org-url=https://your-org.okta.com
+   okta-api-token=your_token_here
+   cache-type=memory
+   cache-ttl-seconds=600
 ```
 
 5. Run development server:
@@ -112,12 +112,12 @@ The application is designed to run on Azure Container Apps with:
 ## Environment Variables
 
 ### Required (Production)
-- `OKTA_ORG_URL` - Your Okta organization URL
-- `OKTA_API_TOKEN` - Okta API token with read access
+- `okta-org-url` - Your Okta organization URL
+- `okta-api-token` - Okta API token with read access
 
 ### Optional
-- `CACHE_TTL_SECONDS` - Cache duration (default: 600)
-- `CACHE_TYPE` - Cache implementation (memory or redis)
+- `cache-ttl-seconds` - Cache duration (default: 600)
+- `cache-type` - Cache implementation (memory or redis)
 
 **Security Note:** Never commit .env.local to git. Use Azure Application Settings for production.
 

@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
 import type { User } from '@/lib/types';
+import OrgChartModal from '@/components/orgchart/OrgChartModal';
 
 export default function SearchInterface() {
   const [query, setQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showOrgChart, setShowOrgChart] = useState(false);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
 
@@ -222,6 +224,15 @@ export default function SearchInterface() {
                   </div>
                 </div>
 
+                {/* Org Chart Button */}
+                <button
+                  onClick={() => setShowOrgChart(true)}
+                  className="mt-5 w-full px-5 py-2.5 bg-white border-2 border-primary text-primary text-sm font-medium rounded-lg hover:bg-primary-light transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>📊</span>
+                  <span>View Org Chart</span>
+                </button>
+
                 <a
                   href={`/user/${selectedUser.id}`}
                   className="block mt-5 px-5 py-2.5 bg-primary text-white text-sm font-medium text-center rounded-lg hover:bg-primary-dark transition-colors"
@@ -237,6 +248,18 @@ export default function SearchInterface() {
           </div>
         </div>
       </div>
+
+      {/* Org Chart Modal */}
+      {selectedUser && showOrgChart && (
+        <OrgChartModal
+          userId={selectedUser.id}
+          onClose={() => setShowOrgChart(false)}
+          onSelectUser={(user) => {
+            setSelectedUser(user);
+            // Optionally trigger a search for this user
+          }}
+        />
+      )}
     </div>
   );
 }

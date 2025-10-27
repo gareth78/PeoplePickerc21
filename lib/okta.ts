@@ -36,6 +36,7 @@ export function normalizeUser(oktaUser: OktaUser): User {
     officeLocation: profile.officeLocation || profile.city || null,
     mobilePhone: profile.mobilePhone || null,
     avatarUrl: null,
+    managerEmail: profile.managerEmail || null,
   };
 }
 
@@ -159,6 +160,47 @@ export async function getUserById(id: string): Promise<User> {
 
       const data: OktaUser = await response.json();
       return normalizeUser(data);
+    } finally {
+      clearTimeout(timeout);
+    }
+  });
+}
+
+export async function searchUserByEmail(email: string): Promise<User | null> {
+  return fetchWithRetry(async () => {
+    validateOktaConfig();
+
+    const baseUrl = `${process.env['okta-org-url']}/api/v1/users`;
+    const params = new URLSearchParams();
+    params.append('q', email);
+    params.append('limit', '1');
+
+    const url = `${baseUrl}?${params.toString()}`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `SSWS ${process.env['okta-api-token']}`,
+        },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Okta API error: ${response.status}`);
+      }
+
+      const data: OktaUser[] = await response.json();
+
+      if (data.length === 0) {
+        return null;
+      }
+
+      return normalizeUser(data[0]);
     } finally {
       clearTimeout(timeout);
     }

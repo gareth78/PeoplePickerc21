@@ -21,13 +21,13 @@ export interface CacheStats {
 }
 
 const ttlEnvValue =
-  process.env['cache-ttl-seconds'] ?? process.env['CACHE_TTL_SECONDS'];
+  process.env['CACHE_TTL_SECONDS'] ?? process.env['cache-ttl-seconds'];
 const cacheTtlSeconds = Number(ttlEnvValue);
 const resolvedTtlSeconds = Number.isFinite(cacheTtlSeconds) && cacheTtlSeconds > 0
   ? Math.floor(cacheTtlSeconds)
   : DEFAULT_TTL_SECONDS;
 
-const cacheTypeEnv = process.env['cache-type'] ?? process.env['CACHE_TYPE'];
+const cacheTypeEnv = process.env['CACHE_TYPE'] ?? process.env['cache-type'];
 const resolvedCacheType = typeof cacheTypeEnv === 'string' && cacheTypeEnv.length > 0
   ? cacheTypeEnv
   : DEFAULT_TYPE;

@@ -45,9 +45,9 @@ export default function SearchInterface() {
       </div>
 
       {/* Split Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] min-h-[500px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] h-[600px]">
         {/* Left Panel: Results */}
-        <div className="flex flex-col border-b lg:border-b-0 lg:border-r border-gray-200">
+        <div className="flex flex-col border-b lg:border-b-0 lg:border-r border-gray-200 min-h-0">
           <div className="flex justify-between items-center px-4 py-3 bg-gray-50 border-b border-gray-200">
             <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
               Results
@@ -57,7 +57,7 @@ export default function SearchInterface() {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto max-h-[500px]">
+          <div className="flex-1 overflow-y-auto min-h-0">
             {loading && (
               <div className="p-10 text-center text-sm text-gray-600">
                 Searching...
@@ -135,14 +135,14 @@ export default function SearchInterface() {
         </div>
 
         {/* Right Panel: Person Detail */}
-        <div className="flex flex-col">
+        <div className="flex flex-col min-h-0">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
             <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
               Person Detail
             </h3>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 min-h-0">
             {selectedUser ? (
               <div className="max-w-md mx-auto">
                 <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center font-bold text-2xl mx-auto mb-4">

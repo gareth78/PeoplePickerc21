@@ -47,7 +47,9 @@ export async function GET(request: Request) {
       });
     }
 
-    const result = await searchUsers(normalizedQuery, 10, cursor);
+    const configuredLimit = Number(process.env['search-results-limit']);
+    const limit = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 100;
+    const result = await searchUsers(normalizedQuery, limit, cursor);
 
     await cache.set(cacheKey, result, cacheTTL);
 

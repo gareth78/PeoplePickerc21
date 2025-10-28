@@ -59,7 +59,7 @@ async function fetchWithRetry<T>(fn: () => Promise<T>, retryCount = 0): Promise<
   }
 }
 
-export async function searchUsers(query: string, limit = 10, cursor?: string): Promise<SearchResult> {
+export async function searchUsers(query: string, limit = 100, cursor?: string): Promise<SearchResult> {
   return fetchWithRetry(async () => {
     validateOktaConfig();
 

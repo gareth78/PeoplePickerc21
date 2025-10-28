@@ -1,5 +1,3 @@
-import type { CacheStats } from '@/lib/cache';
-
 export interface User {
   id: string;
   displayName: string;
@@ -44,7 +42,6 @@ export interface ApiResponse<T> {
   meta?: {
     count?: number;
     latency?: number;
-    cached?: boolean;
     timestamp?: string;
   };
 }
@@ -55,13 +52,11 @@ export interface HealthStatus {
   timestamp: string;
   environment: string;
   nodeVersion: string;
-  cacheType: string;
   uptime: number;
 }
 
 export interface DiagnosticMetrics {
   health: HealthStatus;
-  cache: CacheStats;
   okta: {
     connected: boolean;
     latency: number;

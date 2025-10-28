@@ -6,6 +6,16 @@ import type { CacheInterface, CacheStats } from './types';
 const CACHE_TYPE = process.env['cache-type'] || 'memory';
 const CACHE_TTL_SECONDS = Number(process.env['cache-ttl-seconds'] || 600);
 
+// DEBUG: Log what env vars are actually being read
+console.log('🔍 CACHE ENV DEBUG:', {
+  'cache-ttl-seconds (kebab)': process.env['cache-ttl-seconds'],
+  'CACHE_TTL_SECONDS (upper)': process.env.CACHE_TTL_SECONDS,
+  'cache-type (kebab)': process.env['cache-type'],
+  'CACHE_TYPE (upper)': process.env.CACHE_TYPE,
+  'Computed CACHE_TTL_SECONDS': CACHE_TTL_SECONDS,
+  'Computed CACHE_TYPE': CACHE_TYPE,
+});
+
 interface CacheEntry {
   value: unknown;
   expires: number;

@@ -81,10 +81,13 @@ function createCache(): CacheInterface {
   return new MemoryCache();
 }
 
-const globalForCache = globalThis as typeof globalThis & {
+// Create true singleton anchored to globalThis
+const globalForCache = globalThis as unknown as {
   __peoplePickerCache?: CacheInterface;
 };
 
-export const cache =
-  globalForCache.__peoplePickerCache ??
-  (globalForCache.__peoplePickerCache = createCache());
+if (!globalForCache.__peoplePickerCache) {
+  globalForCache.__peoplePickerCache = createCache();
+}
+
+export const cache = globalForCache.__peoplePickerCache;

@@ -1,20 +1,10 @@
 'use client';
 
-import type { CacheStats } from '@/lib/cache';
 import { useHealth } from '@/lib/hooks/useHealth';
 import styles from './page.module.css';
 
-interface DiagnosticsClientProps {
-  initialCacheStats: CacheStats;
-}
-
-export default function DiagnosticsClient({
-  initialCacheStats,
-}: DiagnosticsClientProps) {
-  const { metrics, loading, error, refresh, cacheStats } =
-    useHealth(initialCacheStats);
-
-  const resolvedCacheStats = cacheStats ?? initialCacheStats;
+export default function DiagnosticsClient() {
+  const { metrics, loading, error, refresh } = useHealth();
 
   if (loading && !metrics) {
     return (
@@ -81,26 +71,6 @@ export default function DiagnosticsClient({
           ) : (
             <div className={styles.loading}>Loading health status...</div>
           )}
-        </div>
-
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Cache Statistics</h2>
-          <div className={styles.metric}>
-            <span className={styles.label}>Type:</span>
-            <span>{resolvedCacheStats.type}</span>
-          </div>
-          <div className={styles.metric}>
-            <span className={styles.label}>TTL:</span>
-            <span>{resolvedCacheStats.ttlSeconds}s</span>
-          </div>
-          <div className={styles.metric}>
-            <span className={styles.label}>Entries:</span>
-            <span>{resolvedCacheStats.entries}</span>
-          </div>
-          <div className={styles.metric}>
-            <span className={styles.label}>Hit Rate:</span>
-            <span>{(resolvedCacheStats.hitRate * 100).toFixed(1)}%</span>
-          </div>
         </div>
 
         <div className={styles.card}>

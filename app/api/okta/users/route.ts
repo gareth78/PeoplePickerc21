@@ -1,21 +1,7 @@
 import { NextResponse } from 'next/server';
-import { cache } from '@/lib/cache';
 import { searchUsers } from '@/lib/okta';
-import type { SearchResult } from '@/lib/types';
 
 export const runtime = 'nodejs';
-
-function isSearchResult(value: unknown): value is SearchResult {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  if (!('users' in value) || !Array.isArray((value as { users?: unknown }).users)) {
-    return false;
-  }
-
-  return true;
-}
 
 export async function GET(request: Request) {
   try {
@@ -34,33 +20,15 @@ export async function GET(request: Request) {
     }
 
     const normalizedQuery = query.trim();
-    const cacheKey = `users:${normalizedQuery}:${cursor ?? 'first'}`;
-    const cacheTTL = cache.defaultTtlSeconds;
-
-    const cached = await cache.get<SearchResult>(cacheKey);
-    if (isSearchResult(cached)) {
-      return NextResponse.json({
-        ok: true,
-        data: cached,
-        meta: {
-          count: cached.users.length,
-          cached: true,
-        },
-      });
-    }
-
     const configuredLimit = Number(process.env['search-results-limit']);
     const limit = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 100;
     const result = await searchUsers(normalizedQuery, limit, cursor);
-
-    await cache.set(cacheKey, result, cacheTTL);
 
     return NextResponse.json({
       ok: true,
       data: result,
       meta: {
         count: result.users.length,
-        cached: false,
       },
     });
   } catch (error) {

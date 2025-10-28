@@ -11,7 +11,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
       nodeVersion: process.version,
-      cacheType: process.env['cache-type'] || 'memory',
+      cacheType: process.env.CACHE_TYPE || 'memory',
       uptime: process.uptime(),
       cache: cacheStats,
     });

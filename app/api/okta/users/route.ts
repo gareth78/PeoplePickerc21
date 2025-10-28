@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
     const normalizedQuery = query.trim();
     const cacheKey = `users:${normalizedQuery}:${cursor ?? 'first'}`;
-    const cacheTTL = Number(process.env['cache-ttl-seconds'] || 600);
+    const cacheTTL = Number(process.env.CACHE_TTL_SECONDS || 600);
 
     const cached = await cache.get(cacheKey);
     if (isSearchResult(cached)) {
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const configuredLimit = Number(process.env['search-results-limit']);
+    const configuredLimit = Number(process.env.SEARCH_RESULTS_LIMIT);
     const limit = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 100;
     const result = await searchUsers(normalizedQuery, limit, cursor);
 

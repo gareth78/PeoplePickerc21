@@ -3,8 +3,8 @@
 
 import type { CacheInterface, CacheStats } from './types';
 
-const CACHE_TYPE = process.env['cache-type'] || 'memory';
-const CACHE_TTL_SECONDS = Number(process.env['cache-ttl-seconds'] || 600);
+const CACHE_TYPE = process.env.CACHE_TYPE || 'memory';
+const CACHE_TTL_SECONDS = Number(process.env.CACHE_TTL_SECONDS || 600);
 
 interface CacheEntry {
   value: unknown;

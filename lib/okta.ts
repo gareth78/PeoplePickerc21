@@ -6,15 +6,15 @@ import { User, OktaUser, SearchResult } from './types';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
-const OKTA_ORG_URL = process.env['okta-org-url'];
-const OKTA_API_TOKEN = process.env['okta-api-token'];
+const OKTA_ORG_URL = process.env.OKTA_ORG_URL;
+const OKTA_API_TOKEN = process.env.OKTA_API_TOKEN;
 
 function validateOktaConfig(): void {
-  if (!process.env['okta-org-url']) {
-    throw new Error("'okta-org-url' environment variable is required");
+  if (!process.env.OKTA_ORG_URL) {
+    throw new Error("'OKTA_ORG_URL' environment variable is required");
   }
-  if (!process.env['okta-api-token']) {
-    throw new Error("'okta-api-token' environment variable is required");
+  if (!process.env.OKTA_API_TOKEN) {
+    throw new Error("'OKTA_API_TOKEN' environment variable is required");
   }
 }
 
@@ -170,7 +170,7 @@ export async function searchUserByEmail(email: string): Promise<User | null> {
   return fetchWithRetry(async () => {
     validateOktaConfig();
 
-    const baseUrl = `${process.env['okta-org-url']}/api/v1/users`;
+    const baseUrl = `${process.env.OKTA_ORG_URL}/api/v1/users`;
     const params = new URLSearchParams();
     params.append('q', email);
     params.append('limit', '1');
@@ -185,7 +185,7 @@ export async function searchUserByEmail(email: string): Promise<User | null> {
         method: 'GET',
         headers: {
           Accept: 'application/json',
-          Authorization: `SSWS ${process.env['okta-api-token']}`,
+          Authorization: `SSWS ${process.env.OKTA_API_TOKEN}`,
         },
         signal: controller.signal,
       });

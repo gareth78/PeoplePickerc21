@@ -81,4 +81,10 @@ function createCache(): CacheInterface {
   return new MemoryCache();
 }
 
-export const cache = createCache();
+const globalForCache = globalThis as typeof globalThis & {
+  __peoplePickerCache?: CacheInterface;
+};
+
+export const cache =
+  globalForCache.__peoplePickerCache ??
+  (globalForCache.__peoplePickerCache = createCache());

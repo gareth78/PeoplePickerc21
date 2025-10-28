@@ -6,7 +6,7 @@ export default function HomePage() {
     <div className="max-w-7xl mx-auto px-5 py-8">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          People Picker MVP
+          People Finder
         </h1>
         <p className="text-gray-600">
           Search the Okta directory to quickly connect with colleagues

@@ -72,6 +72,14 @@ export default function TechnicalPage() {
             >
               API Documentation →
             </a>
+            <a
+              href="/api/cache/debug"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-4 py-2 text-sm text-primary hover:bg-primary-light rounded transition-colors"
+            >
+              Cache Debug Endpoint →
+            </a>
           </div>
         </div>
       </div>

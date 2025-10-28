@@ -1,3 +1,5 @@
+import type { CacheStats } from '@/lib/cache';
+
 export interface User {
   id: string;
   displayName: string;
@@ -57,13 +59,6 @@ export interface HealthStatus {
   uptime: number;
 }
 
-export interface CacheStats {
-  type: string;
-  ttl: number;
-  entries: number;
-  hitRate?: number;
-}
-
 export interface DiagnosticMetrics {
   health: HealthStatus;
   cache: CacheStats;
@@ -73,11 +68,3 @@ export interface DiagnosticMetrics {
     error?: string;
   };
 }
-
-export interface CacheInterface {
-  get(key: string): Promise<unknown | null>;
-  set(key: string, value: unknown, ttlSeconds: number): Promise<void>;
-  clear(): Promise<void>;
-  stats(): Promise<CacheStats>;
-}
-

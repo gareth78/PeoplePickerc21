@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { cache } from '@/lib/cache';
 import { searchUsers } from '@/lib/okta';
 
+export const runtime = 'nodejs';
+
 const CACHE_KEY = 'okta-ping';
 
 type PingCacheEntry = {
@@ -39,12 +41,19 @@ export async function GET() {
   const startTime = Date.now();
 
   try {
-    const cached = await cache.get(CACHE_KEY);
+    const cached = await cache.get<PingCacheEntry>(CACHE_KEY);
     if (isPingCacheEntry(cached)) {
-      return NextResponse.json({
-        ...cached,
-        meta: { ...(cached.meta ?? {}), cached: true },
-      });
+      return NextResponse.json(
+        {
+          ...cached,
+          meta: { ...(cached.meta ?? {}), cached: true },
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-store',
+          },
+        }
+      );
     }
 
     await searchUsers('', 1);
@@ -63,7 +72,11 @@ export async function GET() {
     };
 
     await cache.set(CACHE_KEY, result, 60);
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
   } catch (error) {
     const latency = Date.now() - startTime;
     return NextResponse.json(
@@ -75,7 +88,7 @@ export async function GET() {
         },
         error: error instanceof Error ? error.message : 'Connection failed',
       },
-      { status: 500 }
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

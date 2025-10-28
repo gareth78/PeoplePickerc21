@@ -1,4 +1,4 @@
-import type { CacheStats as CacheStatsType } from '@/lib/types';
+import type { CacheStats as CacheStatsType } from '@/lib/cache';
 import styles from './CacheStats.module.css';
 
 interface CacheStatsProps {
@@ -19,7 +19,7 @@ export default function CacheStats({ stats }: CacheStatsProps) {
       </div>
       <div className={styles.row}>
         <span>TTL</span>
-        <span>{stats.ttl}s</span>
+        <span>{stats.ttlSeconds}s</span>
       </div>
       <div className={styles.row}>
         <span>Entries</span>

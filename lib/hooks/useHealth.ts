@@ -1,10 +1,39 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { CacheStats } from '@/lib/cache';
 import type { DiagnosticMetrics } from '../types';
 
-export function useHealth() {
+function mergeCacheStats(
+  fallback: CacheStats,
+  incoming: CacheStats | undefined
+): CacheStats {
+  if (!incoming) {
+    return fallback;
+  }
+
+  return {
+    type: incoming.type ?? fallback.type,
+    ttlSeconds: incoming.ttlSeconds ?? fallback.ttlSeconds,
+    entries: incoming.entries ?? fallback.entries,
+    hitRate:
+      typeof incoming.hitRate === 'number' ? incoming.hitRate : fallback.hitRate,
+  };
+}
+
+const EMPTY_STATS: CacheStats = {
+  type: 'unknown',
+  ttlSeconds: 0,
+  entries: 0,
+  hitRate: 0,
+};
+
+export function useHealth(initialCacheStats?: CacheStats) {
   const [metrics, setMetrics] = useState<DiagnosticMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(
+    initialCacheStats ?? null
+  );
+  const cacheStatsRef = useRef<CacheStats | null>(initialCacheStats ?? null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -23,9 +52,15 @@ export function useHealth() {
       const healthJson = await healthResponse.json();
       const oktaJson = await oktaResponse.json();
 
+      const fallbackStats = cacheStatsRef.current ?? initialCacheStats ?? EMPTY_STATS;
+      const resolvedCacheStats = mergeCacheStats(fallbackStats, healthJson.cache);
+
+      cacheStatsRef.current = resolvedCacheStats;
+      setCacheStats(resolvedCacheStats);
+
       setMetrics({
         health: healthJson,
-        cache: healthJson.cache || { type: 'unknown', ttl: 0, entries: 0 },
+        cache: resolvedCacheStats,
         okta: oktaJson.data || {
           connected: false,
           latency: 0,
@@ -37,11 +72,11 @@ export function useHealth() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [initialCacheStats]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  return { metrics, loading, error, refresh };
+  return { metrics, loading, error, refresh, cacheStats };
 }

@@ -3,6 +3,8 @@ import { cache } from '@/lib/cache';
 import { searchUsers } from '@/lib/okta';
 import type { SearchResult } from '@/lib/types';
 
+export const runtime = 'nodejs';
+
 function isSearchResult(value: unknown): value is SearchResult {
   if (!value || typeof value !== 'object') {
     return false;
@@ -33,9 +35,9 @@ export async function GET(request: Request) {
 
     const normalizedQuery = query.trim();
     const cacheKey = `users:${normalizedQuery}:${cursor ?? 'first'}`;
-    const cacheTTL = Number(process.env['cache-ttl-seconds'] || 600);
+    const cacheTTL = cache.defaultTtlSeconds;
 
-    const cached = await cache.get(cacheKey);
+    const cached = await cache.get<SearchResult>(cacheKey);
     if (isSearchResult(cached)) {
       return NextResponse.json({
         ok: true,

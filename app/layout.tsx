@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'People Picker MVP | Org Contact Lookup',
-  description: 'Search Okta directory to quickly connect with colleagues',
+  title: 'Org Contact Search',
+  description: 'Search the directory to quickly connect with colleagues',
 };
 
 export default function RootLayout({

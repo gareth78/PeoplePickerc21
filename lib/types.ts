@@ -81,9 +81,3 @@ export interface CacheInterface {
   stats(): Promise<CacheStats>;
 }
 
-export interface OrgChartNode {
-  user: User;
-  manager: User | null;
-  managersManager: User | null;
-  peers: User[];
-}

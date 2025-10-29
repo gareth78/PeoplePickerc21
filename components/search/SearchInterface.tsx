@@ -165,23 +165,34 @@ export default function SearchInterface() {
                   </p>
                 )}
 
-                {/* Action Buttons - Centered under photo */}
+                {/* Quick Action Buttons */}
                 <div className="flex justify-center gap-3 mb-6">
+                  {/* Email button with Outlook icon */}
                   <a
                     href={`mailto:${selectedUser.email}`}
-                    className="px-4 py-2 text-sm font-medium text-primary hover:text-primary-dark border border-primary hover:bg-primary-light rounded-lg transition-colors"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    className="w-12 h-12 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center border-2 border-gray-200 hover:border-blue-400"
+                    title="Send email in Outlook"
                   >
-                    Email
+                    <img
+                      src="/icons/OutlookAppIcon.jpg"
+                      alt="Email"
+                      className="w-8 h-8 rounded"
+                    />
                   </a>
+
+                  {/* Teams button with Teams icon */}
                   <a
                     href={`https://teams.microsoft.com/l/chat/0/0?users=${selectedUser.email}`}
-                    className="px-4 py-2 text-sm font-medium text-primary hover:text-primary-dark border border-primary hover:bg-primary-light rounded-lg transition-colors"
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="w-12 h-12 rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center border-2 border-gray-200 hover:border-purple-400"
+                    title="Chat in Microsoft Teams"
                   >
-                    Teams
+                    <img
+                      src="/icons/TeamsAppIcon.jpg"
+                      alt="Teams"
+                      className="w-8 h-8 rounded"
+                    />
                   </a>
                 </div>
 

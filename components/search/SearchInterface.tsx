@@ -225,7 +225,7 @@ export default function SearchInterface() {
                 )}
 
                 {selectedUser.department && (
-                  <p className="text-sm text-gray-500 text-center mb-5">
+                  <p className="text-sm text-gray-500 text-center mb-1">
                     {selectedUser.department}
                   </p>
                 )}

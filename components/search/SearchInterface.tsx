@@ -11,6 +11,7 @@ export default function SearchInterface() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [managerData, setManagerData] = useState<User | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
 
@@ -39,6 +40,23 @@ export default function SearchInterface() {
       router.replace('/', { scroll: false });
     }
   }, [query, router]);
+
+  // Fetch manager data when user is selected
+  useEffect(() => {
+    if (selectedUser?.managerEmail) {
+      // Fetch manager by email
+      fetch(`/api/okta/users?q=${encodeURIComponent(selectedUser.managerEmail)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.users && data.users.length > 0) {
+            setManagerData(data.users[0]);
+          }
+        })
+        .catch(err => console.error('Failed to fetch manager:', err));
+    } else {
+      setManagerData(null);
+    }
+  }, [selectedUser?.managerEmail]);
 
   const handleLoadMore = () => {
     if (nextCursor) {
@@ -215,6 +233,18 @@ export default function SearchInterface() {
                 {selectedUser.department && (
                   <p className="text-sm text-gray-500 text-center mb-5">
                     {selectedUser.department}
+                  </p>
+                )}
+
+                {managerData && (
+                  <p className="text-sm text-gray-500 text-center mb-5">
+                    Manager: {' '}
+                    <button
+                      onClick={() => setSelectedUser(managerData)}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      {managerData.displayName}
+                    </button>
                   </p>
                 )}
 

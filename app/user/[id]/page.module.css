@@ -1,15 +1,20 @@
 .container {
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 40px 20px;
 }
 
 .card {
   background: white;
-  padding: 40px;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.header {
+  padding: 40px 40px 32px;
   text-align: center;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .avatar {
@@ -33,30 +38,46 @@
   margin: 0 0 8px 0;
 }
 
-.title {
-  font-size: 18px;
+.subtitle {
+  font-size: 16px;
   color: #666;
-  margin: 0 0 4px 0;
+  margin: 0;
 }
 
-.department {
-  font-size: 16px;
-  color: #888;
-  margin: 0 0 24px 0;
+.separator {
+  color: #999;
+}
+
+.section {
+  padding: 32px 40px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.section:last-of-type {
+  border-bottom: none;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #0066cc;
 }
 
 .details {
-  text-align: left;
-  margin-top: 32px;
-  padding-top: 32px;
-  border-top: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .detailItem {
   display: flex;
   justify-content: space-between;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f5f5f5;
+  align-items: flex-start;
 }
 
 .detailItem:last-child {
@@ -67,15 +88,28 @@
   font-weight: 600;
   color: #666;
   font-size: 14px;
+  flex-shrink: 0;
+  width: 180px;
 }
 
 .value {
+  color: #333;
+  font-size: 14px;
+  text-align: right;
+  flex: 1;
+  word-break: break-word;
+}
+
+.link {
   color: #0066cc;
   font-size: 14px;
   text-decoration: none;
+  text-align: right;
+  flex: 1;
+  word-break: break-word;
 }
 
-.value:hover {
+.link:hover {
   text-decoration: underline;
 }
 
@@ -83,6 +117,9 @@
   font-family: 'Courier New', monospace;
   font-size: 13px;
   color: #555;
+  text-align: right;
+  flex: 1;
+  word-break: break-all;
 }
 
 .footer {
@@ -90,13 +127,53 @@
   margin-top: 32px;
 }
 
-.link {
+.backLink {
   color: #0066cc;
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
 }
 
-.link:hover {
+.backLink:hover {
   text-decoration: underline;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 10px;
+  }
+
+  .header,
+  .section {
+    padding: 24px 20px;
+  }
+
+  .name {
+    font-size: 24px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .sectionTitle {
+    font-size: 16px;
+  }
+
+  .detailItem {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .label {
+    width: 100%;
+    text-align: left;
+  }
+
+  .value,
+  .link,
+  .valueCode {
+    text-align: left;
+  }
 }

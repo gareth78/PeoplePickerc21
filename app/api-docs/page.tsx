@@ -12,7 +12,7 @@ export default function ApiDocsPage() {
         <div className={styles.method}>GET</div>
         <div className={styles.path}>/api/health</div>
         <p className={styles.description}>
-          Returns system health status, uptime, and cache statistics.
+          Returns system health information.
         </p>
         <div className={styles.response}>
           <strong>Response:</strong>
@@ -21,14 +21,29 @@ export default function ApiDocsPage() {
   "status": 200,
   "timestamp": "2025-10-27T10:00:00.000Z",
   "environment": "production",
-  "nodeVersion": "v20.19.5",
-  "cacheType": "memory",
-  "uptime": 3600,
-  "cache": {
-    "type": "memory",
-    "ttl": 600,
-    "entries": 5,
-    "hitRate": 0.75
+  "nodeVersion": "v20.19.x",
+  "uptime": 3600
+}`}</pre>
+        </div>
+      </div>
+
+      <div className={styles.endpoint}>
+        <div className={styles.method}>GET</div>
+        <div className={styles.path}>/api/cache/stats</div>
+        <p className={styles.description}>
+          Returns Redis connection and cache performance statistics.
+        </p>
+        <div className={styles.response}>
+          <strong>Response:</strong>
+          <pre>{`{
+  "ok": true,
+  "data": {
+    "connected": true,
+    "keys": 123,
+    "memoryUsed": "12.3M",
+    "hits": 100,
+    "misses": 50,
+    "hitRate": "66.7%"
   }
 }`}</pre>
         </div>
@@ -49,8 +64,7 @@ export default function ApiDocsPage() {
     "latency": 250
   },
   "meta": {
-    "latency": 250,
-    "cached": false
+    "latency": 250
   }
 }`}</pre>
         </div>

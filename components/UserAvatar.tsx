@@ -17,6 +17,7 @@ export default function UserAvatar({
 }: UserAvatarProps) {
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     fetch(`/api/graph/photo/${encodeURIComponent(email)}`)
@@ -44,11 +45,12 @@ export default function UserAvatar({
     large: 'w-24 h-24 text-4xl'
   };
 
-  if (photo && !loading) {
+  if (photo && !loading && !imageError) {
     return (
       <img
         src={photo}
         alt={displayName}
+        onError={() => setImageError(true)}
         className={`${sizeClasses[size]} rounded-full object-cover ${className}`}
       />
     );

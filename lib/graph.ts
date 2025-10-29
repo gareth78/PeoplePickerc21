@@ -44,8 +44,14 @@ export async function getUserPhoto(email: string): Promise<string | null> {
     // Convert binary to base64
     const buffer = Buffer.from(photo);
     return `data:image/jpeg;base64,${buffer.toString('base64')}`;
-  } catch (error) {
-    console.log(`No photo found for ${email}`);
+  } catch (error: any) {
+    // 404 is expected when user has no photo
+    if (error.statusCode === 404 || error.code === 'ImageNotFound') {
+      console.log(`No photo found for ${email}`);
+      return null;
+    }
+    // Log unexpected errors for debugging
+    console.error(`Failed to fetch photo for ${email}:`, error.message || error);
     return null;
   }
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { searchUsers } from '@/lib/okta';
+import { cacheGet, cacheSet, TTL } from '@/lib/redis';
+import type { SearchResult } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
@@ -20,15 +22,39 @@ export async function GET(request: Request) {
     }
 
     const normalizedQuery = query.trim();
+    const cacheKey = `search:${normalizedQuery}:${cursor ?? 'first'}`;
+
+    // Try to get from cache
+    const cached = await cacheGet<SearchResult>(cacheKey);
+    if (cached) {
+      return NextResponse.json({
+        ok: true,
+        data: cached,
+        meta: {
+          count: cached.users.length,
+          cached: true,
+        },
+      });
+    }
+
+    // Fetch from Okta
     const configuredLimit = Number(process.env['search-results-limit']);
-    const limit = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 100;
+    const limit = Number.isFinite(configuredLimit) && configuredLimit > 0
+      ? configuredLimit
+      : 100;
     const result = await searchUsers(normalizedQuery, limit, cursor);
+
+    // Store in cache (don't wait for it)
+    cacheSet(cacheKey, result, TTL.SEARCH).catch(err =>
+      console.error('Failed to cache search result:', err)
+    );
 
     return NextResponse.json({
       ok: true,
       data: result,
       meta: {
         count: result.users.length,
+        cached: false,
       },
     });
   } catch (error) {

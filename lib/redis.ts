@@ -100,34 +100,27 @@ export async function getCacheStats(): Promise<CacheStats> {
       };
     }
 
-    const info = await client.info('stats');
+    // Fetch stats and memory info separately
+    const statsInfo = await client.info('stats');
+    const memoryInfo = await client.info('memory');
     const dbSize = await client.dbsize();
 
-    console.log('📊 Successfully got Redis stats');
-    console.log('📊 Redis INFO output:', info);
+    console.log('📊 Redis MEMORY output:', memoryInfo.substring(0, 500));
 
-    // Parse Redis INFO stats
-    const hitsMatch = info.match(/keyspace_hits:(\d+)/);
-    const missesMatch = info.match(/keyspace_misses:(\d+)/);
+    // Parse stats
+    const hitsMatch = statsInfo.match(/keyspace_hits:(\d+)/);
+    const missesMatch = statsInfo.match(/keyspace_misses:(\d+)/);
 
-    const hits = hitsMatch ? parseInt(hitsMatch[1]) : 0;
-    const misses = missesMatch ? parseInt(missesMatch[1]) : 0;
-    const total = hits + misses;
-    const hitRate = total > 0 ? ((hits / total) * 100).toFixed(1) : '0';
-
-    // Parse memory usage - try multiple fields for Azure Managed Redis compatibility
+    // Parse memory - try multiple formats
     let memoryUsed = '0';
 
-    // Try used_memory_human first (standard Redis)
-    let memoryMatch = info.match(/used_memory_human:([^\r\n]+)/);
-    if (memoryMatch) {
-      memoryUsed = memoryMatch[1].trim();
+    const memoryHumanMatch = memoryInfo.match(/used_memory_human:([^\r\n]+)/);
+    if (memoryHumanMatch) {
+      memoryUsed = memoryHumanMatch[1].trim();
     } else {
-      // Try used_memory in bytes and convert (Azure Managed Redis)
-      const bytesMatch = info.match(/used_memory:(\d+)/);
-      if (bytesMatch) {
-        const bytes = parseInt(bytesMatch[1]);
-        // Convert to human readable
+      const memoryBytesMatch = memoryInfo.match(/used_memory:(\d+)/);
+      if (memoryBytesMatch) {
+        const bytes = parseInt(memoryBytesMatch[1]);
         if (bytes < 1024) {
           memoryUsed = `${bytes}B`;
         } else if (bytes < 1024 * 1024) {
@@ -139,6 +132,11 @@ export async function getCacheStats(): Promise<CacheStats> {
         }
       }
     }
+
+    const hits = hitsMatch ? parseInt(hitsMatch[1]) : 0;
+    const misses = missesMatch ? parseInt(missesMatch[1]) : 0;
+    const total = hits + misses;
+    const hitRate = total > 0 ? ((hits / total) * 100).toFixed(1) : '0';
 
     return {
       connected: true,

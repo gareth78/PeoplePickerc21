@@ -206,6 +206,12 @@ export default function SearchInterface() {
                   </p>
                 )}
 
+                {selectedUser.organization && (
+                  <p className="text-base text-gray-600 text-center mb-1">
+                    {selectedUser.organization}
+                  </p>
+                )}
+
                 {selectedUser.department && (
                   <p className="text-sm text-gray-500 text-center mb-5">
                     {selectedUser.department}

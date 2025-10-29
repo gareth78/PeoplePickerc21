@@ -9,7 +9,7 @@ export default function DiagnosticsClient() {
 
   const [cacheStats, setCacheStats] = useState<any>(null);
   const [clearing, setClearing] = useState(false);
-  const [clearResult, setClearResult] = useState<any>(null);
+  const [clearResult, setClearResult] = useState<{success: boolean; message: string; keysCleared?: number} | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -36,25 +36,27 @@ export default function DiagnosticsClient() {
     if (!confirm('Are you sure you want to clear all cache? This cannot be undone.')) {
       return;
     }
-
+    
     setClearing(true);
     setClearResult(null);
-
+    
     try {
       const response = await fetch('/api/cache/clear', {
-        method: 'POST',
+        method: 'POST'
       });
       const data = await response.json();
       setClearResult(data);
-
-      // Refresh cache stats after clearing
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      
+      // Refresh page after 1.5 seconds to show updated stats
+      if (data.success) {
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
     } catch (error) {
       setClearResult({
         success: false,
-        message: 'Failed to clear cache',
+        message: 'Failed to clear cache'
       });
     } finally {
       setClearing(false);
@@ -181,20 +183,23 @@ export default function DiagnosticsClient() {
                 <span>{cacheStats.hitRate}</span>
               </div>
 
-              {cacheStats && cacheStats.connected && (
-                <div className="mt-4">
+              {cacheStats.connected && (
+                <div className="mt-6 pt-6 border-t">
+                  <h3 className="text-lg font-semibold mb-3">Cache Management</h3>
                   <button
                     onClick={handleClearCache}
                     disabled={clearing}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
                   >
-                    {clearing ? 'Clearing...' : 'Clear All Cache'}
+                    {clearing ? 'Clearing Cache...' : 'Clear All Cache'}
                   </button>
                   {clearResult && (
-                    <p className={`mt-2 text-sm ${clearResult.success ? 'text-green-600' : 'text-red-600'}`}>
-                      {clearResult.message}
-                      {clearResult.keysCleared && ` (${clearResult.keysCleared} keys cleared)`}
-                    </p>
+                    <div className={`mt-3 p-3 rounded-lg ${clearResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                      <p className="font-medium">{clearResult.message}</p>
+                      {clearResult.keysCleared !== undefined && (
+                        <p className="text-sm mt-1">{clearResult.keysCleared} cache keys cleared</p>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

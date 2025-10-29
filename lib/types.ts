@@ -10,6 +10,27 @@ export interface User {
   mobilePhone: string | null;
   avatarUrl: string | null;
   managerEmail: string | null;
+  // Additional profile fields
+  login: string | null;
+  secondaryEmail: string | null;
+  primaryPhone: string | null;
+  streetAddress: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+  countryCode: string | null;
+  division: string | null;
+  organization: string | null;
+  costCenter: string | null;
+  employeeNumber: string | null;
+  preferredLanguage: string | null;
+  locale: string | null;
+  timezone: string | null;
+  manager: string | null;
+  userType: string | null;
+  employeeType: string | null;
+  countryName: string | null;
+  cn: string | null;
 }
 
 export interface OktaUser {
@@ -26,6 +47,27 @@ export interface OktaUser {
     officeLocation?: string;
     mobilePhone?: string;
     managerEmail?: string;
+    // Additional profile fields
+    login?: string;
+    secondaryEmail?: string;
+    primaryPhone?: string;
+    streetAddress?: string;
+    state?: string;
+    zipCode?: string;
+    countryCode?: string;
+    division?: string;
+    organization?: string;
+    costCenter?: string;
+    employeeNumber?: string;
+    preferredLanguage?: string;
+    locale?: string;
+    timezone?: string;
+    manager?: string;
+    userType?: string;
+    employeeType?: string;
+    countryName?: string;
+    cn?: string;
+    [key: string]: any; // Allow for custom Okta attributes
   };
 }
 

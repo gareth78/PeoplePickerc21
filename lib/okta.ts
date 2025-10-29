@@ -37,6 +37,27 @@ export function normalizeUser(oktaUser: OktaUser): User {
     mobilePhone: profile.mobilePhone || null,
     avatarUrl: null,
     managerEmail: profile.managerEmail || null,
+    // Additional profile fields
+    login: profile.login || null,
+    secondaryEmail: profile.secondaryEmail || null,
+    primaryPhone: profile.primaryPhone || null,
+    streetAddress: profile.streetAddress || null,
+    city: profile.city || null,
+    state: profile.state || null,
+    zipCode: profile.zipCode || null,
+    countryCode: profile.countryCode || null,
+    division: profile.division || null,
+    organization: profile.organization || null,
+    costCenter: profile.costCenter || null,
+    employeeNumber: profile.employeeNumber || null,
+    preferredLanguage: profile.preferredLanguage || null,
+    locale: profile.locale || null,
+    timezone: profile.timezone || null,
+    manager: profile.manager || null,
+    userType: profile.userType || null,
+    employeeType: profile.employeeType || null,
+    countryName: profile.countryName || null,
+    cn: profile.cn || null,
   };
 }
 

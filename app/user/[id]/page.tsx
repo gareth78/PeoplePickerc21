@@ -2,7 +2,13 @@ import { notFound } from 'next/navigation';
 import { getUserById } from '@/lib/okta';
 import styles from './page.module.css';
 
-export default async function UserProfilePage({ params }: { params: { id: string } }) {
+export default async function UserProfilePage({
+  params,
+  searchParams
+}: {
+  params: { id: string };
+  searchParams: { q?: string };
+}) {
   try {
     const user = await getUserById(params.id);
     const initials = `${user.firstName?.charAt(0) ?? ''}${user.lastName?.charAt(0) ?? ''}` || user.displayName.charAt(0);
@@ -45,7 +51,12 @@ export default async function UserProfilePage({ params }: { params: { id: string
         </div>
 
         <div className={styles.footer}>
-          <a href="/" className={styles.link}>← Back to Search</a>
+          <a
+            href={searchParams.q ? `/?q=${encodeURIComponent(searchParams.q)}` : '/'}
+            className={styles.link}
+          >
+            ← Back to Search
+          </a>
         </div>
       </div>
     );

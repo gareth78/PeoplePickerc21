@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import SearchInterface from '@/components/search/SearchInterface';
 import Link from 'next/link';
 
@@ -13,7 +14,9 @@ export default function HomePage() {
         </p>
       </div>
 
-      <SearchInterface />
+      <Suspense fallback={<div className="text-center p-8">Loading...</div>}>
+        <SearchInterface />
+      </Suspense>
 
       <div className="text-center mt-8">
         <Link

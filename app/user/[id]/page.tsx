@@ -30,7 +30,7 @@ export default async function UserProfilePage({
           </div>
 
           {/* Basic Information Section */}
-          {(user.login || user.firstName || user.lastName || user.email || user.secondaryEmail) && (
+          {(user.login || user.email || user.secondaryEmail) && (
             <div className={styles.section}>
               <h2 className={styles.sectionTitle}>Basic Information</h2>
               <div className={styles.details}>
@@ -38,24 +38,6 @@ export default async function UserProfilePage({
                   <div className={styles.detailItem}>
                     <span className={styles.label}>Username:</span>
                     <span className={styles.value}>{user.login}</span>
-                  </div>
-                )}
-                {user.firstName && (
-                  <div className={styles.detailItem}>
-                    <span className={styles.label}>First Name:</span>
-                    <span className={styles.value}>{user.firstName}</span>
-                  </div>
-                )}
-                {user.lastName && (
-                  <div className={styles.detailItem}>
-                    <span className={styles.label}>Last Name:</span>
-                    <span className={styles.value}>{user.lastName}</span>
-                  </div>
-                )}
-                {user.displayName && (
-                  <div className={styles.detailItem}>
-                    <span className={styles.label}>Display Name:</span>
-                    <span className={styles.value}>{user.displayName}</span>
                   </div>
                 )}
                 {user.email && (
@@ -170,10 +152,10 @@ export default async function UserProfilePage({
             </div>
           )}
 
-          {/* Location & Office Section */}
-          {(user.officeLocation || user.preferredLanguage || user.locale || user.timezone) && (
+          {/* Location & Preferences Section */}
+          {(user.officeLocation || user.preferredLanguage || user.locale || user.timezone || user.countryName) && (
             <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>Location & Office</h2>
+              <h2 className={styles.sectionTitle}>Location & Preferences</h2>
               <div className={styles.details}>
                 {user.officeLocation && (
                   <div className={styles.detailItem}>
@@ -199,6 +181,12 @@ export default async function UserProfilePage({
                     <span className={styles.value}>{user.timezone}</span>
                   </div>
                 )}
+                {user.countryName && (
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>Country/Region:</span>
+                    <span className={styles.value}>{user.countryName}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -218,39 +206,6 @@ export default async function UserProfilePage({
                   <div className={styles.detailItem}>
                     <span className={styles.label}>Manager Email:</span>
                     <a href={`mailto:${user.managerEmail}`} className={styles.link}>{user.managerEmail}</a>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Additional Attributes Section */}
-          {(user.userType || user.employeeType || user.countryName || user.cn) && (
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>Additional Attributes</h2>
-              <div className={styles.details}>
-                {user.userType && (
-                  <div className={styles.detailItem}>
-                    <span className={styles.label}>User Type:</span>
-                    <span className={styles.value}>{user.userType}</span>
-                  </div>
-                )}
-                {user.employeeType && (
-                  <div className={styles.detailItem}>
-                    <span className={styles.label}>Employee Type:</span>
-                    <span className={styles.value}>{user.employeeType}</span>
-                  </div>
-                )}
-                {user.countryName && (
-                  <div className={styles.detailItem}>
-                    <span className={styles.label}>Country/Region:</span>
-                    <span className={styles.value}>{user.countryName}</span>
-                  </div>
-                )}
-                {user.cn && (
-                  <div className={styles.detailItem}>
-                    <span className={styles.label}>Common Name (CN):</span>
-                    <span className={styles.value}>{user.cn}</span>
                   </div>
                 )}
               </div>

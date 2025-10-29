@@ -135,9 +135,13 @@ export default function SearchInterface() {
                           {user.title}
                         </div>
                       )}
-                      {user.officeLocation && (
+                      {(user.organization || user.city || user.countryName) && (
                         <div className="text-xs text-gray-500 truncate">
-                          {user.officeLocation}
+                          {[
+                            user.organization,
+                            user.city,
+                            user.countryName
+                          ].filter(Boolean).join(', ')}
                         </div>
                       )}
                     </div>

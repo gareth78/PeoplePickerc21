@@ -1,15 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
 import type { User } from '@/lib/types';
 
 export default function SearchInterface() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
+
+  // Initialize query from URL params on mount
+  useEffect(() => {
+    const queryParam = searchParams.get('q');
+    if (queryParam) {
+      setQuery(queryParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (debouncedQuery) {
@@ -19,6 +30,15 @@ export default function SearchInterface() {
       setSelectedUser(null);
     }
   }, [debouncedQuery, search]);
+
+  // Update URL when query changes
+  useEffect(() => {
+    if (query) {
+      router.replace(`/?q=${encodeURIComponent(query)}`, { scroll: false });
+    } else {
+      router.replace('/', { scroll: false });
+    }
+  }, [query, router]);
 
   const handleLoadMore = () => {
     if (nextCursor) {
@@ -35,13 +55,36 @@ export default function SearchInterface() {
       {/* Search Header */}
       <div className="p-5 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Directory search</h2>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name, title, or location..."
-          className="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name, title, or location..."
+            className="w-full px-4 py-3 pr-10 text-base border-2 border-gray-300 rounded-lg outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Clear search"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Split Layout */}
@@ -234,7 +277,7 @@ export default function SearchInterface() {
                 </div>
 
                 <a
-                  href={`/user/${selectedUser.id}`}
+                  href={`/user/${selectedUser.id}${query ? `?q=${encodeURIComponent(query)}` : ''}`}
                   className="block mt-5 px-5 py-2.5 bg-primary text-white text-sm font-medium text-center rounded-lg hover:bg-primary-dark transition-colors"
                 >
                   View full profile →

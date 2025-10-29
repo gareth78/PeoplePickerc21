@@ -104,21 +104,46 @@ export async function getCacheStats(): Promise<CacheStats> {
     const dbSize = await client.dbsize();
 
     console.log('📊 Successfully got Redis stats');
+    console.log('📊 Redis INFO output:', info);
 
     // Parse Redis INFO stats
     const hitsMatch = info.match(/keyspace_hits:(\d+)/);
     const missesMatch = info.match(/keyspace_misses:(\d+)/);
-    const memoryMatch = info.match(/used_memory_human:(.+)/);
 
     const hits = hitsMatch ? parseInt(hitsMatch[1]) : 0;
     const misses = missesMatch ? parseInt(missesMatch[1]) : 0;
     const total = hits + misses;
     const hitRate = total > 0 ? ((hits / total) * 100).toFixed(1) : '0';
 
+    // Parse memory usage - try multiple fields for Azure Managed Redis compatibility
+    let memoryUsed = '0';
+
+    // Try used_memory_human first (standard Redis)
+    let memoryMatch = info.match(/used_memory_human:([^\r\n]+)/);
+    if (memoryMatch) {
+      memoryUsed = memoryMatch[1].trim();
+    } else {
+      // Try used_memory in bytes and convert (Azure Managed Redis)
+      const bytesMatch = info.match(/used_memory:(\d+)/);
+      if (bytesMatch) {
+        const bytes = parseInt(bytesMatch[1]);
+        // Convert to human readable
+        if (bytes < 1024) {
+          memoryUsed = `${bytes}B`;
+        } else if (bytes < 1024 * 1024) {
+          memoryUsed = `${(bytes / 1024).toFixed(2)}K`;
+        } else if (bytes < 1024 * 1024 * 1024) {
+          memoryUsed = `${(bytes / (1024 * 1024)).toFixed(2)}M`;
+        } else {
+          memoryUsed = `${(bytes / (1024 * 1024 * 1024)).toFixed(2)}G`;
+        }
+      }
+    }
+
     return {
       connected: true,
       keys: dbSize,
-      memoryUsed: memoryMatch ? memoryMatch[1].trim() : '0',
+      memoryUsed: memoryUsed,
       hits,
       misses,
       hitRate: `${hitRate}%`,

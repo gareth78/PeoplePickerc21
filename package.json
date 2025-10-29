@@ -12,7 +12,10 @@
     "node": "20.x"
   },
   "dependencies": {
+    "@azure/identity": "^4.0.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "ioredis": "^5.8.2",
+    "isomorphic-fetch": "^3.0.0",
     "next": "14.2.33",
     "react": "^18",
     "react-dom": "^18"

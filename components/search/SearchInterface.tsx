@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
 import type { User } from '@/lib/types';
+import UserAvatar from '../UserAvatar';
 
 export default function SearchInterface() {
   const searchParams = useSearchParams();
@@ -62,10 +63,6 @@ export default function SearchInterface() {
     if (nextCursor) {
       void search(query, nextCursor);
     }
-  };
-
-  const getInitials = (user: User) => {
-    return `${user.firstName?.charAt(0) ?? ''}${user.lastName?.charAt(0) ?? ''}` || user.displayName.charAt(0);
   };
 
   return (
@@ -141,9 +138,12 @@ export default function SearchInterface() {
                       selectedUser?.id === user.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
                     }`}
                   >
-                    <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm flex-shrink-0">
-                      {getInitials(user)}
-                    </div>
+                    <UserAvatar
+                      email={user.email}
+                      displayName={user.displayName}
+                      size="small"
+                      className="flex-shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm text-gray-900 truncate">
                         {user.displayName}
@@ -210,9 +210,12 @@ export default function SearchInterface() {
           <div className="flex-1 overflow-y-auto p-6 min-h-0">
             {selectedUser ? (
               <div className="max-w-md mx-auto">
-                <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center font-bold text-2xl mx-auto mb-4">
-                  {getInitials(selectedUser)}
-                </div>
+                <UserAvatar
+                  email={selectedUser.email}
+                  displayName={selectedUser.displayName}
+                  size="medium"
+                  className="mx-auto mb-4"
+                />
 
                 <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
                   {selectedUser.displayName}

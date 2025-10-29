@@ -135,12 +135,12 @@ export default function SearchInterface() {
                           {user.title}
                         </div>
                       )}
-                      {(user.organization || user.city || user.countryName) && (
+                      {(user.organization || user.city || user.countryCode) && (
                         <div className="text-xs text-gray-500 truncate">
                           {[
                             user.organization,
                             user.city,
-                            user.countryName
+                            user.countryCode
                           ].filter(Boolean).join(', ')}
                         </div>
                       )}

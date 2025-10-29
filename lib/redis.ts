@@ -70,6 +70,7 @@ export async function getCacheStats(): Promise<CacheStats> {
   const client = getRedisClient();
 
   if (!client) {
+    console.log('📊 getCacheStats: No Redis client available');
     return {
       connected: false,
       keys: 0,
@@ -81,8 +82,28 @@ export async function getCacheStats(): Promise<CacheStats> {
   }
 
   try {
+    console.log('📊 getCacheStats: Attempting to get stats...');
+
+    // Check connection status
+    const status = client.status;
+    console.log('📊 Redis client status:', status);
+
+    if (status !== 'ready' && status !== 'connect') {
+      console.log('📊 Redis not ready, status:', status);
+      return {
+        connected: false,
+        keys: 0,
+        memoryUsed: '0',
+        hits: 0,
+        misses: 0,
+        hitRate: '0%',
+      };
+    }
+
     const info = await client.info('stats');
     const dbSize = await client.dbsize();
+
+    console.log('📊 Successfully got Redis stats');
 
     // Parse Redis INFO stats
     const hitsMatch = info.match(/keyspace_hits:(\d+)/);
@@ -103,7 +124,7 @@ export async function getCacheStats(): Promise<CacheStats> {
       hitRate: `${hitRate}%`,
     };
   } catch (error) {
-    console.error('Failed to get cache stats:', error);
+    console.error('📊 getCacheStats error:', error);
     return {
       connected: false,
       keys: 0,

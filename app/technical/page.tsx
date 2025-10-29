@@ -3,13 +3,36 @@ import Link from 'next/link';
 
 async function getCacheStats() {
   try {
+    // In production, the API is on the same host
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000';
+
+    console.log('🟢 Fetching cache stats from:', `${baseUrl}/api/cache/stats`);
+
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/cache/stats`,
-      { cache: 'no-store' }
+      `${baseUrl}/api/cache/stats`,
+      {
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
+
+    console.log('🟢 Stats response status:', response.status);
+
+    if (!response.ok) {
+      console.error('🟢 Stats fetch failed:', response.status);
+      return null;
+    }
+
     const data = await response.json();
+    console.log('🟢 Stats data:', data);
+
     return data.ok ? data.data : null;
-  } catch {
+  } catch (error) {
+    console.error('🟢 Error fetching cache stats:', error);
     return null;
   }
 }

@@ -37,7 +37,7 @@ export function getRedisClient(): Redis | null {
         const delay = Math.min(times * 50, 2000);
         return delay;
       },
-      lazyConnect: true,
+      lazyConnect: false,
     });
 
     redisClient.on('error', (err) => {
@@ -81,8 +81,6 @@ export async function getCacheStats(): Promise<CacheStats> {
   }
 
   try {
-    await client.connect();
-
     const info = await client.info('stats');
     const dbSize = await client.dbsize();
 
@@ -126,7 +124,6 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
   }
 
   try {
-    await client.connect();
     const value = await client.get(key);
 
     if (!value) {
@@ -153,7 +150,6 @@ export async function cacheSet(
   }
 
   try {
-    await client.connect();
     await client.setex(key, ttlSeconds, JSON.stringify(value));
     return true;
   } catch (error) {
@@ -171,7 +167,6 @@ export async function cacheDelete(key: string): Promise<boolean> {
   }
 
   try {
-    await client.connect();
     await client.del(key);
     return true;
   } catch (error) {
@@ -189,7 +184,6 @@ export async function cacheClear(): Promise<boolean> {
   }
 
   try {
-    await client.connect();
     await client.flushdb();
     return true;
   } catch (error) {

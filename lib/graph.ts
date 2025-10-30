@@ -40,38 +40,33 @@ export async function getGraphClient(): Promise<Client> {
 export async function getUserPhoto(email: string): Promise<string | null> {
   try {
     const client = await getGraphClient();
-
-    // Request photo - Graph client returns ArrayBuffer by default for $value endpoints
     const photo = await client
       .api(`/users/${email}/photo/$value`)
       .get();
 
-    // Safely convert to base64
-    if (!photo) {
-      console.log(`No photo data returned for ${email}`);
-      return null;
-    }
-
-    // Handle both ArrayBuffer and Buffer responses
+    // Photo is returned as an ArrayBuffer or Blob
+    // Convert to base64
     let buffer: Buffer;
+
     if (photo instanceof ArrayBuffer) {
       buffer = Buffer.from(photo);
+    } else if (photo instanceof Blob) {
+      // Convert Blob to ArrayBuffer first
+      const arrayBuffer = await photo.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
     } else if (Buffer.isBuffer(photo)) {
       buffer = photo;
     } else {
-      // Fallback: try to convert whatever we got
-      buffer = Buffer.from(photo);
+      console.error('Unexpected photo type:', typeof photo);
+      return null;
     }
 
     return `data:image/jpeg;base64,${buffer.toString('base64')}`;
   } catch (error: any) {
-    // 404 is expected when user has no photo
-    if (error.statusCode === 404 || error.code === 'ImageNotFound') {
-      console.log(`No photo found for ${email}`);
-      return null;
+    // Only log if it's not a 404 (user has no photo)
+    if (error.statusCode !== 404) {
+      console.error(`Failed to fetch photo for ${email}:`, error.message);
     }
-    // Log unexpected errors for debugging
-    console.error(`Failed to fetch photo for ${email}:`, error.message || error);
     return null;
   }
 }

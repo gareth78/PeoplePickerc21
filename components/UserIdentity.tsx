@@ -46,18 +46,22 @@ export default function UserIdentity() {
         console.log('📥 Okta response status:', oktaResponse.status);
         
         const oktaData = await oktaResponse.json();
-        console.log('📊 Okta search results:', oktaData);
-        
-        if (oktaData.users && oktaData.users.length > 0) {
-          console.log('✅ Found', oktaData.users.length, 'users');
-          
+        console.log('📊 Okta data structure:', JSON.stringify(oktaData, null, 2));
+
+        // Check both possible response structures
+        const users = oktaData.users || (Array.isArray(oktaData) ? oktaData : []);
+        console.log('👥 Users array:', users, 'Length:', users.length);
+
+        if (users && users.length > 0) {
+          console.log('✅ Found', users.length, 'users');
+
           // Find exact email match (case-insensitive)
-          const matchingUser = oktaData.users.find((u: any) => {
+          const matchingUser = users.find((u: any) => {
             const match = u.email?.toLowerCase() === authData.email.toLowerCase();
-            console.log('Comparing:', u.email, 'with', authData.email, '→', match);
+            console.log('🔍 Comparing:', u.email, 'with', authData.email, '→', match);
             return match;
           });
-          
+
           if (matchingUser) {
             console.log('✅ Found matching Okta user:', matchingUser);
             authData.oktaProfile = {
@@ -67,10 +71,10 @@ export default function UserIdentity() {
               email: matchingUser.email
             };
           } else {
-            console.log('❌ No exact email match found');
+            console.log('❌ No exact email match in', users.length, 'users');
           }
         } else {
-          console.log('❌ No Okta users returned');
+          console.log('❌ No users in response');
         }
       } catch (error) {
         console.error('❌ Okta lookup failed:', error);

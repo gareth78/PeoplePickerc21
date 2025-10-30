@@ -97,8 +97,8 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       fetch(`/api/okta/users?q=${encodeURIComponent(selectedUser.managerEmail)}`)
         .then(res => res.json())
         .then(data => {
-          if (data.users && data.users.length > 0) {
-            setManagerData(data.users[0]);
+          if (data.data.users && data.data.users.length > 0) {
+            setManagerData(data.data.users[0]);
           }
         })
         .catch(err => console.error('Failed to fetch manager:', err));

@@ -38,7 +38,8 @@ async function getCacheStats() {
 }
 
 export default async function TechnicalPage() {
-  const version = 'v0.1.0';
+  const version = process.env.NEXT_PUBLIC_GIT_SHA || 'dev';
+  const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME;
   const nodeVersion = process.version;
   const oktaUrl = process.env['okta-org-url'];
   let oktaTenant = 'Not configured';
@@ -84,6 +85,12 @@ export default async function TechnicalPage() {
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Version</span>
               <span className="text-sm text-gray-900 font-mono">{version}</span>
             </div>
+            {buildTime && (
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Built</span>
+                <span className="text-sm text-gray-900 font-mono">{new Date(buildTime).toLocaleString('en-GB')}</span>
+              </div>
+            )}
             <div className="flex justify-between py-2 border-b border-gray-100">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Node Runtime</span>
               <span className="text-sm text-gray-900 font-mono">{nodeVersion}</span>

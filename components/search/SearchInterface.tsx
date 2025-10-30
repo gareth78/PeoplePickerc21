@@ -7,7 +7,11 @@ import { useSearch } from '@/lib/hooks/useSearch';
 import type { User } from '@/lib/types';
 import UserAvatar from '../UserAvatar';
 
-export default function SearchInterface() {
+interface SearchInterfaceProps {
+  userOrganization?: string;
+}
+
+export default function SearchInterface({ userOrganization }: SearchInterfaceProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -15,8 +19,9 @@ export default function SearchInterface() {
   const [managerData, setManagerData] = useState<User | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
-  
-  // Organization filter state
+
+  // Filter state
+  const [activeFilter, setActiveFilter] = useState<'all' | 'myorg' | 'groups'>('all');
   const [myOrgFilter, setMyOrgFilter] = useState(false);
   const [allUsers, setAllUsers] = useState<User[]>([]); // Store unfiltered results
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]); // Display these
@@ -49,21 +54,28 @@ export default function SearchInterface() {
     applyFilter(allUsers, myOrgFilter);
   }, [myOrgFilter]);
 
+  // Handle filter changes
+  const handleFilterChange = (filter: 'all' | 'myorg' | 'groups') => {
+    setActiveFilter(filter);
+    if (filter === 'myorg') {
+      setMyOrgFilter(true);
+    } else if (filter === 'all') {
+      setMyOrgFilter(false);
+    }
+    // groups = placeholder, do nothing for now
+  };
+
   // Filter function
   const applyFilter = (users: User[], filterActive: boolean) => {
-    if (!filterActive) {
+    if (!filterActive || !userOrganization) {
       setFilteredUsers(users);
       return;
     }
 
-    // TODO: Get user's org from UserIdentity component (via prop or context)
-    // For now, hardcoded for testing
-    const myOrg = 'Plan International GH';
-    
-    const filtered = users.filter(user => 
-      user.organization === myOrg
+    const filtered = users.filter(user =>
+      user.organization === userOrganization
     );
-    
+
     setFilteredUsers(filtered);
   };
 
@@ -103,23 +115,54 @@ export default function SearchInterface() {
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       {/* Search Header */}
       <div className="p-5 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">Directory search</h2>
-        
-        {/* Organization Filter */}
-        <div className="mb-4">
-          <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-            <input
-              type="checkbox"
-              checked={myOrgFilter}
-              onChange={(e) => setMyOrgFilter(e.target.checked)}
-              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-            />
-            <span className="text-sm font-medium text-gray-700">
-              Show only: Plan International GH
-            </span>
-          </label>
+        {/* Quick Filters Section */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Quick Filters</h2>
+          <div className="flex gap-2 flex-wrap">
+            {/* All Users Button - FIRST */}
+            <button
+              onClick={() => handleFilterChange('all')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                activeFilter === 'all'
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All Users
+            </button>
+
+            {/* Groups Button - SECOND (Placeholder) */}
+            <button
+              disabled
+              className="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
+              title="Coming soon"
+            >
+              Groups
+            </button>
+
+            {/* My Organization Button - THIRD (LAST) */}
+            {userOrganization && (
+              <button
+                onClick={() => handleFilterChange(activeFilter === 'myorg' ? 'all' : 'myorg')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  activeFilter === 'myorg'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                My Organization: {userOrganization}
+                {activeFilter === 'myorg' && (
+                  <span className="ml-2 cursor-pointer" onClick={(e) => {
+                    e.stopPropagation();
+                    handleFilterChange('all');
+                  }}>×</span>
+                )}
+              </button>
+            )}
+          </div>
         </div>
-        
+
+        {/* Search Box */}
         <div className="relative">
           <input
             type="text"

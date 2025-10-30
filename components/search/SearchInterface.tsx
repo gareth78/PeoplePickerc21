@@ -15,6 +15,11 @@ export default function SearchInterface() {
   const [managerData, setManagerData] = useState<User | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
+  
+  // Organization filter state
+  const [myOrgFilter, setMyOrgFilter] = useState(false);
+  const [allUsers, setAllUsers] = useState<User[]>([]); // Store unfiltered results
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]); // Display these
 
   // Initialize query from URL params on mount
   useEffect(() => {
@@ -32,6 +37,34 @@ export default function SearchInterface() {
       setSelectedUser(null);
     }
   }, [debouncedQuery, search]);
+
+  // Update allUsers and apply filter when results change
+  useEffect(() => {
+    setAllUsers(results);
+    applyFilter(results, myOrgFilter);
+  }, [results]);
+
+  // Re-apply filter when checkbox changes
+  useEffect(() => {
+    applyFilter(allUsers, myOrgFilter);
+  }, [myOrgFilter]);
+
+  // Filter function
+  const applyFilter = (users: User[], filterActive: boolean) => {
+    if (!filterActive) {
+      setFilteredUsers(users);
+      return;
+    }
+    
+    // Hardcoded for testing - will make dynamic later
+    const myOrg = 'Plan International GH';
+    
+    const filtered = users.filter(user => 
+      user.organization === myOrg
+    );
+    
+    setFilteredUsers(filtered);
+  };
 
   // Update URL when query changes
   useEffect(() => {
@@ -70,6 +103,22 @@ export default function SearchInterface() {
       {/* Search Header */}
       <div className="p-5 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Directory search</h2>
+        
+        {/* Organization Filter */}
+        <div className="mb-4">
+          <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+            <input
+              type="checkbox"
+              checked={myOrgFilter}
+              onChange={(e) => setMyOrgFilter(e.target.checked)}
+              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+            />
+            <span className="text-sm font-medium text-gray-700">
+              Show only: Plan International GH
+            </span>
+          </label>
+        </div>
+        
         <div className="relative">
           <input
             type="text"
@@ -110,8 +159,8 @@ export default function SearchInterface() {
             <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
               Results
             </h3>
-            {results.length > 0 && (
-              <span className="text-xs text-gray-500">{results.length} found</span>
+            {filteredUsers.length > 0 && (
+              <span className="text-xs text-gray-500">{filteredUsers.length} found</span>
             )}
           </div>
 
@@ -128,9 +177,9 @@ export default function SearchInterface() {
               </div>
             )}
 
-            {results.length > 0 && (
+            {filteredUsers.length > 0 && (
               <div className="flex flex-col">
-                {results.map((user) => (
+                {filteredUsers.map((user) => (
                   <button
                     key={user.id}
                     onClick={() => setSelectedUser(user)}
@@ -177,7 +226,7 @@ export default function SearchInterface() {
               </div>
             )}
 
-            {debouncedQuery.length >= 2 && results.length === 0 && !loading && (
+            {debouncedQuery.length >= 2 && filteredUsers.length === 0 && !loading && (
               <div className="p-10 text-center">
                 <p className="text-sm text-gray-600 mb-2">
                   No colleagues found matching &quot;{debouncedQuery}&quot;

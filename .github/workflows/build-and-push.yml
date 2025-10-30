@@ -54,6 +54,12 @@ jobs:
           # client-id: ${{ secrets.AZURE_CLIENT_ID }}
           # tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           # subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Debug environment
+        run: |
+          echo "Container App: ${{ env.CONTAINER_APP_NAME }}"
+          echo "Resource Group: ${{ env.AZURE_RG }}"
+          echo "Registry: ${{ env.REGISTRY }}"
+          echo "Image Name: ${{ env.IMAGE_NAME }}"
 
       - name: Deploy new image to Container App (creates new revision)
         uses: azure/cli@v2

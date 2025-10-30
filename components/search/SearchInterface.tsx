@@ -4,8 +4,13 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
-import type { User } from '@/lib/types';
+import type {
+  User,
+  Group,
+  GroupDetail as GroupDetailType,
+} from '@/lib/types';
 import UserAvatar from '../UserAvatar';
+import GroupDetail from '../groups/GroupDetail';
 
 interface SearchInterfaceProps {
   userOrganization?: string;
@@ -13,7 +18,7 @@ interface SearchInterfaceProps {
 
 export default function SearchInterface({ userOrganization }: SearchInterfaceProps) {
   console.log('🎨 SearchInterface rendered, userOrganization prop:', userOrganization);
-  
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -29,6 +34,13 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [allUsers, setAllUsers] = useState<User[]>([]); // Store unfiltered results
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]); // Display these
 
+  // Groups state
+  const [searchMode, setSearchMode] = useState<'users' | 'groups'>('users');
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsError, setGroupsError] = useState<string | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+
   // Initialize query from URL params on mount
   useEffect(() => {
     const queryParam = searchParams.get('q');
@@ -38,13 +50,46 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   }, [searchParams]);
 
   useEffect(() => {
-    if (debouncedQuery) {
-      void search(debouncedQuery);
-    } else {
-      void search('');
-      setSelectedUser(null);
+    if (searchMode === 'users') {
+      if (debouncedQuery) {
+        void search(debouncedQuery);
+      } else {
+        void search('');
+        setSelectedUser(null);
+      }
     }
-  }, [debouncedQuery, search]);
+  }, [debouncedQuery, search, searchMode]);
+
+  // Search groups when in groups mode
+  useEffect(() => {
+    if (searchMode === 'groups' && debouncedQuery.length >= 2) {
+      const searchGroups = async () => {
+        setGroupsLoading(true);
+        setGroupsError(null);
+
+        try {
+          const response = await fetch(`/api/graph/groups?q=${encodeURIComponent(debouncedQuery)}`);
+          const data = await response.json();
+
+          if (data.ok) {
+            setGroups(data.data.groups);
+          } else {
+            setGroupsError(data.error || 'Failed to search groups');
+          }
+        } catch (err) {
+          setGroupsError('Failed to search groups');
+          console.error(err);
+        } finally {
+          setGroupsLoading(false);
+        }
+      };
+
+      void searchGroups();
+    } else if (searchMode === 'groups') {
+      setGroups([]);
+      setSelectedGroup(null);
+    }
+  }, [debouncedQuery, searchMode]);
 
   // Update allUsers and apply filter when results change
   useEffect(() => {
@@ -60,12 +105,20 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   // Handle filter changes
   const handleFilterChange = (filter: 'all' | 'myorg' | 'groups') => {
     setActiveFilter(filter);
-    if (filter === 'myorg') {
-      setMyOrgFilter(true);
-    } else if (filter === 'all') {
+    if (filter === 'groups') {
+      setSearchMode('groups');
       setMyOrgFilter(false);
+      setSelectedUser(null);
+      setProfileHistory([]);
+    } else {
+      setSearchMode('users');
+      setSelectedGroup(null);
+      if (filter === 'myorg') {
+        setMyOrgFilter(true);
+      } else if (filter === 'all') {
+        setMyOrgFilter(false);
+      }
     }
-    // groups = placeholder, do nothing for now
   };
 
   // Filter function
@@ -142,6 +195,50 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
     }
   };
 
+  // Handle member click from GroupDetail
+  const handleMemberClick = async (memberId: string, memberType: 'user' | 'group') => {
+    if (memberType === 'group') {
+      try {
+        const response = await fetch(`/api/graph/groups/${memberId}`);
+        const data = await response.json();
+
+        if (data.ok && data.data) {
+          const detail: GroupDetailType = data.data;
+          setSelectedUser(null);
+          setSelectedGroup({
+            id: detail.id,
+            displayName: detail.displayName,
+            mail: detail.mail,
+            description: detail.description,
+            groupTypes: detail.groupTypes,
+          });
+        } else {
+          console.error('Failed to fetch nested group detail:', data.error);
+        }
+      } catch (err) {
+        console.error('Failed to fetch nested group detail:', err);
+      }
+
+      return;
+    } else {
+      // Switch to users mode and search for the user
+      setSearchMode('users');
+      setActiveFilter('all');
+      setSelectedGroup(null);
+
+      // Search for user by ID or email
+      try {
+        const response = await fetch(`/api/okta/users?q=${memberId}`);
+        const data = await response.json();
+        if (data.ok && data.data?.users && data.data.users.length > 0) {
+          setSelectedUser(data.data.users[0]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch user:', err);
+      }
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       {/* Search Header */}
@@ -162,11 +259,14 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
               All Users
             </button>
 
-            {/* Groups Button - SECOND (Placeholder) */}
+            {/* Groups Button - SECOND */}
             <button
-              disabled
-              className="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
-              title="Coming soon"
+              onClick={() => handleFilterChange('groups')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                activeFilter === 'groups'
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
             >
               Groups
             </button>
@@ -241,100 +341,190 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
               Results
             </h3>
-            {filteredUsers.length > 0 && (
+            {searchMode === 'users' && filteredUsers.length > 0 && (
               <span className="text-xs text-gray-500">{filteredUsers.length} found</span>
+            )}
+            {searchMode === 'groups' && groups.length > 0 && (
+              <span className="text-xs text-gray-500">{groups.length} found</span>
             )}
           </div>
 
           <div className="flex-1 overflow-y-auto min-h-0">
-            {loading && (
-              <div className="p-10 text-center text-sm text-gray-600">
-                Searching...
-              </div>
-            )}
-
-            {error && (
-              <div className="p-4 bg-red-50 text-red-700 text-sm border-b border-red-100">
-                {error}
-              </div>
-            )}
-
-            {filteredUsers.length > 0 && (
-              <div className="flex flex-col">
-                {filteredUsers.map((user) => (
-                  <button
-                    key={user.id}
-                    onClick={() => setSelectedUser(user)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
-                      selectedUser?.id === user.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
-                    }`}
-                  >
-                    <UserAvatar
-                      email={user.email}
-                      displayName={user.displayName}
-                      size="small"
-                      className="flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm text-gray-900 truncate">
-                        {user.displayName}
-                      </div>
-                      {user.title && (
-                        <div className="text-xs text-gray-600 truncate">
-                          {user.title}
-                        </div>
-                      )}
-                      {(user.organization || user.city || user.countryName) && (
-                        <div className="text-xs text-gray-500 truncate">
-                          {[
-                            user.organization,
-                            user.city,
-                            user.countryName
-                          ].filter(Boolean).join(', ')}
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                ))}
-
-                {nextCursor && (
-                  <button
-                    onClick={handleLoadMore}
-                    className="w-full py-3 bg-gray-50 text-sm text-primary font-medium hover:bg-gray-100 transition-colors border-b border-gray-200"
-                  >
-                    Load more results
-                  </button>
+            {/* Users Mode */}
+            {searchMode === 'users' && (
+              <>
+                {loading && (
+                  <div className="p-10 text-center text-sm text-gray-600">
+                    Searching...
+                  </div>
                 )}
-              </div>
+
+                {error && (
+                  <div className="p-4 bg-red-50 text-red-700 text-sm border-b border-red-100">
+                    {error}
+                  </div>
+                )}
+
+                {filteredUsers.length > 0 && (
+                  <div className="flex flex-col">
+                    {filteredUsers.map((user) => (
+                      <button
+                        key={user.id}
+                        onClick={() => setSelectedUser(user)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
+                          selectedUser?.id === user.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
+                        }`}
+                      >
+                        <UserAvatar
+                          email={user.email}
+                          displayName={user.displayName}
+                          size="small"
+                          className="flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm text-gray-900 truncate">
+                            {user.displayName}
+                          </div>
+                          {user.title && (
+                            <div className="text-xs text-gray-600 truncate">
+                              {user.title}
+                            </div>
+                          )}
+                          {(user.organization || user.city || user.countryName) && (
+                            <div className="text-xs text-gray-500 truncate">
+                              {[
+                                user.organization,
+                                user.city,
+                                user.countryName
+                              ].filter(Boolean).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+
+                    {nextCursor && (
+                      <button
+                        onClick={handleLoadMore}
+                        className="w-full py-3 bg-gray-50 text-sm text-primary font-medium hover:bg-gray-100 transition-colors border-b border-gray-200"
+                      >
+                        Load more results
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {debouncedQuery.length >= 2 && filteredUsers.length === 0 && !loading && (
+                  <div className="p-10 text-center">
+                    <p className="text-sm text-gray-600 mb-2">
+                      No colleagues found matching &quot;{debouncedQuery}&quot;
+                    </p>
+                    <p className="text-xs text-gray-500">Try a different search term</p>
+                  </div>
+                )}
+
+                {!debouncedQuery && (
+                  <div className="p-10 text-center">
+                    <p className="text-sm text-gray-600 mb-2">
+                      Start typing to search for colleagues
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Search by name, title, or office location
+                    </p>
+                  </div>
+                )}
+              </>
             )}
 
-            {debouncedQuery.length >= 2 && filteredUsers.length === 0 && !loading && (
-              <div className="p-10 text-center">
-                <p className="text-sm text-gray-600 mb-2">
-                  No colleagues found matching &quot;{debouncedQuery}&quot;
-                </p>
-                <p className="text-xs text-gray-500">Try a different search term</p>
-              </div>
-            )}
+            {/* Groups Mode */}
+            {searchMode === 'groups' && (
+              <>
+                {groupsLoading && (
+                  <div className="p-10 text-center text-sm text-gray-600">
+                    Searching groups...
+                  </div>
+                )}
 
-            {!debouncedQuery && (
-              <div className="p-10 text-center">
-                <p className="text-sm text-gray-600 mb-2">
-                  Start typing to search for colleagues
-                </p>
-                <p className="text-xs text-gray-500">
-                  Search by name, title, or office location
-                </p>
-              </div>
+                {groupsError && (
+                  <div className="p-4 bg-red-50 text-red-700 text-sm border-b border-red-100">
+                    {groupsError}
+                  </div>
+                )}
+
+                {groups.length > 0 && (
+                  <div className="flex flex-col">
+                    {groups.map((group) => (
+                      <button
+                        key={group.id}
+                        onClick={() => setSelectedGroup(group)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
+                          selectedGroup?.id === group.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
+                        }`}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <svg
+                            className="w-6 h-6 text-primary"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm text-gray-900 truncate">
+                            {group.displayName}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                              {group.groupTypes.includes('Unified') ? 'M365 Group' : 'Mail-Enabled'}
+                            </span>
+                          </div>
+                          {group.mail && (
+                            <div className="text-xs text-gray-500 truncate">
+                              {group.mail}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {debouncedQuery.length >= 2 && groups.length === 0 && !groupsLoading && (
+                  <div className="p-10 text-center">
+                    <p className="text-sm text-gray-600 mb-2">
+                      No groups found matching &quot;{debouncedQuery}&quot;
+                    </p>
+                    <p className="text-xs text-gray-500">Try a different search term</p>
+                  </div>
+                )}
+
+                {!debouncedQuery && (
+                  <div className="p-10 text-center">
+                    <p className="text-sm text-gray-600 mb-2">
+                      Start typing to search for groups
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Search by group name or email
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
 
-        {/* Right Panel: Person Detail */}
+        {/* Right Panel: Detail */}
         <div className="flex flex-col min-h-0">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
             <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Person Detail
+              Detail
             </h3>
           </div>
 
@@ -364,7 +554,13 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           )}
 
           <div className="flex-1 overflow-y-auto p-6 min-h-0">
-            {selectedUser ? (
+            {selectedGroup ? (
+              <GroupDetail
+                groupId={selectedGroup.id}
+                onMemberClick={handleMemberClick}
+                onBack={() => setSelectedGroup(null)}
+              />
+            ) : selectedUser ? (
               <div className="max-w-md mx-auto">
                 <UserAvatar
                   email={selectedUser.email}
@@ -484,7 +680,9 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
               </div>
             ) : (
               <div className="p-10 text-center text-sm text-gray-600">
-                Choose a person to preview their profile details
+                {searchMode === 'groups'
+                  ? 'Choose a group to view details'
+                  : 'Choose a person to preview their profile details'}
               </div>
             )}
           </div>

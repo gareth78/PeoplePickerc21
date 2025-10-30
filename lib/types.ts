@@ -107,3 +107,39 @@ export interface DiagnosticMetrics {
     error?: string;
   };
 }
+
+// Microsoft 365 Groups types
+export interface Group {
+  id: string;
+  displayName: string;
+  mail: string | null;
+  description: string | null;
+  groupTypes: string[];
+  memberCount?: number;
+}
+
+export interface GroupMember {
+  id: string;
+  displayName: string;
+  mail: string | null;
+  userPrincipalName?: string;
+  jobTitle?: string | null;
+  department?: string | null;
+  type: 'user' | 'group';
+}
+
+export interface GroupDetail {
+  id: string;
+  displayName: string;
+  mail: string | null;
+  description: string | null;
+  groupTypes: string[];
+  members: GroupMember[];
+  owners: GroupMember[];
+}
+
+export interface GroupSearchResult {
+  groups: Group[];
+  nextLink: string | null;
+  totalCount: number;
+}

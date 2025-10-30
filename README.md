@@ -347,4 +347,4 @@ Proprietary - Plan International Internal Use Only
 
 **Version:** 2.0  
 **Last Updated:** October 2025  
-**Maintained By:** Plan International IT Team
+**Maintained By:** Plan International IT Team.

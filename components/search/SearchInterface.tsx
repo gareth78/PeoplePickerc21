@@ -12,6 +12,8 @@ interface SearchInterfaceProps {
 }
 
 export default function SearchInterface({ userOrganization }: SearchInterfaceProps) {
+  console.log('🎨 SearchInterface rendered, userOrganization prop:', userOrganization);
+  
   const searchParams = useSearchParams();
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -141,23 +143,34 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             </button>
 
             {/* My Organization Button - THIRD (LAST) */}
-            {userOrganization && (
-              <button
-                onClick={() => handleFilterChange(activeFilter === 'myorg' ? 'all' : 'myorg')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  activeFilter === 'myorg'
-                    ? 'bg-primary text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                My Organization: {userOrganization}
-                {activeFilter === 'myorg' && (
-                  <span className="ml-2 cursor-pointer" onClick={(e) => {
-                    e.stopPropagation();
-                    handleFilterChange('all');
-                  }}>×</span>
-                )}
-              </button>
+            {console.log('🔍 Checking userOrganization for button render:', userOrganization)}
+            {userOrganization ? (
+              <>
+                {console.log('✅ Rendering My Organization button')}
+                <button
+                  onClick={() => handleFilterChange(activeFilter === 'myorg' ? 'all' : 'myorg')}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    activeFilter === 'myorg'
+                      ? 'bg-primary text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  My Organization: {userOrganization}
+                  {activeFilter === 'myorg' && (
+                    <span className="ml-2 cursor-pointer" onClick={(e) => {
+                      e.stopPropagation();
+                      handleFilterChange('all');
+                    }}>×</span>
+                  )}
+                </button>
+              </>
+            ) : (
+              <>
+                {console.log('❌ userOrganization is falsy, button not rendered')}
+                <div className="text-xs text-red-500">
+                  Debug: userOrg = {JSON.stringify(userOrganization)}
+                </div>
+              </>
             )}
           </div>
         </div>

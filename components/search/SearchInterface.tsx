@@ -92,17 +92,28 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   // Fetch manager data when user is selected
   useEffect(() => {
+    console.log('🔍 Manager fetch useEffect triggered');
+    console.log('📧 selectedUser?.managerEmail:', selectedUser?.managerEmail);
+    
     if (selectedUser?.managerEmail) {
-      // Fetch manager by email
+      console.log('✅ Has managerEmail, fetching:', selectedUser.managerEmail);
       fetch(`/api/okta/users?q=${encodeURIComponent(selectedUser.managerEmail)}`)
-        .then(res => res.json())
+        .then(res => {
+          console.log('📡 Manager fetch response status:', res.status);
+          return res.json();
+        })
         .then(data => {
-          if (data.data.users && data.data.users.length > 0) {
+          console.log('📊 Manager fetch data:', data);
+          if (data.ok && data.data?.users && data.data.users.length > 0) {
+            console.log('✅ Setting managerData:', data.data.users[0]);
             setManagerData(data.data.users[0]);
+          } else {
+            console.log('❌ No users in manager response or API error');
           }
         })
-        .catch(err => console.error('Failed to fetch manager:', err));
+        .catch(err => console.error('❌ Failed to fetch manager:', err));
     } else {
+      console.log('❌ No managerEmail, clearing managerData');
       setManagerData(null);
     }
   }, [selectedUser?.managerEmail]);

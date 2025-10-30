@@ -18,6 +18,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [profileHistory, setProfileHistory] = useState<User[]>([]);
   const [managerData, setManagerData] = useState<User | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
@@ -121,6 +122,23 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const handleLoadMore = () => {
     if (nextCursor) {
       void search(query, nextCursor);
+    }
+  };
+
+  // Navigate to a user profile with history tracking
+  const navigateToUser = (user: User) => {
+    if (selectedUser) {
+      setProfileHistory(prev => [...prev, selectedUser]);
+    }
+    setSelectedUser(user);
+  };
+
+  // Go back to previous user in history
+  const goBackInHistory = () => {
+    if (profileHistory.length > 0) {
+      const previousUser = profileHistory[profileHistory.length - 1];
+      setProfileHistory(prev => prev.slice(0, -1));
+      setSelectedUser(previousUser);
     }
   };
 
@@ -320,6 +338,31 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             </h3>
           </div>
 
+          {/* Back button */}
+          {selectedUser && profileHistory.length > 0 && (
+            <div className="px-6 pt-4">
+              <button
+                onClick={goBackInHistory}
+                className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark transition-colors font-medium"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                <span>Back to {profileHistory[profileHistory.length - 1].displayName}</span>
+              </button>
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto p-6 min-h-0">
             {selectedUser ? (
               <div className="max-w-md mx-auto">
@@ -356,7 +399,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   <p className="text-sm text-gray-500 text-center mb-5">
                     Manager: {' '}
                     <button
-                      onClick={() => setSelectedUser(managerData)}
+                      onClick={() => navigateToUser(managerData)}
                       className="text-primary hover:underline font-medium"
                     >
                       {managerData.displayName}

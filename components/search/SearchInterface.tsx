@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
-import type { User, Group, GroupSearchResult } from '@/lib/types';
+import type {
+  User,
+  Group,
+  GroupDetail as GroupDetailType,
+} from '@/lib/types';
 import UserAvatar from '../UserAvatar';
 import GroupDetail from '../groups/GroupDetail';
 
@@ -194,16 +198,28 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   // Handle member click from GroupDetail
   const handleMemberClick = async (memberId: string, memberType: 'user' | 'group') => {
     if (memberType === 'group') {
-      // Fetch and display the nested group
       try {
-        const response = await fetch(`/api/graph/groups?q=${memberId}`);
+        const response = await fetch(`/api/graph/groups/${memberId}`);
         const data = await response.json();
-        if (data.ok && data.data.groups.length > 0) {
-          setSelectedGroup(data.data.groups[0]);
+
+        if (data.ok && data.data) {
+          const detail: GroupDetailType = data.data;
+          setSelectedUser(null);
+          setSelectedGroup({
+            id: detail.id,
+            displayName: detail.displayName,
+            mail: detail.mail,
+            description: detail.description,
+            groupTypes: detail.groupTypes,
+          });
+        } else {
+          console.error('Failed to fetch nested group detail:', data.error);
         }
       } catch (err) {
-        console.error('Failed to fetch nested group:', err);
+        console.error('Failed to fetch nested group detail:', err);
       }
+
+      return;
     } else {
       // Switch to users mode and search for the user
       setSearchMode('users');

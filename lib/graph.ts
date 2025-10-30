@@ -76,11 +76,14 @@ export async function searchGroups(query: string): Promise<any> {
   try {
     const client = await getGraphClient();
 
+    // Escape single quotes to keep the filter expression valid
+    const sanitizedQuery = query.replace(/'/g, "''");
+
     // Search for M365 Groups and mail-enabled groups
     // Filter: Unified (M365) groups or mail-enabled groups
     const result = await client
       .api('/groups')
-      .filter(`(groupTypes/any(c:c eq 'Unified') or mailEnabled eq true) and (startswith(displayName,'${query}') or startswith(mail,'${query}'))`)
+      .filter(`(groupTypes/any(c:c eq 'Unified') or mailEnabled eq true) and (startswith(displayName,'${sanitizedQuery}') or startswith(mail,'${sanitizedQuery}'))`)
       .select('id,displayName,mail,description,groupTypes')
       .top(50)
       .get();

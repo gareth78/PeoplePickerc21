@@ -143,34 +143,30 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             </button>
 
             {/* My Organization Button - THIRD (LAST) */}
-            {console.log('🔍 Checking userOrganization for button render:', userOrganization)}
-            {userOrganization ? (
-              <>
-                {console.log('✅ Rendering My Organization button')}
-                <button
-                  onClick={() => handleFilterChange(activeFilter === 'myorg' ? 'all' : 'myorg')}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    activeFilter === 'myorg'
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  My Organization: {userOrganization}
-                  {activeFilter === 'myorg' && (
-                    <span className="ml-2 cursor-pointer" onClick={(e) => {
-                      e.stopPropagation();
-                      handleFilterChange('all');
-                    }}>×</span>
-                  )}
-                </button>
-              </>
-            ) : (
-              <>
-                {console.log('❌ userOrganization is falsy, button not rendered')}
-                <div className="text-xs text-red-500">
-                  Debug: userOrg = {JSON.stringify(userOrganization)}
-                </div>
-              </>
+            {userOrganization && (
+              <button
+                onClick={() => handleFilterChange(activeFilter === 'myorg' ? 'all' : 'myorg')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  activeFilter === 'myorg'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                My Organization: {userOrganization}
+                {activeFilter === 'myorg' && (
+                  <span className="ml-2 cursor-pointer" onClick={(e) => {
+                    e.stopPropagation();
+                    handleFilterChange('all');
+                  }}>×</span>
+                )}
+              </button>
+            )}
+            
+            {/* Debug display for development */}
+            {!userOrganization && process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-gray-500 px-2 py-1 bg-yellow-50 rounded">
+                Loading organization...
+              </div>
             )}
           </div>
         </div>

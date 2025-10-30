@@ -47,6 +47,7 @@ export interface OktaUser {
     officeLocation?: string;
     mobilePhone?: string;
     managerEmail?: string;
+    ManagerEmail?: string; // Custom Okta attribute (capitalized)
     // Additional profile fields
     login?: string;
     secondaryEmail?: string;
@@ -63,6 +64,7 @@ export interface OktaUser {
     locale?: string;
     timezone?: string;
     manager?: string;
+    Manager?: string; // Custom Okta attribute (capitalized)
     userType?: string;
     employeeType?: string;
     countryName?: string;

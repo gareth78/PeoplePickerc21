@@ -36,7 +36,7 @@ export function normalizeUser(oktaUser: OktaUser): User {
     officeLocation: profile.officeLocation || profile.city || null,
     mobilePhone: profile.mobilePhone || null,
     avatarUrl: null,
-    managerEmail: profile.managerEmail || null,
+    managerEmail: profile.ManagerEmail || profile.managerEmail || null,
     // Additional profile fields
     login: profile.login || null,
     secondaryEmail: profile.secondaryEmail || null,
@@ -53,7 +53,7 @@ export function normalizeUser(oktaUser: OktaUser): User {
     preferredLanguage: profile.preferredLanguage || null,
     locale: profile.locale || null,
     timezone: profile.timezone || null,
-    manager: profile.manager || null,
+    manager: profile.Manager || profile.manager || null,
     userType: profile.userType || null,
     employeeType: profile.employeeType || null,
     countryName: profile.countryName || null,

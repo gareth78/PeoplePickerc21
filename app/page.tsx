@@ -8,6 +8,16 @@ import Link from 'next/link';
 export default function HomePage() {
   const [userOrg, setUserOrg] = useState<string>();
 
+  // Get version info
+  const version = process.env.NEXT_PUBLIC_GIT_SHA || 'dev';
+  const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME;
+  const buildDate = buildTime ? new Date(buildTime).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  }) : '';
+
   // Fetch user's organization
   useEffect(() => {
     console.log('🔍 Starting user organization fetch...');
@@ -63,6 +73,10 @@ export default function HomePage() {
           <h1 className="text-4xl font-bold text-gray-900">People Finder</h1>
           <p className="text-gray-600 mt-2">
             Search the Okta directory to quickly connect with colleagues
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            version {version}
+            {buildDate && ` • ${buildDate}`}
           </p>
         </div>
         <UserIdentity />

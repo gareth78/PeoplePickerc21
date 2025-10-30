@@ -45,10 +45,10 @@ export async function GET(request: Request) {
       : 100;
     let result = await searchUsers(normalizedQuery, limit, cursor);
 
-    // Apply organization filter if provided
-    if (orgFilter) {
+    // ONLY filter by org if parameter is explicitly provided and not empty
+    if (orgFilter && orgFilter.trim() !== '') {
       const filteredUsers = result.users.filter(user =>
-        user.organization?.toLowerCase() === orgFilter.toLowerCase()
+        user.organization?.toLowerCase().trim() === orgFilter.toLowerCase().trim()
       );
       result = {
         ...result,

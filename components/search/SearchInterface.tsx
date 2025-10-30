@@ -39,27 +39,42 @@ export default function SearchInterface() {
     localStorage.setItem('myOrgFilter', JSON.stringify(myOrgFilter));
   }, [myOrgFilter]);
 
-  // Detect user's organization from search results
+  // Fetch authenticated user's actual organization
   useEffect(() => {
-    if (results.length > 0 && !userOrg) {
-      // Use the most common organization from results as user's org
-      const orgCounts = results.reduce((acc, user) => {
-        if (user.organization) {
-          acc[user.organization] = (acc[user.organization] || 0) + 1;
+    const fetchUserOrg = async () => {
+      try {
+        // Try to get from auth endpoint
+        const authResponse = await fetch('/.auth/me');
+        if (authResponse.ok) {
+          const authData = await authResponse.json();
+          const userEmail = authData.clientPrincipal?.userDetails;
+          
+          if (userEmail) {
+            // Look up this user's profile to get their org
+            const response = await fetch(`/api/okta/users?q=${encodeURIComponent(userEmail)}`);
+            const data = await response.json();
+            if (data.ok && data.data?.users && data.data.users.length > 0) {
+              const matchingUser = data.data.users.find((u: User) => 
+                u.email?.toLowerCase() === userEmail.toLowerCase()
+              );
+              if (matchingUser?.organization) {
+                setUserOrg(matchingUser.organization);
+                return;
+              }
+            }
+          }
         }
-        return acc;
-      }, {} as Record<string, number>);
-
-      const mostCommonOrg = Object.entries(orgCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-      if (mostCommonOrg) {
-        setUserOrg(mostCommonOrg);
+      } catch (error) {
+        console.error('Failed to fetch user org:', error);
       }
-    }
-  }, [results, userOrg]);
+    };
+
+    fetchUserOrg();
+  }, []);
 
   useEffect(() => {
     if (debouncedQuery) {
-      void search(debouncedQuery, undefined, myOrgFilter && userOrg ? userOrg : undefined);
+      void search(debouncedQuery, undefined, myOrgFilter === true && userOrg && userOrg.trim() !== '' ? userOrg : undefined);
     } else {
       void search('');
       setSelectedUser(null);
@@ -94,7 +109,7 @@ export default function SearchInterface() {
 
   const handleLoadMore = () => {
     if (nextCursor) {
-      void search(query, nextCursor, myOrgFilter && userOrg ? userOrg : undefined);
+      void search(query, nextCursor, myOrgFilter === true && userOrg && userOrg.trim() !== '' ? userOrg : undefined);
     }
   };
 
@@ -106,25 +121,19 @@ export default function SearchInterface() {
 
         {/* Organization Filter */}
         {userOrg && (
-          <div className="mb-4 flex items-center gap-3">
-            <button
-              onClick={() => setMyOrgFilter(!myOrgFilter)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                myOrgFilter
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {myOrgFilter ? '✓ ' : ''}My Organization: {userOrg}
-            </button>
-            {myOrgFilter && (
-              <button
-                onClick={() => setMyOrgFilter(false)}
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                Show all
-              </button>
-            )}
+          <div className="mb-4 flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <span className="text-sm font-medium text-gray-700">Filter:</span>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={myOrgFilter}
+                onChange={(e) => setMyOrgFilter(e.target.checked)}
+                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+              />
+              <span className="text-sm text-gray-900">
+                My Organization only ({userOrg})
+              </span>
+            </label>
           </div>
         )}
 

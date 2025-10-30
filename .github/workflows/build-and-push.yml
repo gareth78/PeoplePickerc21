@@ -6,8 +6,12 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: ${{ secrets.AZURE_CONTAINER_REGISTRY }}   # e.g. peoplepickerc21acr.azurecr.io
+  REGISTRY: ${{ secrets.AZURE_CONTAINER_REGISTRY }}   # e.g. peoplepickerc21acr.azurecr.io (no https://)
   IMAGE_NAME: peoplepickerc21
+  AZURE_RG: PeoplePickerc21
+  CONTAINER_APP_NAME: peoplepickerc21-env
+
+
 
 jobs:
   build-and-push:

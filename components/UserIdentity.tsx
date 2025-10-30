@@ -135,7 +135,7 @@ export default function UserIdentity() {
           className="cursor-pointer"
         />
       ) : (
-        <div className="w-9 h-9 rounded-full bg-gray-400 text-white flex items-center justify-center font-semibold text-sm cursor-pointer">
+        <div className="w-9 h-9 rounded-full bg-gray-400 text-white flex items-center justify-center font-semibold text-base cursor-pointer">
           {getInitials(displayName)}
         </div>
       )}
@@ -151,7 +151,7 @@ export default function UserIdentity() {
                 size="medium"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-gray-400 text-white flex items-center justify-center font-bold text-2xl flex-shrink-0">
+              <div className="w-16 h-16 rounded-full bg-gray-400 text-white flex items-center justify-center font-bold text-3xl flex-shrink-0">
                 {getInitials(displayName)}
               </div>
             )}
@@ -164,33 +164,33 @@ export default function UserIdentity() {
               {isInternalUser ? (
                 <>
                   {userInfo.oktaProfile?.title && (
-                    <p className="text-sm text-gray-600 truncate">
+                    <p className="text-base text-gray-600 truncate">
                       {userInfo.oktaProfile.title}
                     </p>
                   )}
                   {userInfo.oktaProfile?.department && (
-                    <p className="text-sm text-gray-600 truncate">
+                    <p className="text-base text-gray-600 truncate">
                       {userInfo.oktaProfile.department}
                     </p>
                   )}
                   {userInfo.oktaProfile?.officeLocation && (
-                    <p className="text-sm text-gray-600 truncate">
+                    <p className="text-base text-gray-600 truncate">
                       📍 {userInfo.oktaProfile.officeLocation}
                     </p>
                   )}
                   {userInfo.oktaProfile?.organization && (
-                    <p className="text-sm text-gray-600 truncate">
+                    <p className="text-base text-gray-600 truncate">
                       {userInfo.oktaProfile.organization}
                     </p>
                   )}
                 </>
               ) : (
-                <p className="text-sm text-gray-500 italic">
+                <p className="text-base text-gray-500 italic">
                   External User
                 </p>
               )}
 
-              <p className="text-xs text-gray-500 truncate mt-1">
+              <p className="text-sm text-gray-500 truncate mt-1">
                 {userInfo.email}
               </p>
             </div>

@@ -81,17 +81,17 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
   const getGroupBadge = () => {
     if (isM365Group) {
       return {
-        className: 'px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full',
+        className: 'px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-full',
         text: 'M365 Group'
       };
     } else if (isDistributionList) {
       return {
-        className: 'px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-full',
+        className: 'px-3 py-1 bg-green-600 text-white text-sm font-medium rounded-full',
         text: 'Distribution List'
       };
     } else {
       return {
-        className: 'px-3 py-1 bg-orange-600 text-white text-xs font-medium rounded-full',
+        className: 'px-3 py-1 bg-orange-600 text-white text-sm font-medium rounded-full',
         text: 'Mail-Enabled'
       };
     }
@@ -106,7 +106,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
 
   if (loading) {
     return (
-      <div className="p-10 text-center text-sm text-gray-600">
+      <div className="p-10 text-center text-base text-gray-600">
         Loading group details...
       </div>
     );
@@ -114,7 +114,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 text-red-700 text-sm">
+      <div className="p-4 bg-red-50 text-red-700 text-base">
         {error}
       </div>
     );
@@ -146,7 +146,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
       </div>
 
       {/* Group Name */}
-      <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+      <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">
         {group.displayName}
       </h2>
 
@@ -159,7 +159,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
 
       {/* Description */}
       {group.description && (
-        <p className="text-sm text-gray-600 text-center mb-5">
+        <p className="text-base text-gray-600 text-center mb-5">
           {group.description}
         </p>
       )}
@@ -202,24 +202,24 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
       {/* Group Metadata Section (for M365 Groups) */}
       {(group.createdDateTime || group.visibility || group.classification) && (
         <div className="pt-5 border-t border-gray-200 mb-5">
-          <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+          <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
             Group Information
           </h4>
           <div className="space-y-2">
             {group.createdDateTime && (
-              <div className="flex justify-between py-2 text-sm">
+              <div className="flex justify-between py-2 text-base">
                 <span className="font-medium text-gray-600">Created:</span>
                 <span className="text-gray-900">{formatDate(group.createdDateTime)}</span>
               </div>
             )}
             {group.visibility && (
-              <div className="flex justify-between py-2 border-t border-gray-100 text-sm">
+              <div className="flex justify-between py-2 border-t border-gray-100 text-base">
                 <span className="font-medium text-gray-600">Visibility:</span>
                 <span className="text-gray-900 capitalize">{group.visibility}</span>
               </div>
             )}
             {group.classification && (
-              <div className="flex justify-between py-2 border-t border-gray-100 text-sm">
+              <div className="flex justify-between py-2 border-t border-gray-100 text-base">
                 <span className="font-medium text-gray-600">Classification:</span>
                 <span className="text-gray-900">{group.classification}</span>
               </div>
@@ -231,10 +231,10 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
       {/* Email with copy button */}
       {group.mail && (
         <div className="pt-5 border-t border-gray-200 mb-5">
-          <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+          <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
             Contact Information
           </h4>
-          <div className="flex justify-between items-center py-2 text-sm">
+          <div className="flex justify-between items-center py-2 text-base">
             <span className="font-medium text-gray-600">Email:</span>
             <div className="flex items-center gap-2">
               <a
@@ -286,7 +286,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
       {/* Owners */}
       {group.owners.length > 0 && (
         <div className="pt-5 border-t border-gray-200 mb-5">
-          <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+          <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
             Owners ({group.owners.length})
           </h4>
           <div className="space-y-2">
@@ -304,7 +304,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
       {/* Members */}
       {allMembers.length > 0 && (
         <div className="pt-5 border-t border-gray-200">
-          <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+          <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
             Members ({group.memberCount || allMembers.length})
           </h4>
           <div className="space-y-2">
@@ -322,7 +322,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
             <button
               onClick={loadAllMembers}
               disabled={loadingAllMembers}
-              className="w-full mt-4 py-3 bg-gray-50 text-sm text-primary font-medium hover:bg-gray-100 transition-colors border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full mt-4 py-3 bg-gray-50 text-base text-primary font-medium hover:bg-gray-100 transition-colors border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingAllMembers ? 'Loading...' : `Load all ${group.memberCount || allMembers.length} members`}
             </button>
@@ -389,16 +389,16 @@ function MemberItem({
 
       {/* Member details */}
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-sm text-gray-900 truncate">
+        <div className="font-semibold text-base text-gray-900 truncate">
           {member.displayName}
         </div>
         {member.jobTitle && (
-          <div className="text-xs text-gray-600 truncate">
+          <div className="text-sm text-gray-600 truncate">
             {member.jobTitle}
           </div>
         )}
         {member.type === 'group' && (
-          <div className="text-xs text-purple-600">
+          <div className="text-sm text-purple-600">
             Group
           </div>
         )}

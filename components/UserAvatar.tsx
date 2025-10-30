@@ -75,9 +75,9 @@ export default function UserAvatar({
   };
 
   const sizeClasses = {
-    small: 'w-9 h-9 text-sm',
-    medium: 'w-16 h-16 text-2xl',
-    large: 'w-24 h-24 text-4xl'
+    small: 'w-9 h-9 text-base',
+    medium: 'w-16 h-16 text-3xl',
+    large: 'w-24 h-24 text-5xl'
   };
 
   if (photo && !loading && !imageError) {

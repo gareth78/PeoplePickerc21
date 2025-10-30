@@ -10,10 +10,14 @@ interface UserInfo {
   provider?: string;
   oktaProfile?: {
     displayName: string;
-    organization?: string;
-    title?: string;
-    officeLocation?: string;
+    organization?: string | null;
+    title?: string | null;
+    officeLocation?: string | null;
     email: string;
+    department?: string | null;
+    mobilePhone?: string | null;
+    manager?: string | null;
+    managerEmail?: string | null;
   };
 }
 
@@ -52,13 +56,13 @@ export default function UserIdentity() {
         // Handle different response structures
         let users = [];
 
-        // Check if data is in stats.users (as object)
-        if (oktaData.stats?.users && typeof oktaData.stats.users === 'object' && !Array.isArray(oktaData.stats.users)) {
-          users = [oktaData.stats.users]; // Wrap single object in array
-          console.log('✅ Found user in stats.users (object)');
+        // Check if data is in the standard API response format
+        if (oktaData.ok && oktaData.data?.users && Array.isArray(oktaData.data.users)) {
+          users = oktaData.data.users;
+          console.log('✅ Found users in data.users array');
         }
-        // Check if data is in users array
-        else if (oktaData.users && Array.isArray(oktaData.users) && oktaData.users.length > 0) {
+        // Fallback: Check if data is directly in users array
+        else if (oktaData.users && Array.isArray(oktaData.users)) {
           users = oktaData.users;
           console.log('✅ Found users in users array');
         }
@@ -75,13 +79,17 @@ export default function UserIdentity() {
           });
           
           if (matchingUser) {
-            console.log('✅ Found matching Okta user!');
+            console.log('✅ Found matching Okta user!', matchingUser);
             authData.oktaProfile = {
               displayName: matchingUser.displayName,
               organization: matchingUser.organization,
               title: matchingUser.title,
               officeLocation: matchingUser.officeLocation,
-              email: matchingUser.email
+              email: matchingUser.email,
+              department: matchingUser.department,
+              mobilePhone: matchingUser.mobilePhone,
+              manager: matchingUser.manager,
+              managerEmail: matchingUser.managerEmail
             };
           }
         }
@@ -160,9 +168,14 @@ export default function UserIdentity() {
                       {userInfo.oktaProfile.title}
                     </p>
                   )}
+                  {userInfo.oktaProfile?.department && (
+                    <p className="text-sm text-gray-600 truncate">
+                      {userInfo.oktaProfile.department}
+                    </p>
+                  )}
                   {userInfo.oktaProfile?.officeLocation && (
                     <p className="text-sm text-gray-600 truncate">
-                      {userInfo.oktaProfile.officeLocation}
+                      📍 {userInfo.oktaProfile.officeLocation}
                     </p>
                   )}
                   {userInfo.oktaProfile?.organization && (

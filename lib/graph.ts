@@ -70,3 +70,77 @@ export async function getUserPhoto(email: string): Promise<string | null> {
     return null;
   }
 }
+
+// Microsoft 365 Groups functions
+export async function searchGroups(query: string): Promise<any> {
+  try {
+    const client = await getGraphClient();
+
+    // Search for M365 Groups and mail-enabled groups
+    // Filter: Unified (M365) groups or mail-enabled groups
+    const result = await client
+      .api('/groups')
+      .filter(`(groupTypes/any(c:c eq 'Unified') or mailEnabled eq true) and (startswith(displayName,'${query}') or startswith(mail,'${query}'))`)
+      .select('id,displayName,mail,description,groupTypes')
+      .top(50)
+      .get();
+
+    return result;
+  } catch (error: any) {
+    console.error('Failed to search groups:', error.message);
+    throw error;
+  }
+}
+
+export async function getGroupDetail(groupId: string): Promise<any> {
+  try {
+    const client = await getGraphClient();
+
+    // Get group details
+    const group = await client
+      .api(`/groups/${groupId}`)
+      .select('id,displayName,mail,description,groupTypes')
+      .get();
+
+    return group;
+  } catch (error: any) {
+    console.error(`Failed to fetch group ${groupId}:`, error.message);
+    throw error;
+  }
+}
+
+export async function getGroupMembers(groupId: string): Promise<any[]> {
+  try {
+    const client = await getGraphClient();
+
+    // Get group members
+    const result = await client
+      .api(`/groups/${groupId}/members`)
+      .select('id,displayName,mail,userPrincipalName,jobTitle,department')
+      .top(100)
+      .get();
+
+    return result.value || [];
+  } catch (error: any) {
+    console.error(`Failed to fetch members for group ${groupId}:`, error.message);
+    throw error;
+  }
+}
+
+export async function getGroupOwners(groupId: string): Promise<any[]> {
+  try {
+    const client = await getGraphClient();
+
+    // Get group owners
+    const result = await client
+      .api(`/groups/${groupId}/owners`)
+      .select('id,displayName,mail,userPrincipalName,jobTitle,department')
+      .top(100)
+      .get();
+
+    return result.value || [];
+  } catch (error: any) {
+    console.error(`Failed to fetch owners for group ${groupId}:`, error.message);
+    throw error;
+  }
+}

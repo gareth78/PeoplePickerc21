@@ -70,3 +70,23 @@ export async function getUserPhoto(email: string): Promise<string | null> {
     return null;
   }
 }
+
+export async function getUserPresence(email: string): Promise<{
+  availability: string;
+  activity: string;
+} | null> {
+  try {
+    const client = await getGraphClient();
+    const presence = await client
+      .api(`/users/${email}/presence`)
+      .get();
+
+    return {
+      availability: presence.availability, // Available, Busy, Away, BeRightBack, DoNotDisturb, Offline
+      activity: presence.activity // Available, InACall, InAMeeting, Busy, Away, etc.
+    };
+  } catch (error: any) {
+    console.error(`Failed to fetch presence for ${email}:`, error.message);
+    return null;
+  }
+}

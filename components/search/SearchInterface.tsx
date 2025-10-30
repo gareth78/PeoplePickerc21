@@ -40,6 +40,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [groupsLoading, setGroupsLoading] = useState(false);
   const [groupsError, setGroupsError] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [previousGroup, setPreviousGroup] = useState<{ id: string; name: string } | null>(null);
 
   // Initialize query from URL params on mount
   useEffect(() => {
@@ -110,9 +111,11 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       setMyOrgFilter(false);
       setSelectedUser(null);
       setProfileHistory([]);
+      setPreviousGroup(null);
     } else {
       setSearchMode('users');
       setSelectedGroup(null);
+      setPreviousGroup(null);
       if (filter === 'myorg') {
         setMyOrgFilter(true);
       } else if (filter === 'all') {
@@ -221,21 +224,50 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
       return;
     } else {
-      // Switch to users mode and search for the user
-      setSearchMode('users');
-      setActiveFilter('all');
-      setSelectedGroup(null);
+      // User was clicked - store the current group and show user profile
+      if (selectedGroup) {
+        setPreviousGroup({ id: selectedGroup.id, name: selectedGroup.displayName });
+      }
 
-      // Search for user by ID or email
+      // Fetch user details
       try {
-        const response = await fetch(`/api/okta/users?q=${memberId}`);
+        const response = await fetch(`/api/okta/users/${memberId}`);
         const data = await response.json();
-        if (data.ok && data.data?.users && data.data.users.length > 0) {
-          setSelectedUser(data.data.users[0]);
+        
+        if (data.ok && data.data) {
+          setSelectedUser(data.data);
+          setSelectedGroup(null);
+        } else {
+          console.error('Failed to fetch user:', data.error);
         }
       } catch (err) {
         console.error('Failed to fetch user:', err);
       }
+    }
+  };
+
+  // Go back to group from user profile
+  const goBackToGroup = async () => {
+    if (!previousGroup) return;
+
+    try {
+      const response = await fetch(`/api/graph/groups/${previousGroup.id}`);
+      const data = await response.json();
+
+      if (data.ok && data.data) {
+        const detail: GroupDetailType = data.data;
+        setSelectedGroup({
+          id: detail.id,
+          displayName: detail.displayName,
+          mail: detail.mail,
+          description: detail.description,
+          groupTypes: detail.groupTypes,
+        });
+        setSelectedUser(null);
+        setPreviousGroup(null);
+      }
+    } catch (err) {
+      console.error('Failed to fetch group:', err);
     }
   };
 
@@ -453,46 +485,68 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
                 {groups.length > 0 && (
                   <div className="flex flex-col">
-                    {groups.map((group) => (
-                      <button
-                        key={group.id}
-                        onClick={() => setSelectedGroup(group)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
-                          selectedGroup?.id === group.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
-                        }`}
-                      >
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <svg
-                            className="w-6 h-6 text-primary"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                            />
-                          </svg>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm text-gray-900 truncate">
-                            {group.displayName}
+                    {groups.map((group) => {
+                      const isM365Group = group.groupTypes.includes('Unified');
+                      const isDistributionList = group.mailEnabled && !isM365Group;
+                      
+                      // Determine badge style and text
+                      const badgeStyle = isM365Group 
+                        ? 'bg-blue-600 text-white' 
+                        : isDistributionList 
+                          ? 'bg-green-600 text-white' 
+                          : 'bg-orange-600 text-white';
+                      const badgeText = isM365Group 
+                        ? 'M365 Group' 
+                        : isDistributionList 
+                          ? 'Distribution List' 
+                          : 'Mail-Enabled';
+                      
+                      return (
+                        <button
+                          key={group.id}
+                          onClick={() => setSelectedGroup(group)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
+                            selectedGroup?.id === group.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
+                          }`}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <svg
+                              className="w-6 h-6 text-primary"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                              />
+                            </svg>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                              {group.groupTypes.includes('Unified') ? 'M365 Group' : 'Mail-Enabled'}
-                            </span>
-                          </div>
-                          {group.mail && (
-                            <div className="text-xs text-gray-500 truncate">
-                              {group.mail}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-sm text-gray-900 truncate">
+                              {group.displayName}
                             </div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`text-xs px-2 py-0.5 ${badgeStyle} rounded-full`}>
+                                {badgeText}
+                              </span>
+                              {group.memberCount !== undefined && (
+                                <span className="text-xs text-gray-500">
+                                  • {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
+                            {group.mail && (
+                              <div className="text-xs text-gray-500 truncate">
+                                {group.mail}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -529,10 +583,10 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           </div>
 
           {/* Back button */}
-          {selectedUser && profileHistory.length > 0 && (
+          {selectedUser && (profileHistory.length > 0 || previousGroup) && (
             <div className="px-6 pt-4">
               <button
-                onClick={goBackInHistory}
+                onClick={previousGroup ? goBackToGroup : goBackInHistory}
                 className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark transition-colors font-medium"
               >
                 <svg
@@ -548,7 +602,11 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                     d="M15 19l-7-7 7-7"
                   />
                 </svg>
-                <span>Back to {profileHistory[profileHistory.length - 1].displayName}</span>
+                <span>
+                  {previousGroup 
+                    ? `Back to ${previousGroup.name}` 
+                    : `Back to ${profileHistory[profileHistory.length - 1].displayName}`}
+                </span>
               </button>
             </div>
           )}

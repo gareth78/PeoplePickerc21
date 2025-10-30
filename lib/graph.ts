@@ -81,10 +81,11 @@ export async function searchGroups(query: string): Promise<any> {
 
     // Search for M365 Groups and mail-enabled groups
     // Filter: Unified (M365) groups or mail-enabled groups
+    // Note: We fetch members separately in the detail view to get accurate counts
     const result = await client
       .api('/groups')
       .filter(`(groupTypes/any(c:c eq 'Unified') or mailEnabled eq true) and (startswith(displayName,'${sanitizedQuery}') or startswith(mail,'${sanitizedQuery}'))`)
-      .select('id,displayName,mail,description,groupTypes')
+      .select('id,displayName,mail,description,groupTypes,createdDateTime,visibility,classification,mailEnabled,securityEnabled')
       .top(50)
       .get();
 
@@ -102,7 +103,7 @@ export async function getGroupDetail(groupId: string): Promise<any> {
     // Get group details
     const group = await client
       .api(`/groups/${groupId}`)
-      .select('id,displayName,mail,description,groupTypes')
+      .select('id,displayName,mail,description,groupTypes,createdDateTime,visibility,classification,mailEnabled,securityEnabled')
       .get();
 
     return group;

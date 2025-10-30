@@ -14,6 +14,9 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [showAllMembers, setShowAllMembers] = useState(false);
+  const [loadingAllMembers, setLoadingAllMembers] = useState(false);
+  const [allMembers, setAllMembers] = useState<GroupMember[]>([]);
 
   useEffect(() => {
     const fetchGroupDetail = async () => {
@@ -26,6 +29,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
 
         if (data.ok) {
           setGroup(data.data);
+          setAllMembers(data.data.members);
         } else {
           setError(data.error || 'Failed to load group details');
         }
@@ -50,7 +54,55 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
     }
   };
 
+  const loadAllMembers = async () => {
+    if (!group) return;
+    
+    setLoadingAllMembers(true);
+    try {
+      const response = await fetch(`/api/graph/groups/${groupId}`);
+      const data = await response.json();
+      
+      if (data.ok) {
+        setAllMembers(data.data.members);
+        setShowAllMembers(true);
+      }
+    } catch (err) {
+      console.error('Failed to load all members:', err);
+    } finally {
+      setLoadingAllMembers(false);
+    }
+  };
+
   const isM365Group = group?.groupTypes.includes('Unified');
+  const isDistributionList = group?.mailEnabled && !isM365Group;
+  const displayedMembers = showAllMembers ? allMembers : allMembers.slice(0, 50);
+
+  // Helper function to get badge color and text
+  const getGroupBadge = () => {
+    if (isM365Group) {
+      return {
+        className: 'px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full',
+        text: 'M365 Group'
+      };
+    } else if (isDistributionList) {
+      return {
+        className: 'px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-full',
+        text: 'Distribution List'
+      };
+    } else {
+      return {
+        className: 'px-3 py-1 bg-orange-600 text-white text-xs font-medium rounded-full',
+        text: 'Mail-Enabled'
+      };
+    }
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  };
 
   if (loading) {
     return (
@@ -72,31 +124,10 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
     return null;
   }
 
+  const badge = getGroupBadge();
+
   return (
     <div className="max-w-md mx-auto">
-      {/* Back button */}
-      {onBack && (
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark transition-colors font-medium mb-4"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          <span>Back to results</span>
-        </button>
-      )}
-
       {/* Group Icon */}
       <div className="w-20 h-20 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
         <svg
@@ -121,8 +152,8 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
 
       {/* Group Type Badge */}
       <div className="flex justify-center mb-4">
-        <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
-          {isM365Group ? 'Microsoft 365 Group' : 'Mail-Enabled Group'}
+        <span className={badge.className}>
+          {badge.text}
         </span>
       </div>
 
@@ -167,6 +198,35 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
           </a>
         )}
       </div>
+
+      {/* Group Metadata Section (for M365 Groups) */}
+      {(group.createdDateTime || group.visibility || group.classification) && (
+        <div className="pt-5 border-t border-gray-200 mb-5">
+          <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+            Group Information
+          </h4>
+          <div className="space-y-2">
+            {group.createdDateTime && (
+              <div className="flex justify-between py-2 text-sm">
+                <span className="font-medium text-gray-600">Created:</span>
+                <span className="text-gray-900">{formatDate(group.createdDateTime)}</span>
+              </div>
+            )}
+            {group.visibility && (
+              <div className="flex justify-between py-2 border-t border-gray-100 text-sm">
+                <span className="font-medium text-gray-600">Visibility:</span>
+                <span className="text-gray-900 capitalize">{group.visibility}</span>
+              </div>
+            )}
+            {group.classification && (
+              <div className="flex justify-between py-2 border-t border-gray-100 text-sm">
+                <span className="font-medium text-gray-600">Classification:</span>
+                <span className="text-gray-900">{group.classification}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Email with copy button */}
       {group.mail && (
@@ -242,13 +302,13 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
       )}
 
       {/* Members */}
-      {group.members.length > 0 && (
+      {allMembers.length > 0 && (
         <div className="pt-5 border-t border-gray-200">
           <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
-            Members ({group.members.length})
+            Members ({group.memberCount || allMembers.length})
           </h4>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {group.members.map((member) => (
+          <div className="space-y-2">
+            {displayedMembers.map((member) => (
               <MemberItem
                 key={member.id}
                 member={member}
@@ -256,6 +316,17 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
               />
             ))}
           </div>
+          
+          {/* Load All Members Button */}
+          {!showAllMembers && allMembers.length > 50 && (
+            <button
+              onClick={loadAllMembers}
+              disabled={loadingAllMembers}
+              className="w-full mt-4 py-3 bg-gray-50 text-sm text-primary font-medium hover:bg-gray-100 transition-colors border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingAllMembers ? 'Loading...' : `Load all ${group.memberCount || allMembers.length} members`}
+            </button>
+          )}
         </div>
       )}
     </div>

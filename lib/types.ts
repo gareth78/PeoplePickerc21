@@ -116,6 +116,11 @@ export interface Group {
   description: string | null;
   groupTypes: string[];
   memberCount?: number;
+  createdDateTime?: string;
+  visibility?: string;
+  classification?: string;
+  mailEnabled?: boolean;
+  securityEnabled?: boolean;
 }
 
 export interface GroupMember {
@@ -136,6 +141,12 @@ export interface GroupDetail {
   groupTypes: string[];
   members: GroupMember[];
   owners: GroupMember[];
+  memberCount?: number;
+  createdDateTime?: string;
+  visibility?: string;
+  classification?: string;
+  mailEnabled?: boolean;
+  securityEnabled?: boolean;
 }
 
 export interface GroupSearchResult {

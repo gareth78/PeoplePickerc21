@@ -72,7 +72,7 @@ export default function HomePage() {
         <div>
           <h1 className="text-4xl font-bold text-gray-900">People Finder</h1>
           <p className="text-gray-600 mt-2">
-            Search the Okta directory to quickly connect with colleagues
+            Search the global directory to quickly connect with colleagues
           </p>
           <p className="text-xs text-gray-400 mt-1">
             version {version}

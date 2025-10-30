@@ -29,39 +29,20 @@ export default function HomePage() {
           
           const oktaData = await oktaRes.json();
           console.log('📊 Full Okta response:', JSON.stringify(oktaData, null, 2));
-          
-          // Check stats.users structure
-          if (oktaData.stats?.users) {
-            console.log('✅ Found stats.users:', JSON.stringify(oktaData.stats.users, null, 2));
-            
-            if (typeof oktaData.stats.users === 'object' && !Array.isArray(oktaData.stats.users)) {
-              const org = oktaData.stats.users.organization;
-              console.log('🏢 Organization from stats.users:', org);
-              
-              if (org) {
-                setUserOrg(org);
-                console.log('✅ Successfully set userOrg state to:', org);
-              } else {
-                console.log('❌ Organization field is empty in stats.users');
-              }
-            } else {
-              console.log('⚠️ stats.users is not an object:', typeof oktaData.stats.users);
-            }
+
+          let org: string | null = null;
+
+          if (oktaData.data?.users && Array.isArray(oktaData.data.users) && oktaData.data.users.length > 0) {
+            org = oktaData.data.users[0].organization;
+            console.log('✅ Found org in data.users[0]:', org);
+          } else if (oktaData.users && Array.isArray(oktaData.users) && oktaData.users.length > 0) {
+            org = oktaData.users[0].organization;
+            console.log('✅ Found org in users[0]:', org);
           }
-          // Check users array structure
-          else if (oktaData.users && Array.isArray(oktaData.users) && oktaData.users.length > 0) {
-            console.log('✅ Found users array with', oktaData.users.length, 'users');
-            const org = oktaData.users[0].organization;
-            console.log('🏢 Organization from users[0]:', org);
-            
-            if (org) {
-              setUserOrg(org);
-              console.log('✅ Successfully set userOrg state to:', org);
-            } else {
-              console.log('❌ Organization field is empty in users[0]');
-            }
-          } else {
-            console.log('❌ No stats.users or users array found in response');
+
+          if (org) {
+            setUserOrg(org);
+            console.log('✅ Set userOrg to:', org);
           }
         } else {
           console.log('❌ No email in auth data');

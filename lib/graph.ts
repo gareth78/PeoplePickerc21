@@ -23,6 +23,9 @@ export async function getGraphClient(): Promise<Client> {
     const authProvider = {
       getAccessToken: async () => {
         const token = await credential!.getToken('https://graph.microsoft.com/.default');
+        if (!token || !token.token) {
+          throw new Error('Failed to acquire access token from Azure');
+        }
         return token.token;
       }
     };
@@ -37,12 +40,29 @@ export async function getGraphClient(): Promise<Client> {
 export async function getUserPhoto(email: string): Promise<string | null> {
   try {
     const client = await getGraphClient();
+
+    // Request photo - Graph client returns ArrayBuffer by default for $value endpoints
     const photo = await client
       .api(`/users/${email}/photo/$value`)
       .get();
 
-    // Convert binary to base64
-    const buffer = Buffer.from(photo);
+    // Safely convert to base64
+    if (!photo) {
+      console.log(`No photo data returned for ${email}`);
+      return null;
+    }
+
+    // Handle both ArrayBuffer and Buffer responses
+    let buffer: Buffer;
+    if (photo instanceof ArrayBuffer) {
+      buffer = Buffer.from(photo);
+    } else if (Buffer.isBuffer(photo)) {
+      buffer = photo;
+    } else {
+      // Fallback: try to convert whatever we got
+      buffer = Buffer.from(photo);
+    }
+
     return `data:image/jpeg;base64,${buffer.toString('base64')}`;
   } catch (error: any) {
     // 404 is expected when user has no photo

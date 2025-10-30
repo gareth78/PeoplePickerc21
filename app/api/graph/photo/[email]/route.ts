@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUserPhoto } from '@/lib/graph';
-import { getRedisClient } from '@/lib/redis';
+import { getRedisClient, TTL } from '@/lib/redis';
 
 export async function GET(
   request: Request,
@@ -8,7 +8,9 @@ export async function GET(
 ) {
   try {
     const { email } = params;
-    const cacheKey = `photo:${email}`;
+    // Normalize email for consistent cache keys
+    const normalizedEmail = email.toLowerCase().trim();
+    const cacheKey = `photo:${normalizedEmail}`;
     const redis = getRedisClient();
 
     // Check cache first (24h TTL)
@@ -20,11 +22,11 @@ export async function GET(
     }
 
     // Fetch from Graph API
-    const photo = await getUserPhoto(email);
+    const photo = await getUserPhoto(normalizedEmail);
 
-    // Cache for 24 hours
+    // Cache using shared TTL constant
     if (redis && photo) {
-      await redis.setex(cacheKey, 86400, photo);
+      await redis.setex(cacheKey, TTL.PHOTO, photo);
     }
 
     return NextResponse.json({ photo });

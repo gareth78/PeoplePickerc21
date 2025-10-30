@@ -20,15 +20,50 @@ export default function UserAvatar({
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/graph/photo/${encodeURIComponent(email)}`)
-      .then(res => res.json())
-      .then(data => {
-        setPhoto(data.photo);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
+    // Create abort controller for cleanup
+    const abortController = new AbortController();
+    let mounted = true;
+
+    const fetchPhoto = async () => {
+      try {
+        const response = await fetch(
+          `/api/graph/photo/${encodeURIComponent(email.toLowerCase().trim())}`,
+          { signal: abortController.signal }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Only update state if component is still mounted
+        if (mounted && !abortController.signal.aborted) {
+          setPhoto(data.photo || null);
+          setLoading(false);
+        }
+      } catch (error) {
+        // Ignore abort errors
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+
+        // Only update state if component is still mounted
+        if (mounted && !abortController.signal.aborted) {
+          console.error('Failed to fetch photo:', error);
+          setPhoto(null);
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchPhoto();
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+      abortController.abort();
+    };
   }, [email]);
 
   const getInitials = () => {

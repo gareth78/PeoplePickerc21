@@ -48,6 +48,12 @@ export async function GET(request: Request) {
       mail: group.mail || null,
       description: group.description || null,
       groupTypes: group.groupTypes || [],
+      memberCount: group['members@odata.count'] || undefined,
+      createdDateTime: group.createdDateTime || undefined,
+      visibility: group.visibility || undefined,
+      classification: group.classification || undefined,
+      mailEnabled: group.mailEnabled || undefined,
+      securityEnabled: group.securityEnabled || undefined,
     }));
 
     const searchResult: GroupSearchResult = {

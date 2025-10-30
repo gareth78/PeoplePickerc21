@@ -76,6 +76,12 @@ export async function GET(
       groupTypes: groupData.groupTypes || [],
       members,
       owners,
+      memberCount: members.length,
+      createdDateTime: groupData.createdDateTime || undefined,
+      visibility: groupData.visibility || undefined,
+      classification: groupData.classification || undefined,
+      mailEnabled: groupData.mailEnabled || undefined,
+      securityEnabled: groupData.securityEnabled || undefined,
     };
 
     // Store in cache (don't wait for it)

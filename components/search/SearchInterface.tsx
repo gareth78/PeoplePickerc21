@@ -55,8 +55,9 @@ export default function SearchInterface() {
       setFilteredUsers(users);
       return;
     }
-    
-    // Hardcoded for testing - will make dynamic later
+
+    // TODO: Get user's org from UserIdentity component (via prop or context)
+    // For now, hardcoded for testing
     const myOrg = 'Plan International GH';
     
     const filtered = users.filter(user => 

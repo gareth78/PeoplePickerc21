@@ -204,7 +204,7 @@ export default async function UserProfilePage({
                 {user.manager && (
                   <div className={styles.detailItem}>
                     <span className={styles.label}>Manager:</span>
-                    <span className={styles.value}>{user.manager}</span>
+                    <a href={`/?q=${encodeURIComponent(user.manager)}`} className={styles.link}>{user.manager}</a>
                   </div>
                 )}
                 {user.managerEmail && (

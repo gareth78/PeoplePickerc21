@@ -10,24 +10,70 @@ export default function HomePage() {
 
   // Fetch user's organization
   useEffect(() => {
+    console.log('🔍 Starting user organization fetch...');
+    
     fetch('/api/me')
-      .then(res => res.json())
+      .then(res => {
+        console.log('📡 /api/me response status:', res.status);
+        return res.json();
+      })
       .then(async (authData) => {
+        console.log('📧 Auth data received:', JSON.stringify(authData, null, 2));
+        
         if (authData.email) {
-          // Try to get Okta profile
-          const oktaRes = await fetch(`/api/okta/users?q=${encodeURIComponent(authData.email)}`);
+          const oktaUrl = `/api/okta/users?q=${encodeURIComponent(authData.email)}`;
+          console.log('🔎 Fetching Okta profile from:', oktaUrl);
+          
+          const oktaRes = await fetch(oktaUrl);
+          console.log('📡 Okta response status:', oktaRes.status);
+          
           const oktaData = await oktaRes.json();
-
-          // Parse the stats.users structure
-          if (oktaData.stats?.users && typeof oktaData.stats.users === 'object') {
-            setUserOrg(oktaData.stats.users.organization);
-          } else if (oktaData.users?.[0]?.organization) {
-            setUserOrg(oktaData.users[0].organization);
+          console.log('📊 Full Okta response:', JSON.stringify(oktaData, null, 2));
+          
+          // Check stats.users structure
+          if (oktaData.stats?.users) {
+            console.log('✅ Found stats.users:', JSON.stringify(oktaData.stats.users, null, 2));
+            
+            if (typeof oktaData.stats.users === 'object' && !Array.isArray(oktaData.stats.users)) {
+              const org = oktaData.stats.users.organization;
+              console.log('🏢 Organization from stats.users:', org);
+              
+              if (org) {
+                setUserOrg(org);
+                console.log('✅ Successfully set userOrg state to:', org);
+              } else {
+                console.log('❌ Organization field is empty in stats.users');
+              }
+            } else {
+              console.log('⚠️ stats.users is not an object:', typeof oktaData.stats.users);
+            }
           }
+          // Check users array structure
+          else if (oktaData.users && Array.isArray(oktaData.users) && oktaData.users.length > 0) {
+            console.log('✅ Found users array with', oktaData.users.length, 'users');
+            const org = oktaData.users[0].organization;
+            console.log('🏢 Organization from users[0]:', org);
+            
+            if (org) {
+              setUserOrg(org);
+              console.log('✅ Successfully set userOrg state to:', org);
+            } else {
+              console.log('❌ Organization field is empty in users[0]');
+            }
+          } else {
+            console.log('❌ No stats.users or users array found in response');
+          }
+        } else {
+          console.log('❌ No email in auth data');
         }
       })
-      .catch(err => console.error('Failed to get user org:', err));
+      .catch(err => {
+        console.error('❌ Error fetching user org:', err);
+      });
   }, []);
+
+  // Add debug render logging
+  console.log('🎨 Rendering Home, userOrg state:', userOrg);
 
   return (
     <div className="max-w-7xl mx-auto px-5 py-8">

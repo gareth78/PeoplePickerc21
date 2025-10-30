@@ -10,7 +10,7 @@ interface UseSearchResult {
   loading: boolean;
   error: string | null;
   nextCursor: string | null;
-  search: (query: string, cursor?: string, org?: string) => Promise<void>;
+  search: (query: string, cursor?: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -20,7 +20,7 @@ export function useSearch(): UseSearchResult {
   const [error, setError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
 
-  const search = useCallback(async (query: string, cursor?: string, org?: string) => {
+  const search = useCallback(async (query: string, cursor?: string) => {
     if (!query || query.trim().length < 2) {
       setResults([]);
       setError(null);
@@ -34,7 +34,6 @@ export function useSearch(): UseSearchResult {
     try {
       const params = new URLSearchParams({ q: query.trim() });
       if (cursor) params.append('cursor', cursor);
-      if (org) params.append('org', org);
 
       const response = await fetch(`/api/okta/users?${params.toString()}`);
       const data = await response.json();

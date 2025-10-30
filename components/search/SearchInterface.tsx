@@ -13,8 +13,6 @@ export default function SearchInterface() {
   const [query, setQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [managerData, setManagerData] = useState<User | null>(null);
-  const [myOrgFilter, setMyOrgFilter] = useState(false);
-  const [userOrg, setUserOrg] = useState<string | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
 
@@ -26,45 +24,14 @@ export default function SearchInterface() {
     }
   }, [searchParams]);
 
-  // Restore filter preference from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('myOrgFilter');
-    if (saved) {
-      setMyOrgFilter(JSON.parse(saved));
-    }
-  }, []);
-
-  // Persist filter preference to localStorage
-  useEffect(() => {
-    localStorage.setItem('myOrgFilter', JSON.stringify(myOrgFilter));
-  }, [myOrgFilter]);
-
-  // Detect user's organization from search results
-  useEffect(() => {
-    if (results.length > 0 && !userOrg) {
-      // Use the most common organization from results as user's org
-      const orgCounts = results.reduce((acc, user) => {
-        if (user.organization) {
-          acc[user.organization] = (acc[user.organization] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>);
-
-      const mostCommonOrg = Object.entries(orgCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-      if (mostCommonOrg) {
-        setUserOrg(mostCommonOrg);
-      }
-    }
-  }, [results, userOrg]);
-
   useEffect(() => {
     if (debouncedQuery) {
-      void search(debouncedQuery, undefined, myOrgFilter && userOrg ? userOrg : undefined);
+      void search(debouncedQuery);
     } else {
       void search('');
       setSelectedUser(null);
     }
-  }, [debouncedQuery, search, myOrgFilter, userOrg]);
+  }, [debouncedQuery, search]);
 
   // Update URL when query changes
   useEffect(() => {
@@ -94,7 +61,7 @@ export default function SearchInterface() {
 
   const handleLoadMore = () => {
     if (nextCursor) {
-      void search(query, nextCursor, myOrgFilter && userOrg ? userOrg : undefined);
+      void search(query, nextCursor);
     }
   };
 
@@ -103,31 +70,6 @@ export default function SearchInterface() {
       {/* Search Header */}
       <div className="p-5 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Directory search</h2>
-
-        {/* Organization Filter */}
-        {userOrg && (
-          <div className="mb-4 flex items-center gap-3">
-            <button
-              onClick={() => setMyOrgFilter(!myOrgFilter)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                myOrgFilter
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {myOrgFilter ? '✓ ' : ''}My Organization: {userOrg}
-            </button>
-            {myOrgFilter && (
-              <button
-                onClick={() => setMyOrgFilter(false)}
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                Show all
-              </button>
-            )}
-          </div>
-        )}
-
         <div className="relative">
           <input
             type="text"

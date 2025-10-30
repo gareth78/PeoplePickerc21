@@ -105,8 +105,3 @@ export interface DiagnosticMetrics {
     error?: string;
   };
 }
-
-export interface SearchFilters {
-  myOrgOnly: boolean;
-  userOrganization?: string;
-}

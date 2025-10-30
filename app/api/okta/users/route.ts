@@ -10,7 +10,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
     const cursor = searchParams.get('cursor') || undefined;
-    const orgFilter = searchParams.get('org');
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json(
@@ -43,19 +42,7 @@ export async function GET(request: Request) {
     const limit = Number.isFinite(configuredLimit) && configuredLimit > 0
       ? configuredLimit
       : 100;
-    let result = await searchUsers(normalizedQuery, limit, cursor);
-
-    // Apply organization filter if provided
-    if (orgFilter) {
-      const filteredUsers = result.users.filter(user =>
-        user.organization?.toLowerCase() === orgFilter.toLowerCase()
-      );
-      result = {
-        ...result,
-        users: filteredUsers,
-        totalCount: filteredUsers.length,
-      };
-    }
+    const result = await searchUsers(normalizedQuery, limit, cursor);
 
     // Store in cache (don't wait for it)
     cacheSet(cacheKey, result, TTL.SEARCH).catch(err =>

@@ -48,33 +48,40 @@ export default function UserIdentity() {
         const oktaData = await oktaResponse.json();
         console.log('📊 Okta data structure:', JSON.stringify(oktaData, null, 2));
 
-        // Check both possible response structures
-        const users = oktaData.users || (Array.isArray(oktaData) ? oktaData : []);
-        console.log('👥 Users array:', users, 'Length:', users.length);
+        // Handle different response structures
+        let users = [];
 
-        if (users && users.length > 0) {
-          console.log('✅ Found', users.length, 'users');
+        // Check if data is in stats.users (as object)
+        if (oktaData.stats?.users && typeof oktaData.stats.users === 'object' && !Array.isArray(oktaData.stats.users)) {
+          users = [oktaData.stats.users]; // Wrap single object in array
+          console.log('✅ Found user in stats.users (object)');
+        }
+        // Check if data is in users array
+        else if (oktaData.users && Array.isArray(oktaData.users) && oktaData.users.length > 0) {
+          users = oktaData.users;
+          console.log('✅ Found users in users array');
+        }
 
-          // Find exact email match (case-insensitive)
+        console.log('👥 Users array length:', users.length);
+
+        if (users.length > 0) {
+          console.log('✅ Processing', users.length, 'user(s)');
+          
           const matchingUser = users.find((u: any) => {
-            const match = u.email?.toLowerCase() === authData.email.toLowerCase();
-            console.log('🔍 Comparing:', u.email, 'with', authData.email, '→', match);
-            return match;
+            const emailMatch = u.email?.toLowerCase() === authData.email.toLowerCase();
+            console.log('🔍 Checking:', u.displayName, u.email, '→', emailMatch);
+            return emailMatch;
           });
-
+          
           if (matchingUser) {
-            console.log('✅ Found matching Okta user:', matchingUser);
+            console.log('✅ Found matching Okta user!');
             authData.oktaProfile = {
               displayName: matchingUser.displayName,
               organization: matchingUser.organization,
               title: matchingUser.title,
               email: matchingUser.email
             };
-          } else {
-            console.log('❌ No exact email match in', users.length, 'users');
           }
-        } else {
-          console.log('❌ No users in response');
         }
       } catch (error) {
         console.error('❌ Okta lookup failed:', error);

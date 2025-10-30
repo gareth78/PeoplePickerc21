@@ -36,29 +36,44 @@ export default function UserIdentity() {
         return;
       }
 
-      // Try to get Okta profile for this user
-      if (authData.email) {
-        try {
-          const oktaResponse = await fetch(`/api/okta/users?q=${encodeURIComponent(authData.email)}`);
-          const oktaData = await oktaResponse.json();
-
-          if (oktaData.users && oktaData.users.length > 0) {
-            const matchingUser = oktaData.users.find((u: any) =>
-              u.email?.toLowerCase() === authData.email.toLowerCase()
-            );
-
-            if (matchingUser) {
-              authData.oktaProfile = {
-                displayName: matchingUser.displayName,
-                organization: matchingUser.organization,
-                title: matchingUser.title,
-                email: matchingUser.email
-              };
-            }
+      // Try to get Okta profile for internal users
+      try {
+        console.log('🔍 Fetching Okta profile for:', authData.email);
+        const oktaUrl = `/api/okta/users?q=${encodeURIComponent(authData.email)}`;
+        console.log('📡 Okta URL:', oktaUrl);
+        
+        const oktaResponse = await fetch(oktaUrl);
+        console.log('📥 Okta response status:', oktaResponse.status);
+        
+        const oktaData = await oktaResponse.json();
+        console.log('📊 Okta search results:', oktaData);
+        
+        if (oktaData.users && oktaData.users.length > 0) {
+          console.log('✅ Found', oktaData.users.length, 'users');
+          
+          // Find exact email match (case-insensitive)
+          const matchingUser = oktaData.users.find((u: any) => {
+            const match = u.email?.toLowerCase() === authData.email.toLowerCase();
+            console.log('Comparing:', u.email, 'with', authData.email, '→', match);
+            return match;
+          });
+          
+          if (matchingUser) {
+            console.log('✅ Found matching Okta user:', matchingUser);
+            authData.oktaProfile = {
+              displayName: matchingUser.displayName,
+              organization: matchingUser.organization,
+              title: matchingUser.title,
+              email: matchingUser.email
+            };
+          } else {
+            console.log('❌ No exact email match found');
           }
-        } catch (error) {
-          console.log('User not found in Okta (external user)');
+        } else {
+          console.log('❌ No Okta users returned');
         }
+      } catch (error) {
+        console.error('❌ Okta lookup failed:', error);
       }
 
       setUserInfo(authData);

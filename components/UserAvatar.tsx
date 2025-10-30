@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import PresenceBadge from './PresenceBadge';
 
 interface UserAvatarProps {
   email: string;
@@ -82,20 +83,30 @@ export default function UserAvatar({
 
   if (photo && !loading && !imageError) {
     return (
-      <img
-        src={photo}
-        alt={displayName}
-        onError={() => setImageError(true)}
-        className={`${sizeClasses[size]} rounded-full object-cover ${className}`}
-      />
+      <div className={`relative ${className}`}>
+        <img
+          src={photo}
+          alt={displayName}
+          onError={() => setImageError(true)}
+          className={`${sizeClasses[size]} rounded-full object-cover`}
+        />
+        <div className="absolute bottom-0 right-0">
+          <PresenceBadge email={email} size={size === 'small' ? 'small' : 'medium'} />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div
-      className={`${sizeClasses[size]} rounded-full bg-primary text-white flex items-center justify-center font-semibold ${className}`}
-    >
-      {loading ? '...' : getInitials()}
+    <div className={`relative ${className}`}>
+      <div
+        className={`${sizeClasses[size]} rounded-full bg-primary text-white flex items-center justify-center font-semibold`}
+      >
+        {loading ? '...' : getInitials()}
+      </div>
+      <div className="absolute bottom-0 right-0">
+        <PresenceBadge email={email} size={size === 'small' ? 'small' : 'medium'} />
+      </div>
     </div>
   );
 }

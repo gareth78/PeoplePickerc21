@@ -12,6 +12,7 @@ interface UserInfo {
     displayName: string;
     organization?: string;
     title?: string;
+    officeLocation?: string;
     email: string;
   };
 }
@@ -79,6 +80,7 @@ export default function UserIdentity() {
               displayName: matchingUser.displayName,
               organization: matchingUser.organization,
               title: matchingUser.title,
+              officeLocation: matchingUser.officeLocation,
               email: matchingUser.email
             };
           }
@@ -156,6 +158,11 @@ export default function UserIdentity() {
                   {userInfo.oktaProfile?.title && (
                     <p className="text-sm text-gray-600 truncate">
                       {userInfo.oktaProfile.title}
+                    </p>
+                  )}
+                  {userInfo.oktaProfile?.officeLocation && (
+                    <p className="text-sm text-gray-600 truncate">
+                      {userInfo.oktaProfile.officeLocation}
                     </p>
                   )}
                   {userInfo.oktaProfile?.organization && (

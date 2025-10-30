@@ -141,6 +141,30 @@ export default function ApiDocsPage() {
         </div>
       </div>
 
+      <div className={styles.endpoint}>
+        <div className={styles.method}>GET</div>
+        <div className={styles.path}>/api/graph/photo/{'{email}'}</div>
+        <p className={styles.description}>
+          Retrieve user profile photo from Microsoft Graph API. Photos are cached for 24 hours.
+        </p>
+        <div className={styles.params}>
+          <strong>Path Parameters:</strong>
+          <ul>
+            <li><code>email</code> (required): User email address</li>
+          </ul>
+        </div>
+        <div className={styles.response}>
+          <strong>Response (with photo):</strong>
+          <pre>{`{
+  "photo": "data:image/jpeg;base64,/9j/4AAQSkZ..."
+}`}</pre>
+          <strong>Response (no photo):</strong>
+          <pre>{`{
+  "photo": null
+}`}</pre>
+        </div>
+      </div>
+
       <div className={styles.footer}>
         <a href="/" className={styles.link}>← Back to Dashboard</a>
       </div>

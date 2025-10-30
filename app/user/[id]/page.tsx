@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getUserById } from '@/lib/okta';
+import UserAvatar from '@/components/UserAvatar';
 import styles from './page.module.css';
 
 export default async function UserProfilePage({
@@ -11,14 +12,18 @@ export default async function UserProfilePage({
 }) {
   try {
     const user = await getUserById(params.id);
-    const initials = `${user.firstName?.charAt(0) ?? ''}${user.lastName?.charAt(0) ?? ''}` || user.displayName.charAt(0);
 
     return (
       <div className={styles.container}>
         <div className={styles.card}>
           {/* Header Section */}
           <div className={styles.header}>
-            <div className={styles.avatar}>{initials}</div>
+            <UserAvatar
+              email={user.email}
+              displayName={user.displayName}
+              size="large"
+              className="mx-auto mb-4"
+            />
             <h1 className={styles.name}>{user.displayName}</h1>
             {(user.title || user.department) && (
               <p className={styles.subtitle}>

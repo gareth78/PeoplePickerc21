@@ -43,12 +43,15 @@ Production-ready containerized people directory application with Okta integratio
    cp .env.local.example .env.local
 ```
 
-4. Add your Okta credentials to .env.local:
+4. Add your Okta and Microsoft Graph credentials to .env.local:
 ```
    okta-org-url=https://your-org.okta.com
    okta-api-token=your_token_here
-   cache-type=memory
-   cache-ttl-seconds=600
+   
+   # Microsoft Graph API (for profile photos)
+   ENTRA_TENANT_ID=your-tenant-id-here
+   ENTRA_CLIENT_ID=your-client-id-here
+   ENTRA_CLIENT_SECRET=your-client-secret-here
 ```
 
 5. Run development server:
@@ -97,6 +100,7 @@ PeoplePickerc21/
 - `GET /api/okta/users?q={query}` - Search users
 - `GET /api/okta/users/sample` - Sample users
 - `GET /api/okta/users/{id}` - Get specific user
+- `GET /api/graph/photo/{email}` - Get user profile photo (cached 24h)
 
 Full documentation available at `/api-docs`
 
@@ -114,10 +118,13 @@ The application is designed to run on Azure Container Apps with:
 ### Required (Production)
 - `okta-org-url` - Your Okta organization URL
 - `okta-api-token` - Okta API token with read access
+- `ENTRA_TENANT_ID` - Azure AD tenant ID for Microsoft Graph
+- `ENTRA_CLIENT_ID` - Azure AD application (client) ID
+- `ENTRA_CLIENT_SECRET` - Azure AD client secret
 
 ### Optional
-- `cache-ttl-seconds` - Cache duration (default: 600)
-- `cache-type` - Cache implementation (memory or redis)
+- `redis-connection-string` - Redis connection string for caching (recommended)
+- `search-results-limit` - Maximum search results (default: 100)
 
 **Security Note:** Never commit .env.local to git. Use Azure Application Settings for production.
 

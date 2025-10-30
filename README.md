@@ -1,163 +1,350 @@
-# PeoplePickerc21 - Org Contact Lookup
+# People Finder - Enterprise Directory Search
 
-Production-ready containerized people directory application with Okta integration.
+Modern, production-ready people directory application integrating Okta user data with Microsoft 365 presence and profile photos.
 
-## Features
+## ✨ Features
 
-- 🔍 Real-time search across Okta directory
-- 📊 Comprehensive diagnostics dashboard
-- 🐳 Docker containerized for consistent deployments
-- 🚀 Fast 2-3 minute deployments via GitHub Actions
-- 📱 Responsive design with CSS Modules
-- 🔐 Secure environment variable management
-- 📈 Cache statistics and performance monitoring
-- 🎯 Clean RESTful API architecture
+### Core Functionality
+- 🔍 **Real-time Search** - Fast search across Okta directory by name, title, department, location
+- 👤 **Rich User Profiles** - Comprehensive user information with contact details and org context
+- 📸 **Profile Photos** - Microsoft Entra ID profile pictures with 24-hour caching
+- 🟢 **Teams Presence** - Real-time availability status with official Microsoft icons
+- 🔗 **Manager Navigation** - Clickable manager links to navigate org hierarchy
+- ✖️ **Smart Search UX** - Clear button and preserved context on navigation
 
-## Tech Stack
+### Technical Features
+- 📊 **Diagnostics Dashboard** - Cache statistics, health monitoring, and performance metrics
+- 🧹 **Cache Management** - One-click cache clearing for troubleshooting
+- 🐳 **Docker Containerized** - Consistent deployments with fast 2-3 minute builds
+- 🚀 **Automated CI/CD** - GitHub Actions pipeline to Azure Container Apps
+- 🔐 **Azure Easy Auth** - Microsoft and GitHub authentication with auto-redirect
+- 📱 **Responsive Design** - Works seamlessly on desktop and mobile
+- ⚡ **Redis Caching** - Performance optimization with configurable TTLs
 
-- Next.js 14 App Router
+## 🏗️ Tech Stack
+
+**Frontend:**
+- Next.js 14 (App Router)
 - TypeScript (strict mode)
-- Node 20 LTS
-- Docker & Docker Compose
-- CSS Modules (no frameworks)
-- Azure Container Apps
-- GitHub Actions CI/CD
+- React 18
+- Tailwind CSS
+- Microsoft Fluent UI Icons
 
-## Quick Start
+**Backend:**
+- Node.js 20 LTS
+- Okta API integration
+- Microsoft Graph API
+- Redis caching layer
+
+**Infrastructure:**
+- Docker containerization
+- Azure Container Apps
+- Azure Container Registry
+- GitHub Actions CI/CD
+- Azure Easy Auth
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 20 LTS
+- Docker Desktop (optional, for local container testing)
+- Azure subscription (for deployment)
+- Okta admin access (for API token)
+- Microsoft Entra ID admin access (for Graph API)
 
 ### Local Development
 
-1. Clone repository:
+1. **Clone and install:**
 ```bash
-   git clone https://github.com/YOUR_USERNAME/PeoplePickerc21.git
-   cd PeoplePickerc21
+git clone https://github.com/YOUR_ORG/PeoplePickerc21.git
+cd PeoplePickerc21
+npm install
 ```
 
-2. Install dependencies:
+2. **Configure environment:**
 ```bash
-   npm install
+cp .env.local.example .env.local
 ```
 
-3. Create environment file:
+3. **Add credentials to `.env.local`:**
+```env
+# Okta Configuration
+okta-org-url=https://your-org.okta.com
+okta-api-token=your_okta_api_token_here
+
+# Microsoft Graph API (for photos & presence)
+ENTRA_TENANT_ID=your-azure-tenant-id
+ENTRA_CLIENT_ID=your-app-client-id
+ENTRA_CLIENT_SECRET=your-app-client-secret
+
+# Optional: Redis for caching
+redis-connection-string=redis://localhost:6379
+```
+
+4. **Run development server:**
 ```bash
-   cp .env.local.example .env.local
+npm run dev
 ```
 
-4. Add your Okta and Microsoft Graph credentials to .env.local:
-```
-   okta-org-url=https://your-org.okta.com
-   okta-api-token=your_token_here
-   
-   # Microsoft Graph API (for profile photos)
-   ENTRA_TENANT_ID=your-tenant-id-here
-   ENTRA_CLIENT_ID=your-client-id-here
-   ENTRA_CLIENT_SECRET=your-client-secret-here
-```
-
-5. Run development server:
-```bash
-   npm run dev
-```
-
-6. Open http://localhost:3000
+5. **Open:** http://localhost:3000
 
 ### Docker Development
-
-1. Build and run with Docker Compose:
 ```bash
-   docker-compose up --build
+docker-compose up --build
 ```
 
-2. Access at http://localhost:3000
+Access at http://localhost:3000
 
-## Project Structure
+## 📁 Project Structure
 ```
 PeoplePickerc21/
-├── app/                    # Next.js App Router
-│   ├── page.tsx           # Main dashboard
-│   ├── diagnostics/       # Detailed metrics
-│   ├── api-docs/          # API documentation
-│   ├── user/[id]/         # User profiles
-│   └── api/               # API routes
-├── components/            # React components
-│   ├── dashboard/         # Dashboard components
-│   ├── search/            # Search components
-│   └── diagnostics/       # Diagnostic components
-├── lib/                   # Utilities and hooks
-│   ├── types.ts          # TypeScript types
-│   ├── okta.ts           # Okta API client
-│   ├── cache.ts          # Cache abstraction
-│   └── hooks/            # Custom React hooks
-├── Dockerfile            # Container definition
-├── docker-compose.yml    # Local Docker setup
-└── .github/workflows/    # CI/CD pipelines
+├── app/
+│   ├── page.tsx                    # Main search interface
+│   ├── user/[id]/                  # Full user profile pages
+│   ├── diagnostics/                # System diagnostics
+│   ├── technical/                  # Technical details page
+│   └── api/
+│       ├── okta/                   # Okta API routes
+│       │   └── users/              # User search & lookup
+│       ├── graph/
+│       │   ├── photo/              # Profile photo fetching
+│       │   └── presence/           # Teams presence status
+│       └── cache/                  # Cache management
+├── components/
+│   ├── search/
+│   │   ├── SearchInterface.tsx     # Main search UI
+│   │   └── UserCard.tsx            # Search result cards
+│   ├── UserAvatar.tsx              # Avatar with photo & presence
+│   ├── PresenceBadge.tsx           # Teams status indicator
+│   └── diagnostics/                # Diagnostic components
+├── lib/
+│   ├── okta.ts                     # Okta API client
+│   ├── graph.ts                    # Microsoft Graph client
+│   ├── redis.ts                    # Redis caching
+│   └── types.ts                    # TypeScript definitions
+├── middleware.ts                   # Authentication middleware (future)
+├── Dockerfile                      # Container definition
+├── docker-compose.yml              # Local Docker setup
+└── .github/workflows/
+    └── azure-container-deploy.yml  # CI/CD pipeline
 ```
 
-## API Endpoints
+## 🔌 API Endpoints
 
-- `GET /api/health` - System health status
+### Health & Diagnostics
+- `GET /api/health` - System health check
 - `GET /api/okta/ping` - Okta connectivity test
-- `GET /api/okta/users?q={query}` - Search users
-- `GET /api/okta/users/sample` - Sample users
-- `GET /api/okta/users/{id}` - Get specific user
-- `GET /api/graph/photo/{email}` - Get user profile photo (cached 24h)
+- `GET /api/cache/stats` - Cache statistics
+- `POST /api/cache/clear` - Clear all cache
 
-Full documentation available at `/api-docs`
+### User Data
+- `GET /api/okta/users?q={query}` - Search users by name, title, location
+- `GET /api/okta/users/{id}` - Get user by Okta ID
+- `GET /api/okta/users/sample` - Sample user data
 
-## Deployment to Azure
+### Microsoft Graph Integration
+- `GET /api/graph/photo/{email}` - User profile photo (24h cache)
+- `GET /api/graph/presence/{email}` - Teams presence status (5min cache)
 
-Detailed Azure deployment instructions will be provided separately.
+Full API documentation: `/api-docs` (coming soon)
 
-The application is designed to run on Azure Container Apps with:
-- Azure Container Registry for image storage
-- GitHub Actions for automated builds and deployments
-- Environment variables managed in Azure Portal
+## 🔐 Authentication Setup
 
-## Environment Variables
+### Azure Easy Auth Configuration
+The application uses Azure Container Apps Easy Auth with two providers:
 
-### Required (Production)
-- `okta-org-url` - Your Okta organization URL
-- `okta-api-token` - Okta API token with read access
-- `ENTRA_TENANT_ID` - Azure AD tenant ID for Microsoft Graph
-- `ENTRA_CLIENT_ID` - Azure AD application (client) ID
-- `ENTRA_CLIENT_SECRET` - Azure AD client secret
+**Microsoft (Primary):**
+- Tenant: Plan International Azure AD
+- Auto-redirect for unauthenticated users
+- Validates tenant ID via middleware
 
-### Optional
-- `redis-connection-string` - Redis connection string for caching (recommended)
-- `search-results-limit` - Maximum search results (default: 100)
+**GitHub (Admin):**
+- Manual access via `/.auth/login/github`
+- Restricted to allowed admin usernames
+- Used for development and troubleshooting
 
-**Security Note:** Never commit .env.local to git. Use Azure Application Settings for production.
+### Microsoft Graph API Setup
 
-## Architecture Decisions
+**1. Create App Registration:**
+- Azure Portal → Entra ID → App registrations
+- Name: `PeoplePicker-GraphAPI`
+- Single tenant only
 
-### Why Containers?
-- Consistent builds across environments
-- Fast deployments (2-3 minutes vs 10+ with App Service)
-- No Oryx build issues
-- Easy rollbacks
+**2. Required Permissions:**
+- `User.Read.All` (Application) - For user data
+- `Presence.Read.All` (Application) - For Teams presence
 
-### Why CSS Modules?
-- No framework dependencies
-- Predictable styling
-- No build-time class name issues
-- Better for AI-assisted development
+**3. Grant Admin Consent** for both permissions
 
-### Why Memory Cache?
-- Simple for single-instance development
-- Easy to swap to Redis for production scaling
-- Clear performance metrics
+**4. Add credentials to Azure Container App** as secrets:
+- `ENTRA_TENANT_ID`
+- `ENTRA_CLIENT_ID`
+- `ENTRA_CLIENT_SECRET`
 
-## Performance
+## ☁️ Azure Deployment
 
-- Initial page load: <2s
-- Search latency: 200-500ms (includes Okta API)
-- Deployment time: 2-3 minutes
-- Container size: ~150MB
+### Architecture
+```
+GitHub → Actions → Container Registry → Container App
+                        ↓
+                   Easy Auth Layer
+                        ↓
+                   Next.js App
+                        ↓
+               Okta + Graph API + Redis
+```
 
-## Contributing
+### Initial Setup
 
-This is an internal tool. For issues or suggestions, contact the development team.
+**1. Create Azure Resources:**
+- Container Apps Environment
+- Container Registry
+- Redis Cache (optional but recommended)
 
-## License
+**2. Configure GitHub Actions:**
+- Add secrets: `AZURE_CREDENTIALS`, `REGISTRY_LOGIN_SERVER`
+- Pipeline auto-builds on push to main
 
-Proprietary - Internal use only.
+**3. Configure Container App:**
+- Add environment variables (Okta, Graph API)
+- Enable Easy Auth with Microsoft + GitHub
+- Set health probe to `/api/health`
+
+**4. Deploy:**
+```bash
+git push origin main
+# GitHub Actions builds and deploys automatically
+# Create new revision in Azure Portal
+```
+
+### Environment Variables (Production)
+Set in Azure Container App → Configuration → Secrets:
+```env
+# Okta
+okta-org-url=https://plan-international.okta.com
+okta-api-token=<from-okta-admin>
+
+# Microsoft Graph
+ENTRA_TENANT_ID=<azure-tenant-id>
+ENTRA_CLIENT_ID=<app-registration-client-id>
+ENTRA_CLIENT_SECRET=<app-registration-secret>
+
+# Redis (recommended)
+redis-connection-string=<azure-redis-connection-string>
+
+# Optional
+search-results-limit=100
+```
+
+## 🎨 Key UI Features
+
+### Search Interface
+- **Left Panel:** Search results with photos, titles, location
+- **Right Panel:** Selected user preview with contact info
+- **Top Bar:** Search input with clear button (×)
+- **Context Preservation:** Back navigation maintains search state
+
+### User Profile Preview
+- Profile photo with Teams presence indicator
+- Title, Department, Organization
+- Quick action buttons (Email, Teams chat)
+- Contact information (email, phone, location)
+- Manager link (clickable to manager's profile)
+
+### Full Profile Page
+- Comprehensive Okta profile data
+- Organized sections:
+  - Basic Information
+  - Contact Information
+  - Organization Details
+  - Location & Preferences
+  - System Information
+
+### Diagnostics Page
+- System health status
+- Okta connectivity check
+- Cache statistics (hit rate, keys, memory usage)
+- Performance metrics
+- One-click cache clearing
+- Build information
+
+## 📊 Performance
+
+- **Initial Load:** <2s
+- **Search Latency:** 200-500ms (Okta API + caching)
+- **Photo Load:** Instant (cached) or ~500ms (first fetch)
+- **Presence Update:** 5 minute cache, ~300ms fetch
+- **Deployment:** 2-3 minutes via GitHub Actions
+- **Container Size:** ~200MB
+
+## 🔮 Roadmap
+
+### Phase 1: Core Features ✅
+- [x] Okta integration
+- [x] User search
+- [x] Profile display
+- [x] Profile photos
+- [x] Teams presence
+
+### Phase 2: Security & Polish (In Progress)
+- [ ] Tenant validation middleware
+- [ ] Audit logging
+- [ ] Role-based access control
+- [ ] Rate limiting
+- [ ] Reorganize technical page
+- [ ] Enhanced UX features
+
+### Phase 3: Advanced Features
+- [ ] Group search
+- [ ] Org chart visualization
+- [ ] Manager hierarchy navigation
+- [ ] Out of office status
+- [ ] Recent searches history
+- [ ] Keyboard shortcuts
+
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+**Photos not loading:**
+- Check Graph API permissions granted
+- Verify `ENTRA_*` credentials in Azure
+- Check logs: `/diagnostics` page
+
+**Presence not showing:**
+- Ensure `Presence.Read.All` permission granted
+- Check 5-minute cache hasn't expired
+- Some users may have presence disabled
+
+**Search slow:**
+- Enable Redis caching
+- Check Okta API rate limits
+- Review cache hit rate in diagnostics
+
+**Build failures:**
+- Verify all dependencies in `package.json`
+- Check TypeScript errors: `npm run build`
+- Review GitHub Actions logs
+
+### Debug Tools
+- **Diagnostics Page:** `/diagnostics`
+- **Technical Details:** `/technical`
+- **Cache Clear:** Diagnostics page → "Clear Cache" button
+- **Logs:** Azure Portal → Container App → Log stream
+
+## 🤝 Contributing
+
+Internal tool for Plan International. For questions or issues:
+1. Check diagnostics page
+2. Review Azure logs
+3. Contact IT development team
+
+## 📄 License
+
+Proprietary - Plan International Internal Use Only
+
+---
+
+**Version:** 2.0  
+**Last Updated:** October 2025  
+**Maintained By:** Plan International IT Team

@@ -77,21 +77,21 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
   const isDistributionList = group?.mailEnabled && !isM365Group;
   const displayedMembers = showAllMembers ? allMembers : allMembers.slice(0, 50);
 
-  // Helper function to get badge color and text
+  // Helper function to get badge color and text - using subtle pastel colors
   const getGroupBadge = () => {
     if (isM365Group) {
       return {
-        className: 'px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-full',
+        className: 'px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full',
         text: 'M365 Group'
       };
     } else if (isDistributionList) {
       return {
-        className: 'px-3 py-1 bg-green-600 text-white text-sm font-medium rounded-full',
+        className: 'px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full',
         text: 'Distribution List'
       };
     } else {
       return {
-        className: 'px-3 py-1 bg-orange-600 text-white text-sm font-medium rounded-full',
+        className: 'px-3 py-1 bg-orange-100 text-orange-700 text-sm font-medium rounded-full',
         text: 'Mail-Enabled'
       };
     }

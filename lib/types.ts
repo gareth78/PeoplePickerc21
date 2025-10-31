@@ -121,6 +121,7 @@ export interface Group {
   classification?: string;
   mailEnabled?: boolean;
   securityEnabled?: boolean;
+  photoUrl?: string | null;
 }
 
 export interface GroupMember {

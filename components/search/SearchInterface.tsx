@@ -498,17 +498,17 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                     {groups.map((group) => {
                       const isM365Group = group.groupTypes.includes('Unified');
                       const isDistributionList = group.mailEnabled && !isM365Group;
-                      
-                      // Determine badge style and text
-                      const badgeStyle = isM365Group 
-                        ? 'bg-blue-600 text-white' 
-                        : isDistributionList 
-                          ? 'bg-green-600 text-white' 
-                          : 'bg-orange-600 text-white';
-                      const badgeText = isM365Group 
-                        ? 'M365 Group' 
-                        : isDistributionList 
-                          ? 'Distribution List' 
+
+                      // Determine badge style and text - using subtle pastel colors
+                      const badgeStyle = isM365Group
+                        ? 'bg-blue-100 text-blue-700'
+                        : isDistributionList
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-orange-100 text-orange-700';
+                      const badgeText = isM365Group
+                        ? 'M365 Group'
+                        : isDistributionList
+                          ? 'Distribution List'
                           : 'Mail-Enabled';
                       
                       return (
@@ -519,20 +519,29 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                             selectedGroup?.id === group.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
                           }`}
                         >
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <svg
-                              className="w-6 h-6 text-primary"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                          {/* Group avatar - show photo if available, otherwise show icon */}
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {group.photoUrl ? (
+                              <img
+                                src={group.photoUrl}
+                                alt={group.displayName}
+                                className="w-full h-full object-cover"
                               />
-                            </svg>
+                            ) : (
+                              <svg
+                                className="w-6 h-6 text-primary"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                />
+                              </svg>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-semibold text-base text-gray-900 truncate mb-2">

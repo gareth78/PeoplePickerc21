@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     const result = await searchGroups(normalizedQuery);
     const latency = Date.now() - startTime;
 
-    // Transform Graph API response to our format and fetch photos for M365 groups
+    // Transform Graph API response to our format and fetch photos for M365 groups (only M365 groups typically have photos)
     const groups: Group[] = await Promise.all(
       (result.value || []).map(async (group: any) => {
         const isM365Group = group.groupTypes?.includes('Unified');

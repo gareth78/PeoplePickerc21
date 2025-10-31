@@ -497,19 +497,30 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   <div className="flex flex-col">
                     {groups.map((group) => {
                       const isM365Group = group.groupTypes.includes('Unified');
-                      const isDistributionList = group.mailEnabled && !isM365Group;
+                      const isDynamicGroup = group.groupTypes.includes('DynamicMembership');
+                      const isSecurityGroup = group.securityEnabled === true;
+                      const isMailEnabled = group.mailEnabled === true;
 
-                      // Determine badge style and text - using subtle pastel colors
-                      const badgeStyle = isM365Group
-                        ? 'bg-blue-100 text-blue-700'
-                        : isDistributionList
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-orange-100 text-orange-700';
-                      const badgeText = isM365Group
-                        ? 'M365 Group'
-                        : isDistributionList
-                          ? 'Distribution List'
-                          : 'Mail-Enabled';
+                      // Determine badge style and text
+                      let badgeStyle = '';
+                      let badgeText = '';
+                      
+                      if (isM365Group) {
+                        badgeStyle = 'bg-blue-100 text-blue-700';
+                        badgeText = 'M365 Group';
+                      } else if (isSecurityGroup && isMailEnabled) {
+                        badgeStyle = 'bg-purple-100 text-purple-700';
+                        badgeText = isDynamicGroup ? 'Dynamic Mail-Enabled Security Group' : 'Mail-Enabled Security Group';
+                      } else if (isSecurityGroup) {
+                        badgeStyle = 'bg-red-100 text-red-700';
+                        badgeText = isDynamicGroup ? 'Dynamic Security Group' : 'Security Group';
+                      } else if (isMailEnabled) {
+                        badgeStyle = 'bg-green-100 text-green-700';
+                        badgeText = 'Distribution List';
+                      } else {
+                        badgeStyle = 'bg-gray-100 text-gray-700';
+                        badgeText = 'Group';
+                      }
                       
                       return (
                         <button
@@ -547,7 +558,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                             <div className="font-semibold text-base text-gray-900 truncate mb-2">
                               {group.displayName}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className={`text-sm px-2 py-0.5 ${badgeStyle} rounded-full`}>
                                 {badgeText}
                               </span>

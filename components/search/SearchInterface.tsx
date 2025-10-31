@@ -199,8 +199,13 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   };
 
   // Handle member click from GroupDetail
-  const handleMemberClick = async (memberId: string, memberType: 'user' | 'group') => {
+  const handleMemberClick = async (memberId: string, memberType: 'user' | 'group', memberEmail?: string) => {
     if (memberType === 'group') {
+      // Store current group for back navigation
+      if (selectedGroup) {
+        setPreviousGroup({ id: selectedGroup.id, name: selectedGroup.displayName });
+      }
+
       try {
         const response = await fetch(`/api/graph/groups/${memberId}`);
         const data = await response.json();
@@ -229,13 +234,18 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
         setPreviousGroup({ id: selectedGroup.id, name: selectedGroup.displayName });
       }
 
-      // Fetch user details
+      // Fetch user details using email (like manager fetch)
+      if (!memberEmail) {
+        console.error('No email provided for user member');
+        return;
+      }
+
       try {
-        const response = await fetch(`/api/okta/users/${memberId}`);
+        const response = await fetch(`/api/okta/users?q=${encodeURIComponent(memberEmail)}`);
         const data = await response.json();
-        
-        if (data.ok && data.data) {
-          setSelectedUser(data.data);
+
+        if (data.ok && data.data?.users && data.data.users.length > 0) {
+          setSelectedUser(data.data.users[0]);
           setSelectedGroup(null);
         } else {
           console.error('Failed to fetch user:', data.error);
@@ -525,10 +535,10 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                             </svg>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-base text-gray-900 truncate">
+                            <div className="font-semibold text-base text-gray-900 truncate mb-2">
                               {group.displayName}
                             </div>
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2">
                               <span className={`text-sm px-2 py-0.5 ${badgeStyle} rounded-full`}>
                                 {badgeText}
                               </span>
@@ -538,11 +548,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                                 </span>
                               )}
                             </div>
-                            {group.mail && (
-                              <div className="text-sm text-gray-500 truncate">
-                                {group.mail}
-                              </div>
-                            )}
                           </div>
                         </button>
                       );
@@ -583,7 +588,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           </div>
 
           {/* Back button */}
-          {selectedUser && (profileHistory.length > 0 || previousGroup) && (
+          {((selectedUser && (profileHistory.length > 0 || previousGroup)) || (selectedGroup && previousGroup)) && (
             <div className="px-6 pt-4">
               <button
                 onClick={previousGroup ? goBackToGroup : goBackInHistory}
@@ -603,8 +608,8 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   />
                 </svg>
                 <span>
-                  {previousGroup 
-                    ? `Back to ${previousGroup.name}` 
+                  {previousGroup
+                    ? `Back to ${previousGroup.name}`
                     : `Back to ${profileHistory[profileHistory.length - 1].displayName}`}
                 </span>
               </button>

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getGroupDetail, getGroupMembers, getGroupOwners } from '@/lib/graph';
+import { getGroupDetail, getGroupMembers, getGroupOwners, getGroupPhoto } from '@/lib/graph';
 import { cacheGet, cacheSet, TTL } from '@/lib/redis';
 import type { GroupDetail, GroupMember } from '@/lib/types';
 
@@ -28,11 +28,12 @@ export async function GET(
     // Fetch from Microsoft Graph
     const startTime = Date.now();
 
-    // Fetch group details, members, and owners in parallel
-    const [groupData, membersData, ownersData] = await Promise.all([
+    // Fetch group details, members, owners, and photo in parallel
+    const [groupData, membersData, ownersData, photoUrl] = await Promise.all([
       getGroupDetail(id),
       getGroupMembers(id),
       getGroupOwners(id),
+      getGroupPhoto(id),
     ]);
 
     const latency = Date.now() - startTime;
@@ -82,6 +83,7 @@ export async function GET(
       classification: groupData.classification || undefined,
       mailEnabled: groupData.mailEnabled || undefined,
       securityEnabled: groupData.securityEnabled || undefined,
+      photoUrl: photoUrl || null,
     };
 
     // Store in cache (don't wait for it)

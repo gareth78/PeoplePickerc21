@@ -71,6 +71,40 @@ export async function getUserPhoto(email: string): Promise<string | null> {
   }
 }
 
+export async function getGroupPhoto(groupId: string): Promise<string | null> {
+  try {
+    const client = await getGraphClient();
+    const photo = await client
+      .api(`/groups/${groupId}/photo/$value`)
+      .get();
+
+    // Photo is returned as an ArrayBuffer or Blob
+    // Convert to base64
+    let buffer: Buffer;
+
+    if (photo instanceof ArrayBuffer) {
+      buffer = Buffer.from(photo);
+    } else if (photo instanceof Blob) {
+      // Convert Blob to ArrayBuffer first
+      const arrayBuffer = await photo.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
+    } else if (Buffer.isBuffer(photo)) {
+      buffer = photo;
+    } else {
+      console.error('Unexpected photo type:', typeof photo);
+      return null;
+    }
+
+    return `data:image/jpeg;base64,${buffer.toString('base64')}`;
+  } catch (error: any) {
+    // Only log if it's not a 404 (group has no photo)
+    if (error.statusCode !== 404) {
+      console.error(`Failed to fetch photo for group ${groupId}:`, error.message);
+    }
+    return null;
+  }
+}
+
 // Microsoft 365 Groups functions
 export async function searchGroups(query: string): Promise<any> {
   try {
@@ -81,11 +115,12 @@ export async function searchGroups(query: string): Promise<any> {
 
     // Search for M365 Groups and mail-enabled groups
     // Filter: Unified (M365) groups or mail-enabled groups
-    // Note: We fetch members separately in the detail view to get accurate counts
+    // Include member count with $count=true
     const result = await client
       .api('/groups')
       .filter(`(groupTypes/any(c:c eq 'Unified') or mailEnabled eq true) and (startswith(displayName,'${sanitizedQuery}') or startswith(mail,'${sanitizedQuery}'))`)
       .select('id,displayName,mail,description,groupTypes,createdDateTime,visibility,classification,mailEnabled,securityEnabled')
+      .expand('members($count=true)')
       .top(50)
       .get();
 

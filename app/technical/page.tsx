@@ -34,7 +34,7 @@ export default function TechnicalPage() {
   const [oktaTestResult, setOktaTestResult] = useState<OktaTestResult | null>(null);
   const [testingOkta, setTestingOkta] = useState(false);
 
-  // Fetch build info and cache stats
+  // Fetch build info, cache stats, and Okta connection status
   const fetchData = async () => {
     try {
       // Fetch cache stats
@@ -54,6 +54,13 @@ export default function TechnicalPage() {
         nodeVersion: buildJson.nodeVersion || process.version,
         oktaTenant: buildJson.oktaTenant || 'Not configured'
       });
+
+      // Fetch Okta connection status
+      const oktaResponse = await fetch('/api/okta/ping', { cache: 'no-store' });
+      const oktaJson = await oktaResponse.json();
+      if (oktaJson.data) {
+        setOktaTestResult(oktaJson.data);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -159,7 +166,7 @@ export default function TechnicalPage() {
         </div>
       </div>
 
-      {/* Build Information & Cache Statistics Grid */}
+      {/* Build Information, Okta Connection & Cache Statistics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {/* Build Information */}
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -191,8 +198,27 @@ export default function TechnicalPage() {
           </div>
         </div>
 
+        {/* Okta Connection */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Okta Connection</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</span>
+              <span className={`text-sm font-semibold ${oktaTestResult?.connected ? 'text-green-600' : 'text-gray-400'}`}>
+                {oktaTestResult?.connected ? '✓ Connected' : 'Checking...'}
+              </span>
+            </div>
+            <div className="flex justify-between py-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Latency</span>
+              <span className="text-sm text-gray-900 font-mono">
+                {oktaTestResult?.latency !== undefined ? `${oktaTestResult.latency}ms` : 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Cache Statistics */}
-        <div className="bg-white rounded-lg shadow-sm p-6 md:col-span-2">
+        <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Cache Statistics</h2>
             <button
@@ -205,36 +231,28 @@ export default function TechnicalPage() {
           </div>
 
           {cacheStats ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</span>
-                  <span className={`text-sm font-semibold ${cacheStats.connected ? 'text-green-600' : 'text-red-600'}`}>
-                    {cacheStats.connected ? '✓ Connected' : '✗ Disconnected'}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Keys</span>
-                  <span className="text-sm text-gray-900 font-mono">{cacheStats.keys}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Memory</span>
-                  <span className="text-sm text-gray-900 font-mono">{cacheStats.memoryUsed}</span>
-                </div>
+            <div className="space-y-3">
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</span>
+                <span className={`text-sm font-semibold ${cacheStats.connected ? 'text-green-600' : 'text-red-600'}`}>
+                  {cacheStats.connected ? '✓ Connected' : '✗ Disconnected'}
+                </span>
               </div>
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hit Rate</span>
-                  <span className="text-sm text-gray-900 font-mono">{cacheStats.hitRate}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hits</span>
-                  <span className="text-sm text-gray-900 font-mono">{cacheStats.hits}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Misses</span>
-                  <span className="text-sm text-gray-900 font-mono">{cacheStats.misses}</span>
-                </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Keys</span>
+                <span className="text-sm text-gray-900 font-mono">{cacheStats.keys}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Memory</span>
+                <span className="text-sm text-gray-900 font-mono">{cacheStats.memoryUsed}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hit Rate</span>
+                <span className="text-sm text-gray-900 font-mono">{cacheStats.hitRate}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hits / Misses</span>
+                <span className="text-sm text-gray-900 font-mono">{cacheStats.hits} / {cacheStats.misses}</span>
               </div>
             </div>
           ) : (

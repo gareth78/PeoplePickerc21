@@ -24,21 +24,21 @@ export function getGroupBadgeMeta(group: GroupLike): GroupBadgeMeta {
 
   if (isM365Group) {
     return {
-      label: isDynamicGroup ? 'Dynamic Microsoft 365 Group' : 'Microsoft 365 Group',
+      label: isDynamicGroup ? 'Dynamic M365' : 'M365',
       variant: 'm365',
     };
   }
 
   if (isMailEnabled && isSecurityEnabled) {
     return {
-      label: isDynamicGroup ? 'Dynamic Mail-Enabled Security Group' : 'Mail-Enabled Security Group',
+      label: isDynamicGroup ? 'Dynamic Mail-Enabled Security' : 'Mail-Enabled Security',
       variant: 'mailSecurity',
     };
   }
 
   if (isMailEnabled) {
     return {
-      label: 'Distribution List',
+      label: 'DL',
       variant: 'distribution',
     };
   }
@@ -52,7 +52,7 @@ export function getGroupBadgeMeta(group: GroupLike): GroupBadgeMeta {
 
   if (isDynamicGroup) {
     return {
-      label: 'Dynamic Group',
+      label: 'Dynamic',
       variant: 'dynamic',
     };
   }

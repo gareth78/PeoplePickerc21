@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
+import { getGroupBadgeClasses, getGroupBadgeMeta } from '@/lib/group-utils';
 import type {
   User,
   Group,
@@ -496,21 +497,9 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                 {groups.length > 0 && (
                   <div className="flex flex-col">
                     {groups.map((group) => {
-                      const isM365Group = group.groupTypes.includes('Unified');
-                      const isDistributionList = group.mailEnabled && !isM365Group;
+                      const badgeMeta = getGroupBadgeMeta(group);
+                      const badgeStyle = getGroupBadgeClasses(badgeMeta.variant);
 
-                      // Determine badge style and text - using subtle pastel colors
-                      const badgeStyle = isM365Group
-                        ? 'bg-blue-100 text-blue-700'
-                        : isDistributionList
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-orange-100 text-orange-700';
-                      const badgeText = isM365Group
-                        ? 'M365 Group'
-                        : isDistributionList
-                          ? 'Distribution List'
-                          : 'Mail-Enabled';
-                      
                       return (
                         <button
                           key={group.id}
@@ -548,8 +537,8 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                               {group.displayName}
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-sm px-2 py-0.5 ${badgeStyle} rounded-full`}>
-                                {badgeText}
+                              <span className={`text-sm px-2 py-0.5 rounded-full ${badgeStyle}`}>
+                                {badgeMeta.label}
                               </span>
                               {group.memberCount !== undefined && (
                                 <span className="text-sm text-gray-500">
@@ -557,6 +546,11 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                                 </span>
                               )}
                             </div>
+                            {group.mail && (
+                              <div className="text-sm text-gray-500 truncate mt-1">
+                                {group.mail}
+                              </div>
+                            )}
                           </div>
                         </button>
                       );

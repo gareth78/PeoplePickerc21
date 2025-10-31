@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { getGroupBadgeClasses, getGroupBadgeMeta } from '@/lib/group-utils';
 import type { GroupDetail as GroupDetailType, GroupMember } from '@/lib/types';
 
 interface GroupDetailProps {
@@ -73,29 +74,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
     }
   };
 
-  const isM365Group = group?.groupTypes.includes('Unified');
-  const isDistributionList = group?.mailEnabled && !isM365Group;
   const displayedMembers = showAllMembers ? allMembers : allMembers.slice(0, 50);
-
-  // Helper function to get badge color and text - using subtle pastel colors
-  const getGroupBadge = () => {
-    if (isM365Group) {
-      return {
-        className: 'px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full',
-        text: 'M365 Group'
-      };
-    } else if (isDistributionList) {
-      return {
-        className: 'px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full',
-        text: 'Distribution List'
-      };
-    } else {
-      return {
-        className: 'px-3 py-1 bg-orange-100 text-orange-700 text-sm font-medium rounded-full',
-        text: 'Mail-Enabled'
-      };
-    }
-  };
 
   // Helper function to format date
   const formatDate = (dateString?: string) => {
@@ -124,7 +103,8 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
     return null;
   }
 
-  const badge = getGroupBadge();
+  const badgeMeta = getGroupBadgeMeta(group);
+  const badgeClassName = getGroupBadgeClasses(badgeMeta.variant);
 
   return (
     <div className="max-w-md mx-auto">
@@ -160,8 +140,8 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
 
       {/* Group Type Badge */}
       <div className="flex justify-center mb-4">
-        <span className={badge.className}>
-          {badge.text}
+        <span className={`px-3 py-1 text-sm font-medium rounded-full ${badgeClassName}`}>
+          {badgeMeta.label}
         </span>
       </div>
 
@@ -191,7 +171,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
       </div>
 
       {/* Group Metadata Section (for M365 Groups) */}
-      {(group.createdDateTime || group.visibility || group.classification) && (
+      {(group.createdDateTime || group.visibility || group.classification || group.mailEnabled !== undefined || group.securityEnabled !== undefined) && (
         <div className="pt-5 border-t border-gray-200 mb-5">
           <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
             Group Information
@@ -213,6 +193,18 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
               <div className="flex justify-between py-2 border-t border-gray-100 text-base">
                 <span className="font-medium text-gray-600">Classification:</span>
                 <span className="text-gray-900">{group.classification}</span>
+              </div>
+            )}
+            {group.mailEnabled !== undefined && (
+              <div className="flex justify-between py-2 border-t border-gray-100 text-base">
+                <span className="font-medium text-gray-600">Mail Enabled:</span>
+                <span className="text-gray-900">{group.mailEnabled ? 'Yes' : 'No'}</span>
+              </div>
+            )}
+            {group.securityEnabled !== undefined && (
+              <div className="flex justify-between py-2 border-t border-gray-100 text-base">
+                <span className="font-medium text-gray-600">Security Enabled:</span>
+                <span className="text-gray-900">{group.securityEnabled ? 'Yes' : 'No'}</span>
               </div>
             )}
           </div>

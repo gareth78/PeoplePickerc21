@@ -804,7 +804,7 @@ const latency = Date.now() - start;
    - Open browser to `https://your-app.azurecontainerapps.io/`
    - Verify search interface loads
    - Perform test search
-   - Check diagnostics page: `https://your-app.azurecontainerapps.io/diagnostics`
+   - Check system information page: `https://your-app.azurecontainerapps.io/technical`
 
 **Automated Health Monitoring:**
 
@@ -1330,7 +1330,7 @@ graph LR
 - [ ] Verify `/api/health` returns 200
 - [ ] Verify `/api/okta/ping` shows `connected: true`
 - [ ] Test search functionality with known user
-- [ ] Check `/diagnostics` page for errors
+- [ ] Check `/technical` page for errors
 - [ ] Monitor Azure Container Apps logs for exceptions
 
 ### Common Troubleshooting

@@ -309,7 +309,7 @@ search-results-limit=100
 **Photos not loading:**
 - Check Graph API permissions granted
 - Verify `ENTRA_*` credentials in Azure
-- Check logs: `/diagnostics` page
+- Check logs: `/technical` page
 
 **Presence not showing:**
 - Ensure `Presence.Read.All` permission granted
@@ -327,9 +327,8 @@ search-results-limit=100
 - Review GitHub Actions logs
 
 ### Debug Tools
-- **Diagnostics Page:** `/diagnostics`
-- **Technical Details:** `/technical`
-- **Cache Clear:** Diagnostics page → "Clear Cache" button
+- **System Information:** `/technical`
+- **Cache Clear:** System Information page → "Clear All Cache" button
 - **Logs:** Azure Portal → Container App → Log stream
 
 ## 🤝 Contributing

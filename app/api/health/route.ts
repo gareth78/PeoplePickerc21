@@ -4,6 +4,19 @@ export const runtime = 'nodejs';
 
 export async function GET() {
   try {
+    const version = process.env.NEXT_PUBLIC_GIT_SHA || 'dev';
+    const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME;
+    const oktaUrl = process.env['okta-org-url'];
+    let oktaTenant = 'Not configured';
+
+    if (oktaUrl) {
+      try {
+        oktaTenant = new URL(oktaUrl).hostname;
+      } catch {
+        oktaTenant = oktaUrl;
+      }
+    }
+
     return NextResponse.json(
       {
         ok: true,
@@ -12,6 +25,9 @@ export async function GET() {
         environment: process.env.NODE_ENV,
         nodeVersion: process.version,
         uptime: process.uptime(),
+        version,
+        buildTime,
+        oktaTenant,
       },
       {
         headers: {

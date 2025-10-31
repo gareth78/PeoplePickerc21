@@ -42,15 +42,8 @@ export async function GET(request: Request) {
     const latency = Date.now() - startTime;
 
     // Transform Graph API response to our format and fetch photos for M365 groups
-    // Sort results by displayName since Graph API doesn't support orderby with our query
-    const sortedResults = (result.value || []).sort((a: any, b: any) => {
-      const nameA = (a.displayName || '').toLowerCase();
-      const nameB = (b.displayName || '').toLowerCase();
-      return nameA.localeCompare(nameB);
-    });
-
     const groups: Group[] = await Promise.all(
-      sortedResults.map(async (group: any) => {
+      (result.value || []).map(async (group: any) => {
         const isM365Group = group.groupTypes?.includes('Unified');
         const memberCountAnnotation = group['members@odata.count'];
         const memberCountCacheKey = `groups:memberCount:${group.id}`;

@@ -147,6 +147,7 @@ export interface GroupDetail {
   classification?: string;
   mailEnabled?: boolean;
   securityEnabled?: boolean;
+  photoUrl?: string | null;
 }
 
 export interface GroupSearchResult {

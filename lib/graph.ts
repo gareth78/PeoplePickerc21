@@ -137,16 +137,16 @@ export async function searchGroups(query: string): Promise<any> {
     // Escape single quotes to keep the filter expression valid
     const sanitizedQuery = query.replace(/'/g, "''");
 
-    // Search for M365 Groups and mail-enabled groups
-    // Filter: Unified (M365) groups or mail-enabled groups
+    // Search across all group types (Microsoft 365, security, distribution, dynamic, etc.)
     // Include member count with $count query parameter and ConsistencyLevel header
     const result = await client
       .api('/groups')
       .header('ConsistencyLevel', 'eventual')
-      .filter(`(groupTypes/any(c:c eq 'Unified') or mailEnabled eq true) and (startswith(displayName,'${sanitizedQuery}') or startswith(mail,'${sanitizedQuery}'))`)
+      .filter(`(startswith(displayName,'${sanitizedQuery}') or startswith(mail,'${sanitizedQuery}') or startswith(mailNickname,'${sanitizedQuery}'))`)
       .select('id,displayName,mail,description,groupTypes,createdDateTime,visibility,classification,mailEnabled,securityEnabled')
       .expand('members($count=true;$top=0)')
       .count(true)
+      .orderby('displayName asc')
       .top(50)
       .get();
 

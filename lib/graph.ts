@@ -139,6 +139,8 @@ export async function searchGroups(query: string): Promise<any> {
 
     // Search across all group types (Microsoft 365, security, distribution, dynamic, etc.)
     // Include member count with $count query parameter and ConsistencyLevel header
+    // Note: $orderby is not used here because Microsoft Graph doesn't support sorting with filters
+    // Results are sorted client-side instead (see route.ts)
     const result = await client
       .api('/groups')
       .header('ConsistencyLevel', 'eventual')
@@ -146,7 +148,6 @@ export async function searchGroups(query: string): Promise<any> {
       .select('id,displayName,mail,description,groupTypes,createdDateTime,visibility,classification,mailEnabled,securityEnabled')
       .expand('members($count=true;$top=0)')
       .count(true)
-      .orderby('displayName asc')
       .top(50)
       .get();
 

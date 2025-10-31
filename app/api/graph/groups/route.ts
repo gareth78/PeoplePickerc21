@@ -72,10 +72,9 @@ export async function GET(request: Request) {
           }
         }
 
-        // Try to fetch photo for mail-enabled groups (M365, distribution lists, mail-enabled security groups)
-        // Security groups without mail typically don't have photos
+        // Only M365 Groups (Unified) have photos - avoid unnecessary API calls for other group types
         let photoUrl: string | null = null;
-        if (group.mailEnabled || isM365Group) {
+        if (isM365Group) {
           photoUrl = await getGroupPhoto(group.id);
         }
 

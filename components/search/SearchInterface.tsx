@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Users, Mail, ShieldCheck, Shield } from 'lucide-react';
+import { Users, Mail, ShieldCheck, Shield, Zap } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
 import { getGroupBadgeClasses, getGroupBadgeMeta, type GroupBadgeVariant } from '@/lib/group-utils';
@@ -29,6 +29,10 @@ function getBadgeIcon(variant: GroupBadgeVariant) {
       return <ShieldCheck className="w-4 h-4" />;
     case 'security':
       return <Shield className="w-4 h-4" />;
+    case 'dynamic':
+      return <Zap className="w-4 h-4" />;
+    case 'standard':
+      return <Users className="w-4 h-4" />;
     default:
       return <Users className="w-4 h-4" />;
   }

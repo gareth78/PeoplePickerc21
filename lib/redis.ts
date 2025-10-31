@@ -5,7 +5,7 @@ export const TTL = {
   PHOTO: 86400,      // 24 hours
   PROFILE: 14400,    // 4 hours
   SEARCH: 3600,      // 1 hour
-  GROUPS: 3600,      // 1 hour
+  GROUPS: 604800,    // 7 days
   PRESENCE: 300,     // 5 minutes (future use)
 } as const;
 

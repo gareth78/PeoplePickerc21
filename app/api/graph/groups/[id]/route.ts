@@ -69,6 +69,8 @@ export async function GET(
       };
     });
 
+    const memberCount = members.length;
+
     const groupDetail: GroupDetail = {
       id: groupData.id,
       displayName: groupData.displayName,
@@ -77,7 +79,7 @@ export async function GET(
       groupTypes: groupData.groupTypes || [],
       members,
       owners,
-      memberCount: members.length,
+      memberCount,
       createdDateTime: groupData.createdDateTime || undefined,
       visibility: groupData.visibility || undefined,
       classification: groupData.classification || undefined,
@@ -85,6 +87,10 @@ export async function GET(
       securityEnabled: groupData.securityEnabled || undefined,
       photoUrl: photoUrl || null,
     };
+
+    cacheSet(`groups:memberCount:${id}`, memberCount, TTL.GROUPS).catch(err =>
+      console.error('Failed to cache group member count from detail:', err)
+    );
 
     // Store in cache (don't wait for it)
     cacheSet(cacheKey, groupDetail, TTL.GROUPS).catch(err =>

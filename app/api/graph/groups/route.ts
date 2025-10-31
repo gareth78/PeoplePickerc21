@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { searchGroups, getGroupPhoto } from '@/lib/graph';
+import { searchGroups, getGroupPhoto, getGroupMemberCount } from '@/lib/graph';
 import { cacheGet, cacheSet, TTL } from '@/lib/redis';
 import type { Group, GroupSearchResult } from '@/lib/types';
 
@@ -44,12 +44,35 @@ export async function GET(request: Request) {
     // Transform Graph API response to our format and fetch photos for M365 groups
     const groups: Group[] = await Promise.all(
       (result.value || []).map(async (group: any) => {
-        // Get member count from the expanded members object
-        const memberCount = group.members?.['@odata.count'] || group['members@odata.count'];
-
-        // Fetch photo for M365 groups (Unified)
-        let photoUrl: string | null = null;
         const isM365Group = group.groupTypes?.includes('Unified');
+        const memberCountAnnotation = group['members@odata.count'];
+        const memberCountCacheKey = `groups:memberCount:${group.id}`;
+        let resolvedMemberCount: number | undefined =
+          typeof memberCountAnnotation === 'number' ? memberCountAnnotation : undefined;
+
+        if (resolvedMemberCount === undefined && typeof memberCountAnnotation === 'string') {
+          const parsed = parseInt(memberCountAnnotation, 10);
+          if (!Number.isNaN(parsed)) {
+            resolvedMemberCount = parsed;
+          }
+        }
+
+        if (resolvedMemberCount === undefined) {
+          const cachedCount = await cacheGet<number>(memberCountCacheKey);
+          if (cachedCount !== null) {
+            resolvedMemberCount = cachedCount;
+          } else {
+            const fetchedCount = await getGroupMemberCount(group.id);
+            if (typeof fetchedCount === 'number') {
+              resolvedMemberCount = fetchedCount;
+              cacheSet(memberCountCacheKey, fetchedCount, TTL.GROUPS).catch(err =>
+                console.error('Failed to cache group member count:', err)
+              );
+            }
+          }
+        }
+
+        let photoUrl: string | null = null;
         if (isM365Group) {
           photoUrl = await getGroupPhoto(group.id);
         }
@@ -60,13 +83,13 @@ export async function GET(request: Request) {
           mail: group.mail || null,
           description: group.description || null,
           groupTypes: group.groupTypes || [],
-          memberCount: memberCount || undefined,
+          memberCount: resolvedMemberCount,
           createdDateTime: group.createdDateTime || undefined,
           visibility: group.visibility || undefined,
           classification: group.classification || undefined,
           mailEnabled: group.mailEnabled || undefined,
           securityEnabled: group.securityEnabled || undefined,
-          photoUrl: photoUrl,
+          photoUrl,
         };
       })
     );

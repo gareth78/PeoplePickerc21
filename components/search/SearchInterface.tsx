@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Users, Mail, ShieldCheck, Shield } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
-import { getGroupBadgeClasses, getGroupBadgeMeta } from '@/lib/group-utils';
+import { getGroupBadgeClasses, getGroupBadgeMeta, type GroupBadgeVariant } from '@/lib/group-utils';
 import type {
   User,
   Group,
@@ -15,6 +16,22 @@ import GroupDetail from '../groups/GroupDetail';
 
 interface SearchInterfaceProps {
   userOrganization?: string;
+}
+
+// Helper function to get the icon for each badge variant
+function getBadgeIcon(variant: GroupBadgeVariant) {
+  switch (variant) {
+    case 'm365':
+      return <Users className="w-4 h-4" />;
+    case 'distribution':
+      return <Mail className="w-4 h-4" />;
+    case 'mailSecurity':
+      return <ShieldCheck className="w-4 h-4" />;
+    case 'security':
+      return <Shield className="w-4 h-4" />;
+    default:
+      return <Users className="w-4 h-4" />;
+  }
 }
 
 export default function SearchInterface({ userOrganization }: SearchInterfaceProps) {
@@ -537,7 +554,8 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                               {group.displayName}
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-sm px-2 py-0.5 rounded-full ${badgeStyle}`}>
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium ${badgeStyle}`}>
+                                {getBadgeIcon(badgeMeta.variant)}
                                 {badgeMeta.label}
                               </span>
                               {group.memberCount !== undefined && (

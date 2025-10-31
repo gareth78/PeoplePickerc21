@@ -38,7 +38,7 @@ export function getGroupBadgeMeta(group: GroupLike): GroupBadgeMeta {
 
   if (isMailEnabled) {
     return {
-      label: 'DL',
+      label: 'Distribution List',
       variant: 'distribution',
     };
   }
@@ -66,16 +66,16 @@ export function getGroupBadgeMeta(group: GroupLike): GroupBadgeMeta {
 export function getGroupBadgeClasses(variant: GroupBadgeVariant): string {
   switch (variant) {
     case 'm365':
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-blue-50 border border-blue-200 text-blue-700';
     case 'distribution':
-      return 'bg-green-100 text-green-700';
+      return 'bg-green-50 border border-green-200 text-green-700';
     case 'mailSecurity':
-      return 'bg-teal-100 text-teal-700';
+      return 'bg-orange-50 border border-orange-200 text-orange-700';
     case 'security':
-      return 'bg-purple-100 text-purple-700';
+      return 'bg-purple-50 border border-purple-200 text-purple-700';
     case 'dynamic':
-      return 'bg-orange-100 text-orange-700';
+      return 'bg-orange-50 border border-orange-200 text-orange-700';
     default:
-      return 'bg-gray-100 text-gray-700';
+      return 'bg-gray-50 border border-gray-200 text-gray-700';
   }
 }

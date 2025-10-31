@@ -16,6 +16,7 @@
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "ioredis": "^5.8.2",
     "isomorphic-fetch": "^3.0.0",
+    "lucide-react": "^0.552.0",
     "next": "14.2.33",
     "react": "^18",
     "react-dom": "^18"

@@ -105,6 +105,30 @@ export async function getGroupPhoto(groupId: string): Promise<string | null> {
   }
 }
 
+export async function getGroupMemberCount(groupId: string): Promise<number | null> {
+  try {
+    const client = await getGraphClient();
+    const rawCount = await client
+      .api(`/groups/${groupId}/members/$count`)
+      .header('ConsistencyLevel', 'eventual')
+      .get();
+
+    if (typeof rawCount === 'number') {
+      return rawCount;
+    }
+
+    const parsed = parseInt(String(rawCount), 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  } catch (error: any) {
+    if (error.statusCode && error.statusCode !== 404) {
+      console.error(`Failed to fetch member count for group ${groupId}:`, error.message);
+    } else if (!error.statusCode) {
+      console.error(`Failed to fetch member count for group ${groupId}:`, error.message ?? error);
+    }
+    return null;
+  }
+}
+
 // Microsoft 365 Groups functions
 export async function searchGroups(query: string): Promise<any> {
   try {

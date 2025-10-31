@@ -142,13 +142,14 @@ export async function searchGroups(query: string): Promise<any> {
     // - Security Groups
     // - Mail-enabled Security Groups
     // - Distribution Lists
+    // - Dynamic Groups (Dynamic Membership)
     // - All other group types
     // Include member count with $count query parameter and ConsistencyLevel header
     const result = await client
       .api('/groups')
       .header('ConsistencyLevel', 'eventual')
       .filter(`startswith(displayName,'${sanitizedQuery}') or startswith(mail,'${sanitizedQuery}')`)
-      .select('id,displayName,mail,description,groupTypes,createdDateTime,visibility,classification,mailEnabled,securityEnabled')
+      .select('id,displayName,mail,description,groupTypes,createdDateTime,visibility,classification,mailEnabled,securityEnabled,membershipRule,membershipRuleProcessingState')
       .expand('members($count=true;$top=0)')
       .count(true)
       .top(50)
@@ -168,7 +169,7 @@ export async function getGroupDetail(groupId: string): Promise<any> {
     // Get group details
     const group = await client
       .api(`/groups/${groupId}`)
-      .select('id,displayName,mail,description,groupTypes,createdDateTime,visibility,classification,mailEnabled,securityEnabled')
+      .select('id,displayName,mail,description,groupTypes,createdDateTime,visibility,classification,mailEnabled,securityEnabled,membershipRule,membershipRuleProcessingState')
       .get();
 
     return group;

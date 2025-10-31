@@ -86,6 +86,8 @@ export async function GET(
       mailEnabled: groupData.mailEnabled || undefined,
       securityEnabled: groupData.securityEnabled || undefined,
       photoUrl: photoUrl || null,
+      membershipRule: groupData.membershipRule || null,
+      membershipRuleProcessingState: groupData.membershipRuleProcessingState || null,
     };
 
     cacheSet(`groups:memberCount:${id}`, memberCount, TTL.GROUPS).catch(err =>

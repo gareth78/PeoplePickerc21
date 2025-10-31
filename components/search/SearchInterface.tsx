@@ -499,6 +499,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                       const isM365Group = group.groupTypes.includes('Unified');
                       const isMailEnabled = group.mailEnabled;
                       const isSecurityEnabled = group.securityEnabled;
+                      const isDynamicGroup = group.groupTypes.includes('DynamicMembership');
 
                       // Determine badge style and text for all group types - using subtle pastel colors
                       let badgeStyle = 'bg-gray-100 text-gray-700';
@@ -554,10 +555,15 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                             <div className="font-semibold text-base text-gray-900 truncate mb-2">
                               {group.displayName}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className={`text-sm px-2 py-0.5 ${badgeStyle} rounded-full`}>
                                 {badgeText}
                               </span>
+                              {isDynamicGroup && (
+                                <span className="text-sm px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">
+                                  Dynamic
+                                </span>
+                              )}
                               {group.memberCount !== undefined && (
                                 <span className="text-sm text-gray-500">
                                   • {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}

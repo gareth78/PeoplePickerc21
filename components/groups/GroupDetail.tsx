@@ -76,6 +76,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
   const isM365Group = group?.groupTypes.includes('Unified');
   const isMailEnabled = group?.mailEnabled;
   const isSecurityEnabled = group?.securityEnabled;
+  const isDynamicGroup = group?.groupTypes.includes('DynamicMembership');
   const displayedMembers = showAllMembers ? allMembers : allMembers.slice(0, 50);
 
   // Helper function to get badge color and text - using subtle pastel colors
@@ -169,11 +170,16 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
         {group.displayName}
       </h2>
 
-      {/* Group Type Badge */}
-      <div className="flex justify-center mb-4">
+      {/* Group Type Badges */}
+      <div className="flex justify-center gap-2 mb-4">
         <span className={badge.className}>
           {badge.text}
         </span>
+        {isDynamicGroup && (
+          <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm font-medium rounded-full">
+            Dynamic
+          </span>
+        )}
       </div>
 
       {/* Description */}
@@ -201,8 +207,8 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
         )}
       </div>
 
-      {/* Group Metadata Section (for M365 Groups) */}
-      {(group.createdDateTime || group.visibility || group.classification) && (
+      {/* Group Metadata Section */}
+      {(group.createdDateTime || group.visibility || group.classification || group.membershipRuleProcessingState) && (
         <div className="pt-5 border-t border-gray-200 mb-5">
           <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
             Group Information
@@ -224,6 +230,12 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
               <div className="flex justify-between py-2 border-t border-gray-100 text-base">
                 <span className="font-medium text-gray-600">Classification:</span>
                 <span className="text-gray-900">{group.classification}</span>
+              </div>
+            )}
+            {isDynamicGroup && group.membershipRuleProcessingState && (
+              <div className="flex justify-between py-2 border-t border-gray-100 text-base">
+                <span className="font-medium text-gray-600">Membership:</span>
+                <span className="text-gray-900 capitalize">{group.membershipRuleProcessingState}</span>
               </div>
             )}
           </div>

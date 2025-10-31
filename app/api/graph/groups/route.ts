@@ -91,6 +91,8 @@ export async function GET(request: Request) {
           mailEnabled: group.mailEnabled || undefined,
           securityEnabled: group.securityEnabled || undefined,
           photoUrl,
+          membershipRule: group.membershipRule || null,
+          membershipRuleProcessingState: group.membershipRuleProcessingState || null,
         };
       })
     );

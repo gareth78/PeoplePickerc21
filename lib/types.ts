@@ -122,6 +122,8 @@ export interface Group {
   mailEnabled?: boolean;
   securityEnabled?: boolean;
   photoUrl?: string | null;
+  membershipRule?: string | null;
+  membershipRuleProcessingState?: string | null;
 }
 
 export interface GroupMember {
@@ -149,6 +151,8 @@ export interface GroupDetail {
   mailEnabled?: boolean;
   securityEnabled?: boolean;
   photoUrl?: string | null;
+  membershipRule?: string | null;
+  membershipRuleProcessingState?: string | null;
 }
 
 export interface GroupSearchResult {

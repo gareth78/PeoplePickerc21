@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, Mail, ShieldCheck, Shield } from 'lucide-react';
+import { Users, Mail, ShieldCheck, Shield, Zap } from 'lucide-react';
 import { getGroupBadgeClasses, getGroupBadgeMeta, type GroupBadgeVariant } from '@/lib/group-utils';
 import type { GroupDetail as GroupDetailType, GroupMember } from '@/lib/types';
 
@@ -22,6 +22,10 @@ function getBadgeIcon(variant: GroupBadgeVariant) {
       return <ShieldCheck className="w-4 h-4" />;
     case 'security':
       return <Shield className="w-4 h-4" />;
+    case 'dynamic':
+      return <Zap className="w-4 h-4" />;
+    case 'standard':
+      return <Users className="w-4 h-4" />;
     default:
       return <Users className="w-4 h-4" />;
   }

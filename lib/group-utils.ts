@@ -74,7 +74,9 @@ export function getGroupBadgeClasses(variant: GroupBadgeVariant): string {
     case 'security':
       return 'bg-purple-50 border border-purple-200 text-purple-700';
     case 'dynamic':
-      return 'bg-orange-50 border border-orange-200 text-orange-700';
+      return 'bg-indigo-50 border border-indigo-200 text-indigo-700';
+    case 'standard':
+      return 'bg-gray-50 border border-gray-200 text-gray-700';
     default:
       return 'bg-gray-50 border border-gray-200 text-gray-700';
   }

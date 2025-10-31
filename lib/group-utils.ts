@@ -66,11 +66,11 @@ export function getGroupBadgeMeta(group: GroupLike): GroupBadgeMeta {
 export function getGroupBadgeClasses(variant: GroupBadgeVariant): string {
   switch (variant) {
     case 'm365':
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-blue-600 text-white';
     case 'distribution':
-      return 'bg-green-100 text-green-700';
+      return 'bg-green-600 text-white';
     case 'mailSecurity':
-      return 'bg-teal-100 text-teal-700';
+      return 'bg-orange-600 text-white';
     case 'security':
       return 'bg-purple-100 text-purple-700';
     case 'dynamic':

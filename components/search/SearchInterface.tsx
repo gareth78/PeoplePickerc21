@@ -546,11 +546,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                                 </span>
                               )}
                             </div>
-                            {group.mail && (
-                              <div className="text-sm text-gray-500 truncate mt-1">
-                                {group.mail}
-                              </div>
-                            )}
                           </div>
                         </button>
                       );

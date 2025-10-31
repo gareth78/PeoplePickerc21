@@ -94,6 +94,10 @@ export async function GET(request: Request) {
       })
     );
 
+    // Sort groups by displayName client-side since Microsoft Graph doesn't support
+    // sorting with filter queries
+    groups.sort((a, b) => a.displayName.localeCompare(b.displayName));
+
     const searchResult: GroupSearchResult = {
       groups,
       nextLink: result['@odata.nextLink'] || null,

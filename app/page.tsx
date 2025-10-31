@@ -70,11 +70,11 @@ export default function HomePage() {
     <div className="max-w-7xl mx-auto px-5 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">People Finder</h1>
+          <h1 className="text-5xl font-bold text-gray-900">People Finder</h1>
           <p className="text-gray-600 mt-2">
             Search the global directory to quickly connect with colleagues
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-sm text-gray-400 mt-1">
             version {version}
             {buildDate && ` • ${buildDate}`}
           </p>
@@ -89,7 +89,7 @@ export default function HomePage() {
       <div className="text-center mt-8">
         <Link
           href="/technical"
-          className="inline-block text-sm text-primary hover:text-primary-dark font-medium transition-colors"
+          className="inline-block text-base text-primary hover:text-primary-dark font-medium transition-colors"
         >
           View Technical Details →
         </Link>

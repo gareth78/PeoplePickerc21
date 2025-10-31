@@ -277,12 +277,12 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       <div className="p-5 border-b border-gray-200">
         {/* Quick Filters Section */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Quick Filters</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-3">Quick Filters</h2>
           <div className="flex gap-2 flex-wrap">
             {/* All Users Button - FIRST */}
             <button
               onClick={() => handleFilterChange('all')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-full text-base font-medium transition-all ${
                 activeFilter === 'all'
                   ? 'bg-primary text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -294,7 +294,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             {/* Groups Button - SECOND */}
             <button
               onClick={() => handleFilterChange('groups')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-full text-base font-medium transition-all ${
                 activeFilter === 'groups'
                   ? 'bg-primary text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -307,7 +307,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             {userOrganization && (
               <button
                 onClick={() => handleFilterChange(activeFilter === 'myorg' ? 'all' : 'myorg')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-full text-base font-medium transition-all ${
                   activeFilter === 'myorg'
                     ? 'bg-primary text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -325,7 +325,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             
             {/* Debug display for development */}
             {!userOrganization && process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-gray-500 px-2 py-1 bg-yellow-50 rounded">
+              <div className="text-sm text-gray-500 px-2 py-1 bg-yellow-50 rounded">
                 Loading organization...
               </div>
             )}
@@ -339,7 +339,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name, title, or location..."
-            className="w-full px-4 py-3 pr-10 text-base border-2 border-gray-300 rounded-lg outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="w-full px-4 py-3 pr-10 text-lg border-2 border-gray-300 rounded-lg outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
           />
           {query && (
             <button
@@ -370,14 +370,14 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
         {/* Left Panel: Results */}
         <div className="flex flex-col border-b lg:border-b-0 lg:border-r border-gray-200 min-h-0">
           <div className="flex justify-between items-center px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
               Results
             </h3>
             {searchMode === 'users' && filteredUsers.length > 0 && (
-              <span className="text-xs text-gray-500">{filteredUsers.length} found</span>
+              <span className="text-sm text-gray-500">{filteredUsers.length} found</span>
             )}
             {searchMode === 'groups' && groups.length > 0 && (
-              <span className="text-xs text-gray-500">{groups.length} found</span>
+              <span className="text-sm text-gray-500">{groups.length} found</span>
             )}
           </div>
 
@@ -386,13 +386,13 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             {searchMode === 'users' && (
               <>
                 {loading && (
-                  <div className="p-10 text-center text-sm text-gray-600">
+                  <div className="p-10 text-center text-base text-gray-600">
                     Searching...
                   </div>
                 )}
 
                 {error && (
-                  <div className="p-4 bg-red-50 text-red-700 text-sm border-b border-red-100">
+                  <div className="p-4 bg-red-50 text-red-700 text-base border-b border-red-100">
                     {error}
                   </div>
                 )}
@@ -414,16 +414,16 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                           className="flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm text-gray-900 truncate">
+                          <div className="font-semibold text-base text-gray-900 truncate">
                             {user.displayName}
                           </div>
                           {user.title && (
-                            <div className="text-xs text-gray-600 truncate">
+                            <div className="text-sm text-gray-600 truncate">
                               {user.title}
                             </div>
                           )}
                           {(user.organization || user.city || user.countryName) && (
-                            <div className="text-xs text-gray-500 truncate">
+                            <div className="text-sm text-gray-500 truncate">
                               {[
                                 user.organization,
                                 user.city,
@@ -438,7 +438,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                     {nextCursor && (
                       <button
                         onClick={handleLoadMore}
-                        className="w-full py-3 bg-gray-50 text-sm text-primary font-medium hover:bg-gray-100 transition-colors border-b border-gray-200"
+                        className="w-full py-3 bg-gray-50 text-base text-primary font-medium hover:bg-gray-100 transition-colors border-b border-gray-200"
                       >
                         Load more results
                       </button>
@@ -448,19 +448,19 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
                 {debouncedQuery.length >= 2 && filteredUsers.length === 0 && !loading && (
                   <div className="p-10 text-center">
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-base text-gray-600 mb-2">
                       No colleagues found matching &quot;{debouncedQuery}&quot;
                     </p>
-                    <p className="text-xs text-gray-500">Try a different search term</p>
+                    <p className="text-sm text-gray-500">Try a different search term</p>
                   </div>
                 )}
 
                 {!debouncedQuery && (
                   <div className="p-10 text-center">
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-base text-gray-600 mb-2">
                       Start typing to search for colleagues
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm text-gray-500">
                       Search by name, title, or office location
                     </p>
                   </div>
@@ -472,13 +472,13 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             {searchMode === 'groups' && (
               <>
                 {groupsLoading && (
-                  <div className="p-10 text-center text-sm text-gray-600">
+                  <div className="p-10 text-center text-base text-gray-600">
                     Searching groups...
                   </div>
                 )}
 
                 {groupsError && (
-                  <div className="p-4 bg-red-50 text-red-700 text-sm border-b border-red-100">
+                  <div className="p-4 bg-red-50 text-red-700 text-base border-b border-red-100">
                     {groupsError}
                   </div>
                 )}
@@ -525,21 +525,21 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                             </svg>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm text-gray-900 truncate">
+                            <div className="font-semibold text-base text-gray-900 truncate">
                               {group.displayName}
                             </div>
                             <div className="flex items-center gap-2 mb-1">
-                              <span className={`text-xs px-2 py-0.5 ${badgeStyle} rounded-full`}>
+                              <span className={`text-sm px-2 py-0.5 ${badgeStyle} rounded-full`}>
                                 {badgeText}
                               </span>
                               {group.memberCount !== undefined && (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-sm text-gray-500">
                                   • {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
                                 </span>
                               )}
                             </div>
                             {group.mail && (
-                              <div className="text-xs text-gray-500 truncate">
+                              <div className="text-sm text-gray-500 truncate">
                                 {group.mail}
                               </div>
                             )}
@@ -552,19 +552,19 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
                 {debouncedQuery.length >= 2 && groups.length === 0 && !groupsLoading && (
                   <div className="p-10 text-center">
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-base text-gray-600 mb-2">
                       No groups found matching &quot;{debouncedQuery}&quot;
                     </p>
-                    <p className="text-xs text-gray-500">Try a different search term</p>
+                    <p className="text-sm text-gray-500">Try a different search term</p>
                   </div>
                 )}
 
                 {!debouncedQuery && (
                   <div className="p-10 text-center">
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-base text-gray-600 mb-2">
                       Start typing to search for groups
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm text-gray-500">
                       Search by group name or email
                     </p>
                   </div>
@@ -577,7 +577,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
         {/* Right Panel: Detail */}
         <div className="flex flex-col min-h-0">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
               Detail
             </h3>
           </div>
@@ -587,7 +587,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             <div className="px-6 pt-4">
               <button
                 onClick={previousGroup ? goBackToGroup : goBackInHistory}
-                className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark transition-colors font-medium"
+                className="flex items-center gap-2 text-base text-primary hover:text-primary-dark transition-colors font-medium"
               >
                 <svg
                   className="w-4 h-4"
@@ -627,30 +627,30 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   className="mx-auto mb-4"
                 />
 
-                <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">
                   {selectedUser.displayName}
                 </h2>
 
                 {selectedUser.title && (
-                  <p className="text-base text-gray-600 text-center mb-1">
+                  <p className="text-lg text-gray-600 text-center mb-1">
                     {selectedUser.title}
                   </p>
                 )}
 
                 {selectedUser.department && (
-                  <p className="text-sm text-gray-500 text-center mb-1">
+                  <p className="text-base text-gray-500 text-center mb-1">
                     {selectedUser.department}
                   </p>
                 )}
 
                 {selectedUser.organization && (
-                  <p className="text-base text-gray-600 text-center mb-1">
+                  <p className="text-lg text-gray-600 text-center mb-1">
                     {selectedUser.organization}
                   </p>
                 )}
 
                 {managerData && (
-                  <p className="text-sm text-gray-500 text-center mb-5">
+                  <p className="text-base text-gray-500 text-center mb-5">
                     Manager: {' '}
                     <button
                       onClick={() => navigateToUser(managerData)}
@@ -693,12 +693,12 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                 </div>
 
                 <div className="pt-5 border-t border-gray-200">
-                  <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                  <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
                     Contact Information
                   </h4>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between py-2 border-b border-gray-100 text-sm">
+                    <div className="flex justify-between py-2 border-b border-gray-100 text-base">
                       <span className="font-medium text-gray-600">Email:</span>
                       <a
                         href={`mailto:${selectedUser.email}`}
@@ -709,7 +709,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                     </div>
 
                     {selectedUser.mobilePhone && (
-                      <div className="flex justify-between py-2 border-b border-gray-100 text-sm">
+                      <div className="flex justify-between py-2 border-b border-gray-100 text-base">
                         <span className="font-medium text-gray-600">Phone:</span>
                         <a
                           href={`tel:${selectedUser.mobilePhone}`}
@@ -721,7 +721,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                     )}
 
                     {selectedUser.officeLocation && (
-                      <div className="flex justify-between py-2 text-sm">
+                      <div className="flex justify-between py-2 text-base">
                         <span className="font-medium text-gray-600">Location:</span>
                         <span className="text-gray-900">{selectedUser.officeLocation}</span>
                       </div>
@@ -731,13 +731,13 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
                 <a
                   href={`/user/${selectedUser.id}${query ? `?q=${encodeURIComponent(query)}` : ''}`}
-                  className="block mt-5 px-5 py-2.5 bg-primary text-white text-sm font-medium text-center rounded-lg hover:bg-primary-dark transition-colors"
+                  className="block mt-5 px-5 py-2.5 bg-primary text-white text-base font-medium text-center rounded-lg hover:bg-primary-dark transition-colors"
                 >
                   View full profile →
                 </a>
               </div>
             ) : (
-              <div className="p-10 text-center text-sm text-gray-600">
+              <div className="p-10 text-center text-base text-gray-600">
                 {searchMode === 'groups'
                   ? 'Choose a group to view details'
                   : 'Choose a person to preview their profile details'}

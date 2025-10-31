@@ -74,7 +74,8 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
   };
 
   const isM365Group = group?.groupTypes.includes('Unified');
-  const isDistributionList = group?.mailEnabled && !isM365Group;
+  const isMailEnabled = group?.mailEnabled;
+  const isSecurityEnabled = group?.securityEnabled;
   const displayedMembers = showAllMembers ? allMembers : allMembers.slice(0, 50);
 
   // Helper function to get badge color and text - using subtle pastel colors
@@ -84,15 +85,25 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
         className: 'px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full',
         text: 'M365 Group'
       };
-    } else if (isDistributionList) {
+    } else if (isSecurityEnabled && isMailEnabled) {
+      return {
+        className: 'px-3 py-1 bg-purple-100 text-purple-700 text-sm font-medium rounded-full',
+        text: 'Mail-Enabled Security Group'
+      };
+    } else if (isSecurityEnabled && !isMailEnabled) {
+      return {
+        className: 'px-3 py-1 bg-red-100 text-red-700 text-sm font-medium rounded-full',
+        text: 'Security Group'
+      };
+    } else if (isMailEnabled && !isSecurityEnabled) {
       return {
         className: 'px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full',
         text: 'Distribution List'
       };
     } else {
       return {
-        className: 'px-3 py-1 bg-orange-100 text-orange-700 text-sm font-medium rounded-full',
-        text: 'Mail-Enabled'
+        className: 'px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded-full',
+        text: 'Group'
       };
     }
   };

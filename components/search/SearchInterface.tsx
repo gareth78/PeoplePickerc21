@@ -497,19 +497,26 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   <div className="flex flex-col">
                     {groups.map((group) => {
                       const isM365Group = group.groupTypes.includes('Unified');
-                      const isDistributionList = group.mailEnabled && !isM365Group;
+                      const isMailEnabled = group.mailEnabled;
+                      const isSecurityEnabled = group.securityEnabled;
 
-                      // Determine badge style and text - using subtle pastel colors
-                      const badgeStyle = isM365Group
-                        ? 'bg-blue-100 text-blue-700'
-                        : isDistributionList
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-orange-100 text-orange-700';
-                      const badgeText = isM365Group
-                        ? 'M365 Group'
-                        : isDistributionList
-                          ? 'Distribution List'
-                          : 'Mail-Enabled';
+                      // Determine badge style and text for all group types - using subtle pastel colors
+                      let badgeStyle = 'bg-gray-100 text-gray-700';
+                      let badgeText = 'Group';
+                      
+                      if (isM365Group) {
+                        badgeStyle = 'bg-blue-100 text-blue-700';
+                        badgeText = 'M365 Group';
+                      } else if (isSecurityEnabled && isMailEnabled) {
+                        badgeStyle = 'bg-purple-100 text-purple-700';
+                        badgeText = 'Mail-Enabled Security';
+                      } else if (isSecurityEnabled && !isMailEnabled) {
+                        badgeStyle = 'bg-red-100 text-red-700';
+                        badgeText = 'Security Group';
+                      } else if (isMailEnabled && !isSecurityEnabled) {
+                        badgeStyle = 'bg-green-100 text-green-700';
+                        badgeText = 'Distribution List';
+                      }
                       
                       return (
                         <button

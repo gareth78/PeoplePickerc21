@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { searchGroups } from '@/lib/graph';
+import { searchGroups, getGroupPhoto } from '@/lib/graph';
 import { cacheGet, cacheSet, TTL } from '@/lib/redis';
 import type { Group, GroupSearchResult } from '@/lib/types';
 
@@ -41,20 +41,35 @@ export async function GET(request: Request) {
     const result = await searchGroups(normalizedQuery);
     const latency = Date.now() - startTime;
 
-    // Transform Graph API response to our format
-    const groups: Group[] = (result.value || []).map((group: any) => ({
-      id: group.id,
-      displayName: group.displayName,
-      mail: group.mail || null,
-      description: group.description || null,
-      groupTypes: group.groupTypes || [],
-      memberCount: group['members@odata.count'] || undefined,
-      createdDateTime: group.createdDateTime || undefined,
-      visibility: group.visibility || undefined,
-      classification: group.classification || undefined,
-      mailEnabled: group.mailEnabled || undefined,
-      securityEnabled: group.securityEnabled || undefined,
-    }));
+    // Transform Graph API response to our format and fetch photos for M365 groups
+    const groups: Group[] = await Promise.all(
+      (result.value || []).map(async (group: any) => {
+        // Get member count from the expanded members object
+        const memberCount = group.members?.['@odata.count'] || group['members@odata.count'];
+
+        // Fetch photo for M365 groups (Unified)
+        let photoUrl: string | null = null;
+        const isM365Group = group.groupTypes?.includes('Unified');
+        if (isM365Group) {
+          photoUrl = await getGroupPhoto(group.id);
+        }
+
+        return {
+          id: group.id,
+          displayName: group.displayName,
+          mail: group.mail || null,
+          description: group.description || null,
+          groupTypes: group.groupTypes || [],
+          memberCount: memberCount || undefined,
+          createdDateTime: group.createdDateTime || undefined,
+          visibility: group.visibility || undefined,
+          classification: group.classification || undefined,
+          mailEnabled: group.mailEnabled || undefined,
+          securityEnabled: group.securityEnabled || undefined,
+          photoUrl: photoUrl,
+        };
+      })
+    );
 
     const searchResult: GroupSearchResult = {
       groups,

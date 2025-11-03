@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Users, Mail, ShieldCheck, Shield, Zap } from 'lucide-react';
+import { Users, Mail, ShieldCheck, Shield, Zap, Download } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
 import { getGroupBadgeClasses, getGroupBadgeMeta, type GroupBadgeVariant } from '@/lib/group-utils';
+import { generateVCard, generateVCardFilename } from '@/lib/vcard';
 import type {
   User,
   Group,
@@ -301,6 +302,20 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
     } catch (err) {
       console.error('Failed to fetch group:', err);
     }
+  };
+
+  // Download vCard for selected user
+  const downloadVCard = (user: User) => {
+    const vcard = generateVCard(user);
+    const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = generateVCardFilename(user.displayName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -715,6 +730,15 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                       className="w-8 h-8 rounded"
                     />
                   </a>
+
+                  {/* Add to Outlook button (vCard download) */}
+                  <button
+                    onClick={() => downloadVCard(selectedUser)}
+                    className="w-12 h-12 rounded-lg hover:bg-green-50 transition-colors flex items-center justify-center border-2 border-gray-200 hover:border-green-400"
+                    title="Add to Outlook"
+                  >
+                    <Download className="w-6 h-6 text-gray-700" />
+                  </button>
                 </div>
 
                 <div className="pt-5 border-t border-gray-200">

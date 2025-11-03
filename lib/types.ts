@@ -31,6 +31,7 @@ export interface User {
   employeeType: string | null;
   countryName: string | null;
   cn: string | null;
+  hideFromGAL: boolean | string | null;
 }
 
 export interface OktaUser {
@@ -69,6 +70,7 @@ export interface OktaUser {
     employeeType?: string;
     countryName?: string;
     cn?: string;
+    hideFromGAL?: boolean | string; // Global Address List visibility flag
     [key: string]: any; // Allow for custom Okta attributes
   };
 }

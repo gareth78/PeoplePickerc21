@@ -58,6 +58,7 @@ export function normalizeUser(oktaUser: OktaUser): User {
     employeeType: profile.employeeType || null,
     countryName: profile.countryName || null,
     cn: profile.cn || null,
+    hideFromGAL: profile.hideFromGAL ?? null,
   };
 }
 

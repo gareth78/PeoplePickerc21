@@ -44,16 +44,31 @@ export async function GET(request: Request) {
       : 100;
     const result = await searchUsers(normalizedQuery, limit, cursor);
 
+    // Filter out users hidden from Global Address List
+    const visibleUsers = result.users.filter(user => {
+      // Treat null/undefined as visible (show the user)
+      // Filter out users where hideFromGAL is true or 'true' (handle both boolean and string values)
+      const hidden = user.hideFromGAL === true || user.hideFromGAL === 'true';
+      return !hidden;
+    });
+
+    // Update result with filtered users
+    const filteredResult = {
+      ...result,
+      users: visibleUsers,
+      totalCount: visibleUsers.length,
+    };
+
     // Store in cache (don't wait for it)
-    cacheSet(cacheKey, result, TTL.SEARCH).catch(err =>
+    cacheSet(cacheKey, filteredResult, TTL.SEARCH).catch(err =>
       console.error('Failed to cache search result:', err)
     );
 
     return NextResponse.json({
       ok: true,
-      data: result,
+      data: filteredResult,
       meta: {
-        count: result.users.length,
+        count: filteredResult.users.length,
         cached: false,
       },
     });

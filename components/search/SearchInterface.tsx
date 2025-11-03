@@ -662,7 +662,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   email={selectedUser.email}
                   displayName={selectedUser.displayName}
                   size="medium"
-                  className="mx-auto mb-4 hover:scale-110 transition-transform duration-200 ease-in-out cursor-pointer"
+                  className="mx-auto mb-4 hover:scale-150 transition-transform duration-200 ease-in-out cursor-pointer"
                   rounded="rounded-lg"
                 />
 

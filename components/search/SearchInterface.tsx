@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Users, Mail, ShieldCheck, Shield, Zap } from 'lucide-react';
+import { Users, Mail, ShieldCheck, Shield, Zap, Copy, Check } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
 import { getGroupBadgeClasses, getGroupBadgeMeta, type GroupBadgeVariant } from '@/lib/group-utils';
@@ -47,6 +47,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileHistory, setProfileHistory] = useState<User[]>([]);
   const [managerData, setManagerData] = useState<User | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
 
@@ -300,6 +301,18 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       }
     } catch (err) {
       console.error('Failed to fetch group:', err);
+    }
+  };
+
+  // Copy to clipboard function
+  const copyToClipboard = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      // Reset after 2 seconds
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
     }
   };
 
@@ -657,13 +670,13 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                 </h2>
 
                 {selectedUser.title && (
-                  <p className="text-lg text-gray-600 text-center mb-1">
+                  <p className="text-xl text-gray-600 text-center mb-1">
                     {selectedUser.title}
                   </p>
                 )}
 
                 {selectedUser.department && (
-                  <p className="text-base text-gray-500 text-center mb-1">
+                  <p className="text-lg text-gray-500 text-center mb-1">
                     {selectedUser.department}
                   </p>
                 )}
@@ -723,32 +736,156 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   </h4>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between py-2 border-b border-gray-100 text-base">
-                      <span className="font-medium text-gray-600">Email:</span>
-                      <a
-                        href={`mailto:${selectedUser.email}`}
-                        className="text-primary hover:underline"
-                      >
-                        {selectedUser.email}
-                      </a>
+                    {/* Name */}
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                      <span className="font-medium text-gray-600">Name:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-900">{selectedUser.displayName}</span>
+                        <button
+                          onClick={() => copyToClipboard(selectedUser.displayName, 'name')}
+                          className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                          title="Copy to clipboard"
+                        >
+                          {copiedField === 'name' ? (
+                            <Check className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
-                    {selectedUser.mobilePhone && (
-                      <div className="flex justify-between py-2 border-b border-gray-100 text-base">
-                        <span className="font-medium text-gray-600">Phone:</span>
-                        <a
-                          href={`tel:${selectedUser.mobilePhone}`}
-                          className="text-primary hover:underline"
-                        >
-                          {selectedUser.mobilePhone}
-                        </a>
+                    {/* Job Title */}
+                    {selectedUser.title && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                        <span className="font-medium text-gray-600">Job Title:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900">{selectedUser.title}</span>
+                          <button
+                            onClick={() => copyToClipboard(selectedUser.title || '', 'title')}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            {copiedField === 'title' ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
 
+                    {/* Department */}
+                    {selectedUser.department && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                        <span className="font-medium text-gray-600">Department:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900">{selectedUser.department}</span>
+                          <button
+                            onClick={() => copyToClipboard(selectedUser.department || '', 'department')}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            {copiedField === 'department' ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Organization */}
+                    {selectedUser.organization && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                        <span className="font-medium text-gray-600">Organization:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900">{selectedUser.organization}</span>
+                          <button
+                            onClick={() => copyToClipboard(selectedUser.organization || '', 'organization')}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            {copiedField === 'organization' ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Email */}
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                      <span className="font-medium text-gray-600">Email:</span>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`mailto:${selectedUser.email}`}
+                          className="text-primary hover:underline"
+                        >
+                          {selectedUser.email}
+                        </a>
+                        <button
+                          onClick={() => copyToClipboard(selectedUser.email, 'email')}
+                          className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                          title="Copy to clipboard"
+                        >
+                          {copiedField === 'email' ? (
+                            <Check className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Phone */}
+                    {selectedUser.mobilePhone && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                        <span className="font-medium text-gray-600">Phone:</span>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`tel:${selectedUser.mobilePhone}`}
+                            className="text-primary hover:underline"
+                          >
+                            {selectedUser.mobilePhone}
+                          </a>
+                          <button
+                            onClick={() => copyToClipboard(selectedUser.mobilePhone || '', 'phone')}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            {copiedField === 'phone' ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Location */}
                     {selectedUser.officeLocation && (
-                      <div className="flex justify-between py-2 text-base">
+                      <div className="flex justify-between items-center py-2 text-base">
                         <span className="font-medium text-gray-600">Location:</span>
-                        <span className="text-gray-900">{selectedUser.officeLocation}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900">{selectedUser.officeLocation}</span>
+                          <button
+                            onClick={() => copyToClipboard(selectedUser.officeLocation || '', 'location')}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            {copiedField === 'location' ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

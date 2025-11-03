@@ -7,13 +7,15 @@ interface UserAvatarProps {
   displayName: string;
   size?: 'small' | 'medium' | 'large';
   className?: string;
+  rounded?: 'rounded-full' | 'rounded-lg';
 }
 
 export default function UserAvatar({
   email,
   displayName,
   size = 'medium',
-  className = ''
+  className = '',
+  rounded = 'rounded-full'
 }: UserAvatarProps) {
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,14 +88,14 @@ export default function UserAvatar({
         src={photo}
         alt={displayName}
         onError={() => setImageError(true)}
-        className={`${sizeClasses[size]} rounded-full object-cover ${className}`}
+        className={`${sizeClasses[size]} ${rounded} object-cover ${className}`}
       />
     );
   }
 
   return (
     <div
-      className={`${sizeClasses[size]} rounded-full bg-primary text-white flex items-center justify-center font-semibold ${className}`}
+      className={`${sizeClasses[size]} ${rounded} bg-primary text-white flex items-center justify-center font-semibold ${className}`}
     >
       {loading ? '...' : getInitials()}
     </div>

@@ -663,32 +663,33 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   displayName={selectedUser.displayName}
                   size="medium"
                   className="mx-auto mb-4"
+                  rounded="rounded-lg"
                 />
 
-                <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">
+                <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
                   {selectedUser.displayName}
                 </h2>
 
                 {selectedUser.title && (
-                  <p className="text-xl text-gray-600 text-center mb-1">
+                  <p className="text-lg text-gray-600 text-center mb-1">
                     {selectedUser.title}
                   </p>
                 )}
 
                 {selectedUser.department && (
-                  <p className="text-lg text-gray-500 text-center mb-1">
+                  <p className="text-base text-gray-500 text-center mb-1">
                     {selectedUser.department}
                   </p>
                 )}
 
                 {selectedUser.organization && (
-                  <p className="text-lg text-gray-600 text-center mb-1">
+                  <p className="text-base text-gray-600 text-center mb-1">
                     {selectedUser.organization}
                   </p>
                 )}
 
                 {managerData && (
-                  <p className="text-base text-gray-500 text-center mb-5">
+                  <p className="text-sm text-gray-500 text-center mb-5">
                     Manager: {' '}
                     <button
                       onClick={() => navigateToUser(managerData)}

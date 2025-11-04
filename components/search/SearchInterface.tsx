@@ -18,6 +18,11 @@ interface SearchInterfaceProps {
   userOrganization?: string;
 }
 
+interface PresenceData {
+  activity: string;
+  availability: string;
+}
+
 // Helper function to get the icon for each badge variant
 function getBadgeIcon(variant: GroupBadgeVariant) {
   switch (variant) {
@@ -38,6 +43,47 @@ function getBadgeIcon(variant: GroupBadgeVariant) {
   }
 }
 
+// Helper function to format presence activity for display
+function formatPresenceActivity(activity: string): string {
+  switch (activity) {
+    case 'InAMeeting':
+      return 'In a Meeting';
+    case 'InACall':
+      return 'On a Call';
+    case 'OutOfOffice':
+      return 'Out of Office';
+    case 'BeRightBack':
+      return 'Be Right Back';
+    case 'DoNotDisturb':
+      return 'Do Not Disturb';
+    default:
+      return activity;
+  }
+}
+
+// Helper function to get presence badge classes
+function getPresenceBadgeClasses(activity: string): string {
+  switch (activity) {
+    case 'Available':
+      return 'bg-green-100 text-green-700';
+    case 'Busy':
+    case 'DoNotDisturb':
+    case 'InAMeeting':
+    case 'InACall':
+    case 'Presenting':
+      return 'bg-red-100 text-red-700';
+    case 'Away':
+    case 'BeRightBack':
+      return 'bg-amber-100 text-amber-700';
+    case 'OutOfOffice':
+      return 'bg-purple-100 text-purple-700';
+    case 'Offline':
+      return 'bg-gray-100 text-gray-700';
+    default:
+      return '';
+  }
+}
+
 export default function SearchInterface({ userOrganization }: SearchInterfaceProps) {
   console.log('🎨 SearchInterface rendered, userOrganization prop:', userOrganization);
 
@@ -47,6 +93,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileHistory, setProfileHistory] = useState<User[]>([]);
   const [managerData, setManagerData] = useState<User | null>(null);
+  const [presenceData, setPresenceData] = useState<PresenceData | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
@@ -174,7 +221,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   useEffect(() => {
     console.log('🔍 Manager fetch useEffect triggered');
     console.log('📧 selectedUser?.managerEmail:', selectedUser?.managerEmail);
-    
+
     if (selectedUser?.managerEmail) {
       console.log('✅ Has managerEmail, fetching:', selectedUser.managerEmail);
       fetch(`/api/okta/users?q=${encodeURIComponent(selectedUser.managerEmail)}`)
@@ -197,6 +244,27 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       setManagerData(null);
     }
   }, [selectedUser?.managerEmail]);
+
+  // Fetch presence data when user is selected
+  useEffect(() => {
+    if (selectedUser?.email) {
+      fetch(`/api/graph/presence/${encodeURIComponent(selectedUser.email)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.ok && data.data) {
+            setPresenceData(data.data);
+          } else {
+            setPresenceData(null);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to fetch presence:', err);
+          setPresenceData(null);
+        });
+    } else {
+      setPresenceData(null);
+    }
+  }, [selectedUser?.email]);
 
   const handleLoadMore = () => {
     if (nextCursor) {
@@ -665,6 +733,15 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   className="mx-auto mb-4 hover:scale-150 transition-transform duration-200 ease-in-out cursor-pointer"
                   rounded="rounded-lg"
                 />
+
+                {/* Presence Badge */}
+                {presenceData && presenceData.activity && getPresenceBadgeClasses(presenceData.activity) && (
+                  <div className="flex justify-center mb-3">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getPresenceBadgeClasses(presenceData.activity)}`}>
+                      {formatPresenceActivity(presenceData.activity)}
+                    </span>
+                  </div>
+                )}
 
                 <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
                   {selectedUser.displayName}

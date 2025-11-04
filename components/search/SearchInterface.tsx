@@ -168,7 +168,8 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
     } else {
       router.replace('/', { scroll: false });
     }
-  }, [query, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]); // router is intentionally omitted - it's a stable reference from Next.js
 
   // Fetch manager data when user is selected
   useEffect(() => {

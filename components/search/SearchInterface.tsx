@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Users, Mail, ShieldCheck, Shield, Zap, Copy, Check } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
@@ -41,14 +41,7 @@ function getBadgeIcon(variant: GroupBadgeVariant) {
 }
 
 export default function SearchInterface({ userOrganization }: SearchInterfaceProps) {
-  // Debug logging to track renders (client-side only)
-  if (typeof window !== 'undefined') {
-    (window as any).__searchInterfaceRenderCount = ((window as any).__searchInterfaceRenderCount || 0) + 1;
-    console.log('🎨 SearchInterface RENDER', {
-      userOrganization,
-      renderCount: (window as any).__searchInterfaceRenderCount
-    });
-  }
+  console.log('🎨 SearchInterface rendered, userOrganization prop:', userOrganization);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -64,19 +57,8 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   // Filter state
   const [activeFilter, setActiveFilter] = useState<'all' | 'myorg' | 'groups'>('all');
   const [myOrgFilter, setMyOrgFilter] = useState(false);
-
-  // Compute filtered users using useMemo to prevent render loops
-  const filteredUsers = useMemo(() => {
-    console.log('🔄 useMemo: Computing filtered users', {
-      myOrgFilter,
-      userOrganization,
-      resultsCount: results.length
-    });
-    if (!myOrgFilter || !userOrganization) {
-      return results;
-    }
-    return results.filter(user => user.organization === userOrganization);
-  }, [results, myOrgFilter, userOrganization]);
+  const [allUsers, setAllUsers] = useState<User[]>([]); // Store unfiltered results
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]); // Display these
 
   // Groups state
   const [searchMode, setSearchMode] = useState<'users' | 'groups'>('users');
@@ -88,7 +70,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   // Initialize query from URL params on mount
   useEffect(() => {
-    console.log('🔧 useEffect: Initialize query from URL params');
     const queryParam = searchParams.get('q');
     if (queryParam) {
       setQuery(queryParam);
@@ -96,7 +77,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   }, [searchParams]);
 
   useEffect(() => {
-    console.log('🔧 useEffect: User search triggered', { searchMode, debouncedQuery: debouncedQuery.substring(0, 20) });
     if (searchMode === 'users') {
       if (debouncedQuery) {
         void search(debouncedQuery);
@@ -109,7 +89,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   // Search groups when in groups mode
   useEffect(() => {
-    console.log('🔧 useEffect: Groups search triggered', { searchMode, queryLength: debouncedQuery.length });
     if (searchMode === 'groups' && debouncedQuery.length >= 2) {
       const searchGroups = async () => {
         setGroupsLoading(true);
@@ -139,6 +118,17 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
     }
   }, [debouncedQuery, searchMode]);
 
+  // Update allUsers and apply filter when results change
+  useEffect(() => {
+    setAllUsers(results);
+    applyFilter(results, myOrgFilter);
+  }, [results]);
+
+  // Re-apply filter when checkbox changes
+  useEffect(() => {
+    applyFilter(allUsers, myOrgFilter);
+  }, [myOrgFilter]);
+
   // Handle filter changes
   const handleFilterChange = (filter: 'all' | 'myorg' | 'groups') => {
     setActiveFilter(filter);
@@ -160,22 +150,33 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
     }
   };
 
-  // Update URL when query changes (router is stable, no need in deps)
+  // Filter function
+  const applyFilter = (users: User[], filterActive: boolean) => {
+    if (!filterActive || !userOrganization) {
+      setFilteredUsers(users);
+      return;
+    }
+
+    const filtered = users.filter(user =>
+      user.organization === userOrganization
+    );
+
+    setFilteredUsers(filtered);
+  };
+
+  // Update URL when query changes
   useEffect(() => {
-    console.log('🔧 useEffect: Update URL', { query: query.substring(0, 20) });
     if (query) {
       router.replace(`/?q=${encodeURIComponent(query)}`, { scroll: false });
     } else {
       router.replace('/', { scroll: false });
     }
-  }, [query]);
+  }, [query, router]);
 
   // Fetch manager data when user is selected
   useEffect(() => {
-    console.log('🔧 useEffect: Manager fetch triggered', {
-      hasManagerEmail: !!selectedUser?.managerEmail,
-      managerEmail: selectedUser?.managerEmail
-    });
+    console.log('🔍 Manager fetch useEffect triggered');
+    console.log('📧 selectedUser?.managerEmail:', selectedUser?.managerEmail);
 
     if (selectedUser?.managerEmail) {
       console.log('✅ Has managerEmail, fetching:', selectedUser.managerEmail);
@@ -317,22 +318,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       console.error('Failed to copy:', err);
     }
   };
-
-  // Memoize presence badge to prevent unnecessary re-renders
-  const presenceBadge = useMemo(() => {
-    console.log('🔄 useMemo: Computing presence badge', { activity: presence?.activity });
-    if (!presence?.activity) return null;
-    const badgeClasses = getPresenceBadgeClasses(presence.activity);
-    if (!badgeClasses) return null;
-
-    return (
-      <div className="flex justify-center mb-3">
-        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${badgeClasses}`}>
-          {formatPresenceActivity(presence.activity)}
-        </span>
-      </div>
-    );
-  }, [presence?.activity]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -684,7 +669,13 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   rounded="rounded-lg"
                 />
 
-                {presenceBadge}
+                {presence?.activity && getPresenceBadgeClasses(presence.activity) && (
+                  <div className="flex justify-center mb-3">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getPresenceBadgeClasses(presence.activity)}`}>
+                      {formatPresenceActivity(presence.activity)}
+                    </span>
+                  </div>
+                )}
 
                 <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
                   {selectedUser.displayName}

@@ -5,9 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Users, Mail, ShieldCheck, Shield, Zap, Copy, Check } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
-import { usePresence } from '@/lib/hooks/usePresence';
 import { getGroupBadgeClasses, getGroupBadgeMeta, type GroupBadgeVariant } from '@/lib/group-utils';
-import { formatPresenceActivity, getPresenceBadgeClasses } from '@/lib/presence-utils';
 import type {
   User,
   Group,
@@ -52,7 +50,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
-  const { presence } = usePresence(selectedUser?.email);
 
   // Filter state
   const [activeFilter, setActiveFilter] = useState<'all' | 'myorg' | 'groups'>('all');
@@ -668,14 +665,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   className="mx-auto mb-4 hover:scale-150 transition-transform duration-200 ease-in-out cursor-pointer"
                   rounded="rounded-lg"
                 />
-
-                {presence?.activity && getPresenceBadgeClasses(presence.activity) && (
-                  <div className="flex justify-center mb-3">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getPresenceBadgeClasses(presence.activity)}`}>
-                      {formatPresenceActivity(presence.activity)}
-                    </span>
-                  </div>
-                )}
 
                 <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
                   {selectedUser.displayName}

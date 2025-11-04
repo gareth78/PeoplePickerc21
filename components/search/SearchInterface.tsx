@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Users, Mail, ShieldCheck, Shield, Zap, Copy, Check } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
@@ -38,8 +38,14 @@ function getBadgeIcon(variant: GroupBadgeVariant) {
   }
 }
 
+let renderCount = 0;
+
 export default function SearchInterface({ userOrganization }: SearchInterfaceProps) {
-  console.log('🎨 SearchInterface rendered, userOrganization prop:', userOrganization);
+  renderCount++;
+  console.log(`🔴 RENDER #${renderCount}`, {
+    userOrganization,
+    timestamp: Date.now()
+  });
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -65,20 +71,36 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [previousGroup, setPreviousGroup] = useState<{ id: string; name: string } | null>(null);
 
+  // Track previous userOrganization for prop change logging
+  const prevUserOrgRef = useRef(userOrganization);
+  console.log('📥 Props changed:', {
+    userOrganization,
+    userOrganizationChanged: userOrganization !== prevUserOrgRef.current
+  });
+  prevUserOrgRef.current = userOrganization;
+
   // Initialize query from URL params on mount
   useEffect(() => {
+    console.log('🔵 Effect: URL query sync', {
+      dependencies: { searchParams }
+    });
     const queryParam = searchParams.get('q');
     if (queryParam) {
+      console.log('⚡ setState: query (from URL)', queryParam);
       setQuery(queryParam);
     }
   }, [searchParams]);
 
   useEffect(() => {
+    console.log('🔵 Effect: User search', {
+      dependencies: { debouncedQuery, searchMode }
+    });
     if (searchMode === 'users') {
       if (debouncedQuery) {
         void search(debouncedQuery);
       } else {
         void search('');
+        console.log('⚡ setState: selectedUser', null);
         setSelectedUser(null);
       }
     }
@@ -86,9 +108,14 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   // Search groups when in groups mode
   useEffect(() => {
+    console.log('🔵 Effect: Groups search', {
+      dependencies: { debouncedQuery, searchMode }
+    });
     if (searchMode === 'groups' && debouncedQuery.length >= 2) {
       const searchGroups = async () => {
+        console.log('⚡ setState: groupsLoading', true);
         setGroupsLoading(true);
+        console.log('⚡ setState: groupsError', null);
         setGroupsError(null);
 
         try {
@@ -96,52 +123,77 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           const data = await response.json();
 
           if (data.ok) {
+            console.log('⚡ setState: groups', data.data.groups);
             setGroups(data.data.groups);
           } else {
+            console.log('⚡ setState: groupsError', data.error || 'Failed to search groups');
             setGroupsError(data.error || 'Failed to search groups');
           }
         } catch (err) {
+          console.log('⚡ setState: groupsError', 'Failed to search groups');
           setGroupsError('Failed to search groups');
           console.error(err);
         } finally {
+          console.log('⚡ setState: groupsLoading', false);
           setGroupsLoading(false);
         }
       };
 
       void searchGroups();
     } else if (searchMode === 'groups') {
+      console.log('⚡ setState: groups', []);
       setGroups([]);
+      console.log('⚡ setState: selectedGroup', null);
       setSelectedGroup(null);
     }
   }, [debouncedQuery, searchMode]);
 
   // Update allUsers and apply filter when results change
   useEffect(() => {
+    console.log('🔵 Effect: Results changed', {
+      dependencies: { resultsLength: results.length }
+    });
+    console.log('⚡ setState: allUsers', results);
     setAllUsers(results);
     applyFilter(results, myOrgFilter);
   }, [results]);
 
   // Re-apply filter when checkbox changes
   useEffect(() => {
+    console.log('🔵 Effect: Filter application', {
+      dependencies: { myOrgFilter }
+    });
     applyFilter(allUsers, myOrgFilter);
   }, [myOrgFilter]);
 
   // Handle filter changes
   const handleFilterChange = (filter: 'all' | 'myorg' | 'groups') => {
+    console.log('🔧 handleFilterChange called', filter);
+    console.log('⚡ setState: activeFilter', filter);
     setActiveFilter(filter);
     if (filter === 'groups') {
+      console.log('⚡ setState: searchMode', 'groups');
       setSearchMode('groups');
+      console.log('⚡ setState: myOrgFilter', false);
       setMyOrgFilter(false);
+      console.log('⚡ setState: selectedUser', null);
       setSelectedUser(null);
+      console.log('⚡ setState: profileHistory', []);
       setProfileHistory([]);
+      console.log('⚡ setState: previousGroup', null);
       setPreviousGroup(null);
     } else {
+      console.log('⚡ setState: searchMode', 'users');
       setSearchMode('users');
+      console.log('⚡ setState: selectedGroup', null);
       setSelectedGroup(null);
+      console.log('⚡ setState: previousGroup', null);
       setPreviousGroup(null);
       if (filter === 'myorg') {
+        console.log('⚡ setState: myOrgFilter', true);
         setMyOrgFilter(true);
       } else if (filter === 'all') {
+        console.log('⚡ setState: myOrgFilter', false);
         setMyOrgFilter(false);
       }
     }
@@ -149,7 +201,9 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   // Filter function
   const applyFilter = (users: User[], filterActive: boolean) => {
+    console.log('🔧 applyFilter called', { usersLength: users.length, filterActive, userOrganization });
     if (!filterActive || !userOrganization) {
+      console.log('⚡ setState: filteredUsers (unfiltered)', users);
       setFilteredUsers(users);
       return;
     }
@@ -158,11 +212,15 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       user.organization === userOrganization
     );
 
+    console.log('⚡ setState: filteredUsers (filtered)', filtered);
     setFilteredUsers(filtered);
   };
 
   // Update URL when query changes
   useEffect(() => {
+    console.log('🔵 Effect: URL update', {
+      dependencies: { query }
+    });
     if (query) {
       router.replace(`/?q=${encodeURIComponent(query)}`, { scroll: false });
     } else {
@@ -173,6 +231,9 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   // Fetch manager data when user is selected
   useEffect(() => {
+    console.log('🔵 Effect: Manager fetch', {
+      dependencies: { managerEmail: selectedUser?.managerEmail }
+    });
     console.log('🔍 Manager fetch useEffect triggered');
     console.log('📧 selectedUser?.managerEmail:', selectedUser?.managerEmail);
 
@@ -187,6 +248,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           console.log('📊 Manager fetch data:', data);
           if (data.ok && data.data?.users && data.data.users.length > 0) {
             console.log('✅ Setting managerData:', data.data.users[0]);
+            console.log('⚡ setState: managerData', data.data.users[0]);
             setManagerData(data.data.users[0]);
           } else {
             console.log('❌ No users in manager response or API error');
@@ -195,6 +257,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
         .catch(err => console.error('❌ Failed to fetch manager:', err));
     } else {
       console.log('❌ No managerEmail, clearing managerData');
+      console.log('⚡ setState: managerData', null);
       setManagerData(null);
     }
   }, [selectedUser?.managerEmail]);
@@ -207,26 +270,34 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   // Navigate to a user profile with history tracking
   const navigateToUser = (user: User) => {
+    console.log('🔧 navigateToUser called', user.displayName);
     if (selectedUser) {
+      console.log('⚡ setState: profileHistory (add to history)');
       setProfileHistory(prev => [...prev, selectedUser]);
     }
+    console.log('⚡ setState: selectedUser', user);
     setSelectedUser(user);
   };
 
   // Go back to previous user in history
   const goBackInHistory = () => {
+    console.log('🔧 goBackInHistory called');
     if (profileHistory.length > 0) {
       const previousUser = profileHistory[profileHistory.length - 1];
+      console.log('⚡ setState: profileHistory (remove last)');
       setProfileHistory(prev => prev.slice(0, -1));
+      console.log('⚡ setState: selectedUser', previousUser);
       setSelectedUser(previousUser);
     }
   };
 
   // Handle member click from GroupDetail
   const handleMemberClick = async (memberId: string, memberType: 'user' | 'group', memberEmail?: string) => {
+    console.log('🔧 handleMemberClick called', { memberId, memberType, memberEmail });
     if (memberType === 'group') {
       // Store current group for back navigation
       if (selectedGroup) {
+        console.log('⚡ setState: previousGroup', { id: selectedGroup.id, name: selectedGroup.displayName });
         setPreviousGroup({ id: selectedGroup.id, name: selectedGroup.displayName });
       }
 
@@ -236,7 +307,9 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
         if (data.ok && data.data) {
           const detail: GroupDetailType = data.data;
+          console.log('⚡ setState: selectedUser', null);
           setSelectedUser(null);
+          console.log('⚡ setState: selectedGroup', detail);
           setSelectedGroup({
             id: detail.id,
             displayName: detail.displayName,
@@ -255,6 +328,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
     } else {
       // User was clicked - store the current group and show user profile
       if (selectedGroup) {
+        console.log('⚡ setState: previousGroup', { id: selectedGroup.id, name: selectedGroup.displayName });
         setPreviousGroup({ id: selectedGroup.id, name: selectedGroup.displayName });
       }
 
@@ -269,7 +343,9 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
         const data = await response.json();
 
         if (data.ok && data.data?.users && data.data.users.length > 0) {
+          console.log('⚡ setState: selectedUser', data.data.users[0]);
           setSelectedUser(data.data.users[0]);
+          console.log('⚡ setState: selectedGroup', null);
           setSelectedGroup(null);
         } else {
           console.error('Failed to fetch user:', data.error);
@@ -282,6 +358,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   // Go back to group from user profile
   const goBackToGroup = async () => {
+    console.log('🔧 goBackToGroup called');
     if (!previousGroup) return;
 
     try {
@@ -290,6 +367,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
       if (data.ok && data.data) {
         const detail: GroupDetailType = data.data;
+        console.log('⚡ setState: selectedGroup', detail);
         setSelectedGroup({
           id: detail.id,
           displayName: detail.displayName,
@@ -297,7 +375,9 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           description: detail.description,
           groupTypes: detail.groupTypes,
         });
+        console.log('⚡ setState: selectedUser', null);
         setSelectedUser(null);
+        console.log('⚡ setState: previousGroup', null);
         setPreviousGroup(null);
       }
     } catch (err) {
@@ -307,11 +387,16 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   // Copy to clipboard function
   const copyToClipboard = async (text: string, fieldName: string) => {
+    console.log('🔧 copyToClipboard called', fieldName);
     try {
       await navigator.clipboard.writeText(text);
+      console.log('⚡ setState: copiedField', fieldName);
       setCopiedField(fieldName);
       // Reset after 2 seconds
-      setTimeout(() => setCopiedField(null), 2000);
+      setTimeout(() => {
+        console.log('⚡ setState: copiedField', null);
+        setCopiedField(null);
+      }, 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
     }
@@ -383,13 +468,19 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              console.log('⚡ setState: query (from input)', e.target.value);
+              setQuery(e.target.value);
+            }}
             placeholder="Search by name, title, or location..."
             className="w-full px-4 py-3 pr-10 text-lg border-2 border-gray-300 rounded-lg outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
           />
           {query && (
             <button
-              onClick={() => setQuery('')}
+              onClick={() => {
+                console.log('⚡ setState: query (clear button)', '');
+                setQuery('');
+              }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Clear search"
             >
@@ -448,7 +539,10 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                     {filteredUsers.map((user) => (
                       <button
                         key={user.id}
-                        onClick={() => setSelectedUser(user)}
+                        onClick={() => {
+                          console.log('⚡ setState: selectedUser (from user list)', user);
+                          setSelectedUser(user);
+                        }}
                         className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
                           selectedUser?.id === user.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
                         }`}
@@ -538,7 +632,10 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                       return (
                         <button
                           key={group.id}
-                          onClick={() => setSelectedGroup(group)}
+                          onClick={() => {
+                            console.log('⚡ setState: selectedGroup (from group list)', group);
+                            setSelectedGroup(group);
+                          }}
                           className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
                             selectedGroup?.id === group.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
                           }`}
@@ -655,7 +752,10 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
               <GroupDetail
                 groupId={selectedGroup.id}
                 onMemberClick={handleMemberClick}
-                onBack={() => setSelectedGroup(null)}
+                onBack={() => {
+                  console.log('⚡ setState: selectedGroup (from GroupDetail back)', null);
+                  setSelectedGroup(null);
+                }}
               />
             ) : selectedUser ? (
               <div className="max-w-md mx-auto">

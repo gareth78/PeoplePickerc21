@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Users, Mail, ShieldCheck, Shield, Zap, Copy, Check } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
@@ -18,7 +17,6 @@ interface SearchInterfaceProps {
   userOrganization?: string;
 }
 
-// Helper function to get the icon for each badge variant
 function getBadgeIcon(variant: GroupBadgeVariant) {
   switch (variant) {
     case 'm365':
@@ -38,17 +36,7 @@ function getBadgeIcon(variant: GroupBadgeVariant) {
   }
 }
 
-let renderCount = 0;
-
 export default function SearchInterface({ userOrganization }: SearchInterfaceProps) {
-  renderCount++;
-  console.log(`🔴 RENDER #${renderCount}`, {
-    userOrganization,
-    timestamp: Date.now()
-  });
-
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const [query, setQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileHistory, setProfileHistory] = useState<User[]>([]);
@@ -57,13 +45,11 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
 
-  // Filter state
   const [activeFilter, setActiveFilter] = useState<'all' | 'myorg' | 'groups'>('all');
   const [myOrgFilter, setMyOrgFilter] = useState(false);
-  const [allUsers, setAllUsers] = useState<User[]>([]); // Store unfiltered results
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]); // Display these
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 
-  // Groups state
   const [searchMode, setSearchMode] = useState<'users' | 'groups'>('users');
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
@@ -71,51 +57,21 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [previousGroup, setPreviousGroup] = useState<{ id: string; name: string } | null>(null);
 
-  // Track previous userOrganization for prop change logging
-  const prevUserOrgRef = useRef(userOrganization);
-  console.log('📥 Props changed:', {
-    userOrganization,
-    userOrganizationChanged: userOrganization !== prevUserOrgRef.current
-  });
-  prevUserOrgRef.current = userOrganization;
-
-  // Initialize query from URL params on mount
   useEffect(() => {
-    console.log('🔵 Effect: URL query sync', {
-      dependencies: { searchParams }
-    });
-    const queryParam = searchParams.get('q');
-    if (queryParam) {
-      console.log('⚡ setState: query (from URL)', queryParam);
-      setQuery(queryParam);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    console.log('🔵 Effect: User search', {
-      dependencies: { debouncedQuery, searchMode }
-    });
     if (searchMode === 'users') {
       if (debouncedQuery) {
         void search(debouncedQuery);
       } else {
         void search('');
-        console.log('⚡ setState: selectedUser', null);
         setSelectedUser(null);
       }
     }
   }, [debouncedQuery, search, searchMode]);
 
-  // Search groups when in groups mode
   useEffect(() => {
-    console.log('🔵 Effect: Groups search', {
-      dependencies: { debouncedQuery, searchMode }
-    });
     if (searchMode === 'groups' && debouncedQuery.length >= 2) {
       const searchGroups = async () => {
-        console.log('⚡ setState: groupsLoading', true);
         setGroupsLoading(true);
-        console.log('⚡ setState: groupsError', null);
         setGroupsError(null);
 
         try {
@@ -123,141 +79,71 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           const data = await response.json();
 
           if (data.ok) {
-            console.log('⚡ setState: groups', data.data.groups);
             setGroups(data.data.groups);
           } else {
-            console.log('⚡ setState: groupsError', data.error || 'Failed to search groups');
             setGroupsError(data.error || 'Failed to search groups');
           }
-        } catch (err) {
-          console.log('⚡ setState: groupsError', 'Failed to search groups');
+        } catch {
           setGroupsError('Failed to search groups');
-          console.error(err);
         } finally {
-          console.log('⚡ setState: groupsLoading', false);
           setGroupsLoading(false);
         }
       };
 
       void searchGroups();
     } else if (searchMode === 'groups') {
-      console.log('⚡ setState: groups', []);
       setGroups([]);
-      console.log('⚡ setState: selectedGroup', null);
       setSelectedGroup(null);
     }
   }, [debouncedQuery, searchMode]);
 
-  // Update allUsers and apply filter when results change
   useEffect(() => {
-    console.log('🔵 Effect: Results changed', {
-      dependencies: { resultsLength: results.length }
-    });
-    console.log('⚡ setState: allUsers', results);
     setAllUsers(results);
-    applyFilter(results, myOrgFilter);
   }, [results]);
 
-  // Re-apply filter when checkbox changes
   useEffect(() => {
-    console.log('🔵 Effect: Filter application', {
-      dependencies: { myOrgFilter }
-    });
-    applyFilter(allUsers, myOrgFilter);
-  }, [myOrgFilter]);
+    if (!myOrgFilter || !userOrganization) {
+      setFilteredUsers(allUsers);
+      return;
+    }
 
-  // Handle filter changes
+    const filtered = allUsers.filter((user) => user.organization === userOrganization);
+    setFilteredUsers(filtered);
+  }, [allUsers, myOrgFilter, userOrganization]);
+
   const handleFilterChange = (filter: 'all' | 'myorg' | 'groups') => {
-    console.log('🔧 handleFilterChange called', filter);
-    console.log('⚡ setState: activeFilter', filter);
     setActiveFilter(filter);
     if (filter === 'groups') {
-      console.log('⚡ setState: searchMode', 'groups');
       setSearchMode('groups');
-      console.log('⚡ setState: myOrgFilter', false);
       setMyOrgFilter(false);
-      console.log('⚡ setState: selectedUser', null);
       setSelectedUser(null);
-      console.log('⚡ setState: profileHistory', []);
       setProfileHistory([]);
-      console.log('⚡ setState: previousGroup', null);
       setPreviousGroup(null);
     } else {
-      console.log('⚡ setState: searchMode', 'users');
       setSearchMode('users');
-      console.log('⚡ setState: selectedGroup', null);
       setSelectedGroup(null);
-      console.log('⚡ setState: previousGroup', null);
       setPreviousGroup(null);
       if (filter === 'myorg') {
-        console.log('⚡ setState: myOrgFilter', true);
         setMyOrgFilter(true);
       } else if (filter === 'all') {
-        console.log('⚡ setState: myOrgFilter', false);
         setMyOrgFilter(false);
       }
     }
   };
 
-  // Filter function
-  const applyFilter = (users: User[], filterActive: boolean) => {
-    console.log('🔧 applyFilter called', { usersLength: users.length, filterActive, userOrganization });
-    if (!filterActive || !userOrganization) {
-      console.log('⚡ setState: filteredUsers (unfiltered)', users);
-      setFilteredUsers(users);
-      return;
-    }
-
-    const filtered = users.filter(user =>
-      user.organization === userOrganization
-    );
-
-    console.log('⚡ setState: filteredUsers (filtered)', filtered);
-    setFilteredUsers(filtered);
-  };
-
-  // Update URL when query changes
   useEffect(() => {
-    console.log('🔵 Effect: URL update', {
-      dependencies: { query }
-    });
-    if (query) {
-      router.replace(`/?q=${encodeURIComponent(query)}`, { scroll: false });
-    } else {
-      router.replace('/', { scroll: false });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]); // router is intentionally omitted - it's a stable reference from Next.js
-
-  // Fetch manager data when user is selected
-  useEffect(() => {
-    console.log('🔵 Effect: Manager fetch', {
-      dependencies: { managerEmail: selectedUser?.managerEmail }
-    });
-    console.log('🔍 Manager fetch useEffect triggered');
-    console.log('📧 selectedUser?.managerEmail:', selectedUser?.managerEmail);
-
     if (selectedUser?.managerEmail) {
-      console.log('✅ Has managerEmail, fetching:', selectedUser.managerEmail);
       fetch(`/api/okta/users?q=${encodeURIComponent(selectedUser.managerEmail)}`)
-        .then(res => {
-          console.log('📡 Manager fetch response status:', res.status);
-          return res.json();
-        })
-        .then(data => {
-          console.log('📊 Manager fetch data:', data);
+        .then((res) => res.json())
+        .then((data) => {
           if (data.ok && data.data?.users && data.data.users.length > 0) {
-            console.log('✅ Setting managerData:', data.data.users[0]);
-            console.log('⚡ setState: managerData', data.data.users[0]);
             setManagerData(data.data.users[0]);
-          } else {
-            console.log('❌ No users in manager response or API error');
           }
         })
-        .catch(err => console.error('❌ Failed to fetch manager:', err));
+        .catch(() => {
+          /* intentionally empty */
+        });
     } else {
-      console.log('❌ No managerEmail, clearing managerData');
-      console.log('⚡ setState: managerData', null);
       setManagerData(null);
     }
   }, [selectedUser?.managerEmail]);
@@ -268,36 +154,24 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
     }
   };
 
-  // Navigate to a user profile with history tracking
   const navigateToUser = (user: User) => {
-    console.log('🔧 navigateToUser called', user.displayName);
     if (selectedUser) {
-      console.log('⚡ setState: profileHistory (add to history)');
-      setProfileHistory(prev => [...prev, selectedUser]);
+      setProfileHistory((prev) => [...prev, selectedUser]);
     }
-    console.log('⚡ setState: selectedUser', user);
     setSelectedUser(user);
   };
 
-  // Go back to previous user in history
   const goBackInHistory = () => {
-    console.log('🔧 goBackInHistory called');
     if (profileHistory.length > 0) {
       const previousUser = profileHistory[profileHistory.length - 1];
-      console.log('⚡ setState: profileHistory (remove last)');
-      setProfileHistory(prev => prev.slice(0, -1));
-      console.log('⚡ setState: selectedUser', previousUser);
+      setProfileHistory((prev) => prev.slice(0, -1));
       setSelectedUser(previousUser);
     }
   };
 
-  // Handle member click from GroupDetail
   const handleMemberClick = async (memberId: string, memberType: 'user' | 'group', memberEmail?: string) => {
-    console.log('🔧 handleMemberClick called', { memberId, memberType, memberEmail });
     if (memberType === 'group') {
-      // Store current group for back navigation
       if (selectedGroup) {
-        console.log('⚡ setState: previousGroup', { id: selectedGroup.id, name: selectedGroup.displayName });
         setPreviousGroup({ id: selectedGroup.id, name: selectedGroup.displayName });
       }
 
@@ -307,9 +181,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
         if (data.ok && data.data) {
           const detail: GroupDetailType = data.data;
-          console.log('⚡ setState: selectedUser', null);
           setSelectedUser(null);
-          console.log('⚡ setState: selectedGroup', detail);
           setSelectedGroup({
             id: detail.id,
             displayName: detail.displayName,
@@ -317,24 +189,18 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             description: detail.description,
             groupTypes: detail.groupTypes,
           });
-        } else {
-          console.error('Failed to fetch nested group detail:', data.error);
         }
-      } catch (err) {
-        console.error('Failed to fetch nested group detail:', err);
+      } catch {
+        /* intentionally empty */
       }
 
       return;
     } else {
-      // User was clicked - store the current group and show user profile
       if (selectedGroup) {
-        console.log('⚡ setState: previousGroup', { id: selectedGroup.id, name: selectedGroup.displayName });
         setPreviousGroup({ id: selectedGroup.id, name: selectedGroup.displayName });
       }
 
-      // Fetch user details using email (like manager fetch)
       if (!memberEmail) {
-        console.error('No email provided for user member');
         return;
       }
 
@@ -343,22 +209,16 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
         const data = await response.json();
 
         if (data.ok && data.data?.users && data.data.users.length > 0) {
-          console.log('⚡ setState: selectedUser', data.data.users[0]);
           setSelectedUser(data.data.users[0]);
-          console.log('⚡ setState: selectedGroup', null);
           setSelectedGroup(null);
-        } else {
-          console.error('Failed to fetch user:', data.error);
         }
-      } catch (err) {
-        console.error('Failed to fetch user:', err);
+      } catch {
+        /* intentionally empty */
       }
     }
   };
 
-  // Go back to group from user profile
   const goBackToGroup = async () => {
-    console.log('🔧 goBackToGroup called');
     if (!previousGroup) return;
 
     try {
@@ -367,7 +227,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
       if (data.ok && data.data) {
         const detail: GroupDetailType = data.data;
-        console.log('⚡ setState: selectedGroup', detail);
         setSelectedGroup({
           id: detail.id,
           displayName: detail.displayName,
@@ -375,30 +234,23 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           description: detail.description,
           groupTypes: detail.groupTypes,
         });
-        console.log('⚡ setState: selectedUser', null);
         setSelectedUser(null);
-        console.log('⚡ setState: previousGroup', null);
         setPreviousGroup(null);
       }
-    } catch (err) {
-      console.error('Failed to fetch group:', err);
+    } catch {
+      /* intentionally empty */
     }
   };
 
-  // Copy to clipboard function
   const copyToClipboard = async (text: string, fieldName: string) => {
-    console.log('🔧 copyToClipboard called', fieldName);
     try {
       await navigator.clipboard.writeText(text);
-      console.log('⚡ setState: copiedField', fieldName);
       setCopiedField(fieldName);
-      // Reset after 2 seconds
       setTimeout(() => {
-        console.log('⚡ setState: copiedField', null);
         setCopiedField(null);
       }, 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
+    } catch {
+      /* intentionally empty */
     }
   };
 
@@ -446,14 +298,19 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
               >
                 My Organization: {userOrganization}
                 {activeFilter === 'myorg' && (
-                  <span className="ml-2 cursor-pointer" onClick={(e) => {
-                    e.stopPropagation();
-                    handleFilterChange('all');
-                  }}>×</span>
+                  <span
+                    className="ml-2 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFilterChange('all');
+                    }}
+                  >
+                    ×
+                  </span>
                 )}
               </button>
             )}
-            
+
             {/* Debug display for development */}
             {!userOrganization && process.env.NODE_ENV === 'development' && (
               <div className="text-sm text-gray-500 px-2 py-1 bg-yellow-50 rounded">
@@ -469,7 +326,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             type="text"
             value={query}
             onChange={(e) => {
-              console.log('⚡ setState: query (from input)', e.target.value);
               setQuery(e.target.value);
             }}
             placeholder="Search by name, title, or location..."
@@ -478,7 +334,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           {query && (
             <button
               onClick={() => {
-                console.log('⚡ setState: query (clear button)', '');
                 setQuery('');
               }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
@@ -528,63 +383,64 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   </div>
                 )}
 
-                {error && (
-                  <div className="p-4 bg-red-50 text-red-700 text-base border-b border-red-100">
-                    {error}
-                  </div>
-                )}
+                  {error && (
+                    <div className="p-4 bg-red-50 text-red-700 text-base border-b border-red-100">
+                      {error}
+                    </div>
+                  )}
 
-                {filteredUsers.length > 0 && (
-                  <div className="flex flex-col">
-                    {filteredUsers.map((user) => (
-                      <button
-                        key={user.id}
-                        onClick={() => {
-                          console.log('⚡ setState: selectedUser (from user list)', user);
-                          setSelectedUser(user);
-                        }}
-                        className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
-                          selectedUser?.id === user.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
-                        }`}
-                      >
-                        <UserAvatar
-                          email={user.email}
-                          displayName={user.displayName}
-                          size="small"
-                          className="flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-base text-gray-900 truncate">
-                            {user.displayName}
+                  {filteredUsers.length > 0 && (
+                    <div className="flex flex-col">
+                      {filteredUsers.map((user) => (
+                        <button
+                          key={user.id}
+                          onClick={() => {
+                            setSelectedUser(user);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
+                            selectedUser?.id === user.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
+                          }`}
+                        >
+                          <UserAvatar
+                            email={user.email}
+                            displayName={user.displayName}
+                            size="small"
+                            className="flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-base text-gray-900 truncate">
+                              {user.displayName}
+                            </div>
+                            {user.title && (
+                              <div className="text-sm text-gray-600 truncate">
+                                {user.title}
+                              </div>
+                            )}
+                            {(user.organization || user.city || user.countryName) && (
+                              <div className="text-sm text-gray-500 truncate">
+                                {[
+                                  user.organization,
+                                  user.city,
+                                  user.countryName,
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ')}
+                              </div>
+                            )}
                           </div>
-                          {user.title && (
-                            <div className="text-sm text-gray-600 truncate">
-                              {user.title}
-                            </div>
-                          )}
-                          {(user.organization || user.city || user.countryName) && (
-                            <div className="text-sm text-gray-500 truncate">
-                              {[
-                                user.organization,
-                                user.city,
-                                user.countryName
-                              ].filter(Boolean).join(', ')}
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      ))}
 
-                    {nextCursor && (
-                      <button
-                        onClick={handleLoadMore}
-                        className="w-full py-3 bg-gray-50 text-base text-primary font-medium hover:bg-gray-100 transition-colors border-b border-gray-200"
-                      >
-                        Load more results
-                      </button>
-                    )}
-                  </div>
-                )}
+                      {nextCursor && (
+                        <button
+                          onClick={handleLoadMore}
+                          className="w-full py-3 bg-gray-50 text-base text-primary font-medium hover:bg-gray-100 transition-colors border-b border-gray-200"
+                        >
+                          Load more results
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                 {debouncedQuery.length >= 2 && filteredUsers.length === 0 && !loading && (
                   <div className="p-10 text-center">
@@ -617,74 +473,73 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   </div>
                 )}
 
-                {groupsError && (
-                  <div className="p-4 bg-red-50 text-red-700 text-base border-b border-red-100">
-                    {groupsError}
-                  </div>
-                )}
+                  {groupsError && (
+                    <div className="p-4 bg-red-50 text-red-700 text-base border-b border-red-100">
+                      {groupsError}
+                    </div>
+                  )}
 
-                {groups.length > 0 && (
-                  <div className="flex flex-col">
-                    {groups.map((group) => {
-                      const badgeMeta = getGroupBadgeMeta(group);
-                      const badgeStyle = getGroupBadgeClasses(badgeMeta.variant);
+                  {groups.length > 0 && (
+                    <div className="flex flex-col">
+                      {groups.map((group) => {
+                        const badgeMeta = getGroupBadgeMeta(group);
+                        const badgeStyle = getGroupBadgeClasses(badgeMeta.variant);
 
-                      return (
-                        <button
-                          key={group.id}
-                          onClick={() => {
-                            console.log('⚡ setState: selectedGroup (from group list)', group);
-                            setSelectedGroup(group);
-                          }}
-                          className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
-                            selectedGroup?.id === group.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
-                          }`}
-                        >
-                          {/* Group avatar - show photo if available, otherwise show icon */}
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                            {group.photoUrl ? (
-                              <img
-                                src={group.photoUrl}
-                                alt={group.displayName}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <svg
-                                className="w-6 h-6 text-primary"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                        return (
+                          <button
+                            key={group.id}
+                            onClick={() => {
+                              setSelectedGroup(group);
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left transition-colors hover:bg-gray-50 ${
+                              selectedGroup?.id === group.id ? 'bg-primary-light border-l-4 border-l-primary' : ''
+                            }`}
+                          >
+                            {/* Group avatar - show photo if available, otherwise show icon */}
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              {group.photoUrl ? (
+                                <img
+                                  src={group.photoUrl}
+                                  alt={group.displayName}
+                                  className="w-full h-full object-cover"
                                 />
-                              </svg>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-base text-gray-900 truncate mb-2">
-                              {group.displayName}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium ${badgeStyle}`}>
-                                {getBadgeIcon(badgeMeta.variant)}
-                                {badgeMeta.label}
-                              </span>
-                              {group.memberCount !== undefined && (
-                                <span className="text-sm text-gray-500">
-                                  • {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
-                                </span>
+                              ) : (
+                                <svg
+                                  className="w-6 h-6 text-primary"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                  />
+                                </svg>
                               )}
                             </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-base text-gray-900 truncate mb-2">
+                                {group.displayName}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium ${badgeStyle}`}>
+                                  {getBadgeIcon(badgeMeta.variant)}
+                                  {badgeMeta.label}
+                                </span>
+                                {group.memberCount !== undefined && (
+                                  <span className="text-sm text-gray-500">
+                                    • {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
 
                 {debouncedQuery.length >= 2 && groups.length === 0 && !groupsLoading && (
                   <div className="p-10 text-center">
@@ -753,7 +608,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                 groupId={selectedGroup.id}
                 onMemberClick={handleMemberClick}
                 onBack={() => {
-                  console.log('⚡ setState: selectedGroup (from GroupDetail back)', null);
                   setSelectedGroup(null);
                 }}
               />

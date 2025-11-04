@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Users, Mail, ShieldCheck, Shield, Zap } from 'lucide-react';
+import { Users, Mail, ShieldCheck, Shield, Zap, Copy, Check } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
+import { usePresence } from '@/lib/hooks/usePresence';
 import { getGroupBadgeClasses, getGroupBadgeMeta, type GroupBadgeVariant } from '@/lib/group-utils';
+import { formatPresenceActivity, getPresenceBadgeClasses } from '@/lib/presence-utils';
 import type {
   User,
   Group,
@@ -13,7 +15,6 @@ import type {
 } from '@/lib/types';
 import UserAvatar from '../UserAvatar';
 import GroupDetail from '../groups/GroupDetail';
-import SelectedUserDetail from './SelectedUserDetail';
 
 interface SearchInterfaceProps {
   userOrganization?: string;
@@ -51,6 +52,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search } = useSearch();
+  const { presence } = usePresence(selectedUser?.email);
 
   // Filter state
   const [activeFilter, setActiveFilter] = useState<'all' | 'myorg' | 'groups'>('all');
@@ -650,30 +652,272 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
             </div>
           )}
 
-            <div className="flex-1 overflow-y-auto p-6 min-h-0">
-              {selectedGroup ? (
-                <GroupDetail
-                  groupId={selectedGroup.id}
-                  onMemberClick={handleMemberClick}
-                  onBack={() => setSelectedGroup(null)}
+          <div className="flex-1 overflow-y-auto p-6 min-h-0">
+            {selectedGroup ? (
+              <GroupDetail
+                groupId={selectedGroup.id}
+                onMemberClick={handleMemberClick}
+                onBack={() => setSelectedGroup(null)}
+              />
+            ) : selectedUser ? (
+              <div className="max-w-md mx-auto">
+                <UserAvatar
+                  email={selectedUser.email}
+                  displayName={selectedUser.displayName}
+                  size="medium"
+                  className="mx-auto mb-4 hover:scale-150 transition-transform duration-200 ease-in-out cursor-pointer"
+                  rounded="rounded-lg"
                 />
-              ) : selectedUser ? (
-                <SelectedUserDetail
-                  user={selectedUser}
-                  managerData={managerData}
-                  copiedField={copiedField}
-                  onCopyField={copyToClipboard}
-                  onNavigateToUser={navigateToUser}
-                  query={query}
-                />
-              ) : (
-                <div className="p-10 text-center text-base text-gray-600">
-                  {searchMode === 'groups'
-                    ? 'Choose a group to view details'
-                    : 'Choose a person to preview their profile details'}
+
+                {presence?.activity && getPresenceBadgeClasses(presence.activity) && (
+                  <div className="flex justify-center mb-3">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getPresenceBadgeClasses(presence.activity)}`}>
+                      {formatPresenceActivity(presence.activity)}
+                    </span>
+                  </div>
+                )}
+
+                <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                  {selectedUser.displayName}
+                </h2>
+
+                {selectedUser.title && (
+                  <p className="text-lg text-gray-600 text-center mb-1">
+                    {selectedUser.title}
+                  </p>
+                )}
+
+                {selectedUser.department && (
+                  <p className="text-base text-gray-500 text-center mb-1">
+                    {selectedUser.department}
+                  </p>
+                )}
+
+                {selectedUser.organization && (
+                  <p className="text-base text-gray-600 text-center mb-1">
+                    {selectedUser.organization}
+                  </p>
+                )}
+
+                {managerData && (
+                  <p className="text-sm text-gray-500 text-center mb-5">
+                    Manager: {' '}
+                    <button
+                      onClick={() => navigateToUser(managerData)}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      {managerData.displayName}
+                    </button>
+                  </p>
+                )}
+
+                {/* Quick Action Buttons */}
+                <div className="flex justify-center gap-3 mb-6">
+                  {/* Email button with Outlook icon */}
+                  <a
+                    href={`mailto:${selectedUser.email}`}
+                    className="w-12 h-12 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center border-2 border-gray-200 hover:border-blue-400"
+                    title="Send email in Outlook"
+                  >
+                    <img
+                      src="/icons/OutlookAppIcon.jpg"
+                      alt="Email"
+                      className="w-8 h-8 rounded"
+                    />
+                  </a>
+
+                  {/* Teams button with Teams icon */}
+                  <a
+                    href={`https://teams.microsoft.com/l/chat/0/0?users=${selectedUser.email}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center border-2 border-gray-200 hover:border-purple-400"
+                    title="Chat in Microsoft Teams"
+                  >
+                    <img
+                      src="/icons/TeamsAppIcon.jpg"
+                      alt="Teams"
+                      className="w-8 h-8 rounded"
+                    />
+                  </a>
                 </div>
-              )}
-            </div>
+
+                <div className="pt-5 border-t border-gray-200">
+                  <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                    Contact Information
+                  </h4>
+
+                  <div className="space-y-2">
+                    {/* Name */}
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                      <span className="font-medium text-gray-600">Name:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-900">{selectedUser.displayName}</span>
+                        <button
+                          onClick={() => copyToClipboard(selectedUser.displayName, 'name')}
+                          className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                          title="Copy to clipboard"
+                        >
+                          {copiedField === 'name' ? (
+                            <Check className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Job Title */}
+                    {selectedUser.title && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                        <span className="font-medium text-gray-600">Job Title:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900">{selectedUser.title}</span>
+                          <button
+                            onClick={() => copyToClipboard(selectedUser.title || '', 'title')}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            {copiedField === 'title' ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Department */}
+                    {selectedUser.department && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                        <span className="font-medium text-gray-600">Department:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900">{selectedUser.department}</span>
+                          <button
+                            onClick={() => copyToClipboard(selectedUser.department || '', 'department')}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            {copiedField === 'department' ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Organization */}
+                    {selectedUser.organization && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                        <span className="font-medium text-gray-600">Organization:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900">{selectedUser.organization}</span>
+                          <button
+                            onClick={() => copyToClipboard(selectedUser.organization || '', 'organization')}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            {copiedField === 'organization' ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Email */}
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                      <span className="font-medium text-gray-600">Email:</span>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`mailto:${selectedUser.email}`}
+                          className="text-primary hover:underline"
+                        >
+                          {selectedUser.email}
+                        </a>
+                        <button
+                          onClick={() => copyToClipboard(selectedUser.email, 'email')}
+                          className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                          title="Copy to clipboard"
+                        >
+                          {copiedField === 'email' ? (
+                            <Check className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Phone */}
+                    {selectedUser.mobilePhone && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100 text-base">
+                        <span className="font-medium text-gray-600">Phone:</span>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`tel:${selectedUser.mobilePhone}`}
+                            className="text-primary hover:underline"
+                          >
+                            {selectedUser.mobilePhone}
+                          </a>
+                          <button
+                            onClick={() => copyToClipboard(selectedUser.mobilePhone || '', 'phone')}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            {copiedField === 'phone' ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Location */}
+                    {selectedUser.officeLocation && (
+                      <div className="flex justify-between items-center py-2 text-base">
+                        <span className="font-medium text-gray-600">Location:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900">{selectedUser.officeLocation}</span>
+                          <button
+                            onClick={() => copyToClipboard(selectedUser.officeLocation || '', 'location')}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            {copiedField === 'location' ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <a
+                  href={`/user/${selectedUser.id}${query ? `?q=${encodeURIComponent(query)}` : ''}`}
+                  className="block mt-5 px-5 py-2.5 bg-primary text-white text-base font-medium text-center rounded-lg hover:bg-primary-dark transition-colors"
+                >
+                  View full profile →
+                </a>
+              </div>
+            ) : (
+              <div className="p-10 text-center text-base text-gray-600">
+                {searchMode === 'groups'
+                  ? 'Choose a group to view details'
+                  : 'Choose a person to preview their profile details'}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -54,7 +54,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [previousGroup, setPreviousGroup] = useState<{ id: string; name: string } | null>(null);
   const groupsQueryRef = useRef<string | null>(null);
-  const groupsCount = groups.length;
 
   const filteredUsers = useMemo(() => {
     if (!myOrgFilter || !userOrganization) {
@@ -80,7 +79,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       const trimmedQuery = debouncedQuery.trim();
 
       if (trimmedQuery.length < 2) {
-        if (groupsCount > 0) {
+        if (groups.length > 0) {
           setGroups([]);
           setSelectedGroup(null);
         }
@@ -117,12 +116,12 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       };
 
       void searchGroups();
-    } else if (groupsCount > 0) {
+    } else if (groups.length > 0) {
       setGroups([]);
       setSelectedGroup(null);
       groupsQueryRef.current = null;
     }
-  }, [debouncedQuery, groupsCount, searchMode]);
+  }, [debouncedQuery, groups.length, searchMode]);
 
   const handleFilterChange = (filter: 'all' | 'myorg' | 'groups') => {
     setActiveFilter(filter);

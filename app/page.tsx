@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import SearchInterface from '@/components/search/SearchInterface';
 import UserIdentity from '@/components/UserIdentity';
 import Link from 'next/link';
@@ -66,9 +66,7 @@ export default function HomePage() {
         <UserIdentity />
       </div>
 
-      <Suspense fallback={<div className="text-center p-8">Loading...</div>}>
-        <SearchInterface userOrganization={userOrg} />
-      </Suspense>
+      <SearchInterface userOrganization={userOrg} />
 
       <div className="text-center mt-8">
         <Link

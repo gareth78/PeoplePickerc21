@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Users, Mail, ShieldCheck, Shield, Zap, Copy, Check } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
@@ -53,6 +53,8 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [groupsError, setGroupsError] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [previousGroup, setPreviousGroup] = useState<{ id: string; name: string } | null>(null);
+  const groupsQueryRef = useRef<string | null>(null);
+  const groupsCount = groups.length;
 
   const filteredUsers = useMemo(() => {
     if (!myOrgFilter || !userOrganization) {
@@ -60,61 +62,67 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
     }
 
     return results.filter((user) => user.organization === userOrganization);
-  }, [myOrgFilter, results, userOrganization]);
+  }, [results, myOrgFilter, userOrganization]);
 
   useEffect(() => {
-    if (searchMode !== 'users') {
-      return;
-    }
-
-    const trimmedQuery = debouncedQuery.trim();
-
-    if (trimmedQuery.length >= 2) {
-      void search(trimmedQuery);
-      return;
-    }
-
-    reset();
-    setSelectedUser((prev) => (prev ? null : prev));
-  }, [debouncedQuery, reset, search, searchMode]);
-
-  useEffect(() => {
-    if (searchMode !== 'groups') {
-      return;
-    }
-
-    const trimmedQuery = debouncedQuery.trim();
-
-    if (trimmedQuery.length < 2) {
-      setGroups((prev) => (prev.length ? [] : prev));
-      setSelectedGroup((prev) => (prev ? null : prev));
-      setGroupsError(null);
-      setGroupsLoading(false);
-      return;
-    }
-
-    const searchGroups = async () => {
-      setGroupsLoading(true);
-      setGroupsError(null);
-
-      try {
-        const response = await fetch(`/api/graph/groups?q=${encodeURIComponent(trimmedQuery)}`);
-        const data = await response.json();
-
-        if (data.ok) {
-          setGroups(data.data.groups);
-        } else {
-          setGroupsError(data.error || 'Failed to search groups');
-        }
-      } catch {
-        setGroupsError('Failed to search groups');
-      } finally {
-        setGroupsLoading(false);
+    if (searchMode === 'users') {
+      if (debouncedQuery.trim().length >= 2) {
+        void search(debouncedQuery);
+      } else {
+        reset();
+        setSelectedUser(null);
       }
-    };
+    }
+  }, [debouncedQuery, search, searchMode, reset]);
 
-    void searchGroups();
-  }, [debouncedQuery, searchMode]);
+  useEffect(() => {
+    if (searchMode === 'groups') {
+      const trimmedQuery = debouncedQuery.trim();
+
+      if (trimmedQuery.length < 2) {
+        if (groupsCount > 0) {
+          setGroups([]);
+          setSelectedGroup(null);
+        }
+        setGroupsError(null);
+        setGroupsLoading(false);
+        groupsQueryRef.current = null;
+        return;
+      }
+
+      if (groupsQueryRef.current === trimmedQuery) {
+        return;
+      }
+
+      groupsQueryRef.current = trimmedQuery;
+
+      const searchGroups = async () => {
+        setGroupsLoading(true);
+        setGroupsError(null);
+
+        try {
+          const response = await fetch(`/api/graph/groups?q=${encodeURIComponent(trimmedQuery)}`);
+          const data = await response.json();
+
+          if (data.ok) {
+            setGroups(data.data.groups);
+          } else {
+            setGroupsError(data.error || 'Failed to search groups');
+          }
+        } catch {
+          setGroupsError('Failed to search groups');
+        } finally {
+          setGroupsLoading(false);
+        }
+      };
+
+      void searchGroups();
+    } else if (groupsCount > 0) {
+      setGroups([]);
+      setSelectedGroup(null);
+      groupsQueryRef.current = null;
+    }
+  }, [debouncedQuery, groupsCount, searchMode]);
 
   const handleFilterChange = (filter: 'all' | 'myorg' | 'groups') => {
     setActiveFilter(filter);

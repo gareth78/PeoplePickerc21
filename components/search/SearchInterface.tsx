@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Users, Mail, ShieldCheck, Shield, Zap, Copy, Check } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
@@ -43,13 +43,10 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [managerData, setManagerData] = useState<User | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const debouncedQuery = useDebounce(query, 300);
-  const { results, loading, error, nextCursor, search } = useSearch();
+  const { results, loading, error, nextCursor, search, reset } = useSearch();
 
   const [activeFilter, setActiveFilter] = useState<'all' | 'myorg' | 'groups'>('all');
   const [myOrgFilter, setMyOrgFilter] = useState(false);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-
   const [searchMode, setSearchMode] = useState<'users' | 'groups'>('users');
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
@@ -57,59 +54,67 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [previousGroup, setPreviousGroup] = useState<{ id: string; name: string } | null>(null);
 
-  useEffect(() => {
-    if (searchMode === 'users') {
-      if (debouncedQuery) {
-        void search(debouncedQuery);
-      } else {
-        void search('');
-        setSelectedUser(null);
-      }
-    }
-  }, [debouncedQuery, search, searchMode]);
-
-  useEffect(() => {
-    if (searchMode === 'groups' && debouncedQuery.length >= 2) {
-      const searchGroups = async () => {
-        setGroupsLoading(true);
-        setGroupsError(null);
-
-        try {
-          const response = await fetch(`/api/graph/groups?q=${encodeURIComponent(debouncedQuery)}`);
-          const data = await response.json();
-
-          if (data.ok) {
-            setGroups(data.data.groups);
-          } else {
-            setGroupsError(data.error || 'Failed to search groups');
-          }
-        } catch {
-          setGroupsError('Failed to search groups');
-        } finally {
-          setGroupsLoading(false);
-        }
-      };
-
-      void searchGroups();
-    } else if (searchMode === 'groups') {
-      setGroups([]);
-      setSelectedGroup(null);
-    }
-  }, [debouncedQuery, searchMode]);
-
-  useEffect(() => {
-    setAllUsers(results);
-  }, [results]);
-
-  useEffect(() => {
+  const filteredUsers = useMemo(() => {
     if (!myOrgFilter || !userOrganization) {
-      setFilteredUsers(allUsers);
+      return results;
+    }
+
+    return results.filter((user) => user.organization === userOrganization);
+  }, [myOrgFilter, results, userOrganization]);
+
+  useEffect(() => {
+    if (searchMode !== 'users') {
       return;
     }
 
-    const filtered = allUsers.filter((user) => user.organization === userOrganization);
-    setFilteredUsers(filtered);
-  }, [allUsers, myOrgFilter, userOrganization]);
+    const trimmedQuery = debouncedQuery.trim();
+
+    if (trimmedQuery.length >= 2) {
+      void search(trimmedQuery);
+      return;
+    }
+
+    reset();
+    setSelectedUser((prev) => (prev ? null : prev));
+  }, [debouncedQuery, reset, search, searchMode]);
+
+  useEffect(() => {
+    if (searchMode !== 'groups') {
+      return;
+    }
+
+    const trimmedQuery = debouncedQuery.trim();
+
+    if (trimmedQuery.length < 2) {
+      setGroups((prev) => (prev.length ? [] : prev));
+      setSelectedGroup((prev) => (prev ? null : prev));
+      setGroupsError(null);
+      setGroupsLoading(false);
+      return;
+    }
+
+    const searchGroups = async () => {
+      setGroupsLoading(true);
+      setGroupsError(null);
+
+      try {
+        const response = await fetch(`/api/graph/groups?q=${encodeURIComponent(trimmedQuery)}`);
+        const data = await response.json();
+
+        if (data.ok) {
+          setGroups(data.data.groups);
+        } else {
+          setGroupsError(data.error || 'Failed to search groups');
+        }
+      } catch {
+        setGroupsError('Failed to search groups');
+      } finally {
+        setGroupsLoading(false);
+      }
+    };
+
+    void searchGroups();
+  }, [debouncedQuery, searchMode]);
 
   const handleFilterChange = (filter: 'all' | 'myorg' | 'groups') => {
     setActiveFilter(filter);
@@ -150,7 +155,10 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   const handleLoadMore = () => {
     if (nextCursor) {
-      void search(query, nextCursor);
+      const trimmedQuery = query.trim();
+      if (trimmedQuery.length >= 2) {
+        void search(trimmedQuery, nextCursor);
+      }
     }
   };
 

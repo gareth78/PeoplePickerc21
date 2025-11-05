@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Users, Mail, ShieldCheck, Shield, Zap, Copy, Check } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useSearch } from '@/lib/hooks/useSearch';
@@ -47,8 +47,6 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
   const [activeFilter, setActiveFilter] = useState<'all' | 'myorg' | 'groups'>('all');
   const [myOrgFilter, setMyOrgFilter] = useState(false);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 
   const [searchMode, setSearchMode] = useState<'users' | 'groups'>('users');
   const [groups, setGroups] = useState<Group[]>([]);
@@ -97,19 +95,12 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
     }
   }, [debouncedQuery, searchMode]);
 
-  useEffect(() => {
-    setAllUsers(results);
-  }, [results]);
-
-  useEffect(() => {
+  const filteredUsers = useMemo(() => {
     if (!myOrgFilter || !userOrganization) {
-      setFilteredUsers(allUsers);
-      return;
+      return results;
     }
-
-    const filtered = allUsers.filter((user) => user.organization === userOrganization);
-    setFilteredUsers(filtered);
-  }, [allUsers, myOrgFilter, userOrganization]);
+    return results.filter((user) => user.organization === userOrganization);
+  }, [results, myOrgFilter, userOrganization]);
 
   const handleFilterChange = (filter: 'all' | 'myorg' | 'groups') => {
     setActiveFilter(filter);

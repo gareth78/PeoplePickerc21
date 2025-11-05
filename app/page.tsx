@@ -20,51 +20,35 @@ export default function HomePage() {
 
   // Fetch user's organization
   useEffect(() => {
-    console.log('🔍 Starting user organization fetch...');
-    
     fetch('/api/me')
       .then(res => {
-        console.log('📡 /api/me response status:', res.status);
         return res.json();
       })
       .then(async (authData) => {
-        console.log('📧 Auth data received:', JSON.stringify(authData, null, 2));
-        
         if (authData.email) {
           const oktaUrl = `/api/okta/users?q=${encodeURIComponent(authData.email)}`;
-          console.log('🔎 Fetching Okta profile from:', oktaUrl);
           
           const oktaRes = await fetch(oktaUrl);
-          console.log('📡 Okta response status:', oktaRes.status);
           
           const oktaData = await oktaRes.json();
-          console.log('📊 Full Okta response:', JSON.stringify(oktaData, null, 2));
 
           let org: string | null = null;
 
           if (oktaData.data?.users && Array.isArray(oktaData.data.users) && oktaData.data.users.length > 0) {
             org = oktaData.data.users[0].organization;
-            console.log('✅ Found org in data.users[0]:', org);
           } else if (oktaData.users && Array.isArray(oktaData.users) && oktaData.users.length > 0) {
             org = oktaData.users[0].organization;
-            console.log('✅ Found org in users[0]:', org);
           }
 
           if (org) {
             setUserOrg(org);
-            console.log('✅ Set userOrg to:', org);
           }
-        } else {
-          console.log('❌ No email in auth data');
         }
       })
       .catch(err => {
         console.error('❌ Error fetching user org:', err);
       });
   }, []);
-
-  // Add debug render logging
-  console.log('🎨 Rendering Home, userOrg state:', userOrg);
 
   return (
     <div className="max-w-7xl mx-auto px-5 py-8">

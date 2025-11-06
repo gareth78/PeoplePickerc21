@@ -7,9 +7,9 @@ export async function GET(
   { params }: { params: { email: string } }
 ) {
   try {
-    const { email } = params;
+    const rawEmail = decodeURIComponent(params.email);
     // Normalize email for consistent cache keys
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = rawEmail.toLowerCase().trim();
     const cacheKey = `presence:${normalizedEmail}`;
     const redis = getRedisClient();
 

@@ -41,6 +41,10 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileHistory, setProfileHistory] = useState<User[]>([]);
   const [managerData, setManagerData] = useState<User | null>(null);
+  const [selectedUserPresence, setSelectedUserPresence] = useState<{
+    availability?: string;
+    activity?: string;
+  } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search, reset } = useSearch();
@@ -159,6 +163,27 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       setManagerData(null);
     }
   }, [selectedUser?.managerEmail]);
+
+  useEffect(() => {
+    if (selectedUser?.email) {
+      fetch(`/api/graph/presence/${encodeURIComponent(selectedUser.email)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.ok) {
+            setSelectedUserPresence({
+              availability: data.data?.availability,
+              activity: data.data?.activity
+            });
+          }
+        })
+        .catch(() => {
+          // Silently fail - presence is optional
+          setSelectedUserPresence(null);
+        });
+    } else {
+      setSelectedUserPresence(null);
+    }
+  }, [selectedUser?.id]);
 
   const handleLoadMore = () => {
     if (nextCursor) {
@@ -639,6 +664,50 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                 <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
                   {selectedUser.displayName}
                 </h2>
+
+                {selectedUserPresence?.availability && (
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedUserPresence.availability === 'Available' || selectedUserPresence.availability === 'AvailableIdle'
+                          ? 'bg-green-100 text-green-800'
+                          : selectedUserPresence.availability === 'Busy' || selectedUserPresence.availability === 'BusyIdle'
+                          ? 'bg-red-100 text-red-800'
+                          : selectedUserPresence.availability === 'Away' || selectedUserPresence.availability === 'BeRightBack'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : selectedUserPresence.availability === 'DoNotDisturb'
+                          ? 'bg-gray-100 text-gray-800'
+                          : 'bg-gray-100 text-gray-500'
+                      }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          selectedUserPresence.availability === 'Available' || selectedUserPresence.availability === 'AvailableIdle'
+                            ? 'bg-green-600'
+                            : selectedUserPresence.availability === 'Busy' || selectedUserPresence.availability === 'BusyIdle'
+                            ? 'bg-red-600'
+                            : selectedUserPresence.availability === 'Away' || selectedUserPresence.availability === 'BeRightBack'
+                            ? 'bg-yellow-600'
+                            : selectedUserPresence.availability === 'DoNotDisturb'
+                            ? 'bg-gray-600'
+                            : 'bg-gray-400'
+                        }`}
+                      />
+                      {selectedUserPresence.availability === 'AvailableIdle'
+                        ? 'Available'
+                        : selectedUserPresence.availability === 'BusyIdle'
+                        ? 'Busy'
+                        : selectedUserPresence.availability === 'BeRightBack'
+                        ? 'Be Right Back'
+                        : selectedUserPresence.availability === 'DoNotDisturb'
+                        ? 'Do Not Disturb'
+                        : selectedUserPresence.availability}
+                    </span>
+                    {selectedUserPresence.activity && (
+                      <span className="text-xs text-gray-500">({selectedUserPresence.activity})</span>
+                    )}
+                  </div>
+                )}
 
                 {selectedUser.title && (
                   <p className="text-lg text-gray-600 text-center mb-1">

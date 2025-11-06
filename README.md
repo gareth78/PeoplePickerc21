@@ -12,6 +12,12 @@ Modern, production-ready people directory application integrating Okta user data
 - 🔗 **Manager Navigation** - Clickable manager links to navigate org hierarchy
 - ✖️ **Smart Search UX** - Clear button and preserved context on navigation
 
+### Admin Features
+- 🔐 **Admin Authentication** - Protected admin area with role-based access control
+- 👥 **User Management** - Add and remove admin users through web UI
+- 🛡️ **Super Admin Protection** - Environment-based super admins that cannot be removed
+- 📊 **Admin Dashboard** - System diagnostics and cache management for administrators
+
 ### Technical Features
 - 📊 **Diagnostics Dashboard** - Cache statistics, health monitoring, and performance metrics
 - 🧹 **Cache Management** - One-click cache clearing for troubleshooting
@@ -79,6 +85,9 @@ ENTRA_CLIENT_SECRET=your-app-client-secret
 
 # Optional: Redis for caching
 redis-connection-string=redis://localhost:6379
+
+# Admin System - Super Admins (comma-separated emails)
+NEXT_PUBLIC_SUPER_ADMINS=your.email@example.com
 ```
 
 4. **Run development server:**
@@ -101,9 +110,15 @@ PeoplePickerc21/
 ├── app/
 │   ├── page.tsx                    # Main search interface
 │   ├── user/[id]/                  # Full user profile pages
-│   ├── diagnostics/                # System diagnostics
+│   ├── admin/                      # Admin area (protected)
+│   │   ├── layout.tsx              # Admin sidebar layout
+│   │   ├── dashboard/              # System diagnostics
+│   │   └── users/                  # Admin user management
 │   ├── technical/                  # Technical details page
 │   └── api/
+│       ├── admin/                  # Admin API routes
+│       │   ├── check/              # Check admin status
+│       │   └── users/              # Admin user management
 │       ├── okta/                   # Okta API routes
 │       │   └── users/              # User search & lookup
 │       ├── graph/
@@ -116,8 +131,11 @@ PeoplePickerc21/
 │   │   └── UserCard.tsx            # Search result cards
 │   ├── UserAvatar.tsx              # Avatar with photo & presence
 │   ├── PresenceBadge.tsx           # Teams status indicator
+│   ├── Footer.tsx                  # Footer with admin link
 │   └── diagnostics/                # Diagnostic components
 ├── lib/
+│   ├── auth/
+│   │   └── adminAuth.ts            # Admin authentication
 │   ├── okta.ts                     # Okta API client
 │   ├── graph.ts                    # Microsoft Graph client
 │   ├── redis.ts                    # Redis caching
@@ -145,6 +163,12 @@ PeoplePickerc21/
 ### Microsoft Graph Integration
 - `GET /api/graph/photo/{email}` - User profile photo (24h cache)
 - `GET /api/graph/presence/{email}` - Teams presence status (5min cache)
+
+### Admin Endpoints (Protected)
+- `GET /api/admin/check` - Check if current user is admin
+- `GET /api/admin/users` - List all admin users
+- `POST /api/admin/users` - Add admin user
+- `DELETE /api/admin/users` - Remove admin user
 
 Full API documentation: `/api-docs` (coming soon)
 
@@ -180,6 +204,50 @@ The application uses Azure Container Apps Easy Auth with two providers:
 - `ENTRA_TENANT_ID`
 - `ENTRA_CLIENT_ID`
 - `ENTRA_CLIENT_SECRET`
+
+## 🔐 Admin System
+
+### Overview
+The admin system provides protected access to system diagnostics and user management. Only designated admin users can access the admin panel at `/admin`.
+
+### Access Control Model
+- **Super Admins:** Defined via `NEXT_PUBLIC_SUPER_ADMINS` environment variable (comma-separated emails)
+  - Cannot be removed through the UI or API
+  - Have full admin access
+  - Must be set before first deployment
+
+- **Regular Admins:** Stored in Redis `admins` set
+  - Can be added/removed by any admin through the UI
+  - Have full admin access (same permissions as super admins)
+  - Persistent storage (no TTL)
+
+### Bootstrap Process
+1. Set `NEXT_PUBLIC_SUPER_ADMINS` environment variable with initial admin email(s)
+2. Deploy application
+3. Super admin logs in and sees "Admin" link in footer
+4. Navigate to `/admin/dashboard` or `/admin/users`
+5. Add additional admins through the UI as needed
+
+### Admin Features
+- **Dashboard** (`/admin/dashboard`) - System diagnostics, cache management, Okta connectivity
+- **User Management** (`/admin/users`) - Add/remove admin users, view admin list
+- **Protected Routes** - All admin API routes require authentication
+- **Audit Logging** - Admin actions logged to console
+
+### Security Notes
+- All admin routes check authentication on every request
+- Super admins from environment variable cannot be removed
+- Non-admins attempting to access admin routes are redirected to home page
+- Admin status checked via `/api/admin/check` endpoint
+
+### Example Configuration
+```env
+# Single super admin
+NEXT_PUBLIC_SUPER_ADMINS=john.doe@example.com
+
+# Multiple super admins
+NEXT_PUBLIC_SUPER_ADMINS=john.doe@example.com,jane.smith@example.com,admin@example.com
+```
 
 ## ☁️ Azure Deployment
 
@@ -231,6 +299,9 @@ ENTRA_CLIENT_SECRET=<app-registration-secret>
 
 # Redis (recommended)
 redis-connection-string=<azure-redis-connection-string>
+
+# Admin System - REQUIRED
+NEXT_PUBLIC_SUPER_ADMINS=admin1@example.com,admin2@example.com
 
 # Optional
 search-results-limit=100

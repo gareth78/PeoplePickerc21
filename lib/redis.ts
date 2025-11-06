@@ -1,6 +1,7 @@
 import Redis from 'ioredis';
 
 // TTL constants (in seconds)
+// Note: The "admins" Redis set has no TTL (permanent storage for admin access control)
 export const TTL = {
   PHOTO: 86400,      // 24 hours
   PROFILE: 14400,    // 4 hours

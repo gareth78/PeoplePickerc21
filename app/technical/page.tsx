@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Footer from '@/components/Footer';
 import { RefreshCw, Book, Link as LinkIcon } from 'lucide-react';
 
 interface CacheStats {
@@ -331,8 +330,6 @@ export default function TechnicalPage() {
           </a>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }

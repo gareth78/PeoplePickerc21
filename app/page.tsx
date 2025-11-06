@@ -3,11 +3,20 @@
 import { useState, useEffect } from 'react';
 import SearchInterface from '@/components/search/SearchInterface';
 import UserIdentity from '@/components/UserIdentity';
-import Footer from '@/components/Footer';
 import Link from 'next/link';
 
 export default function HomePage() {
   const [userOrg, setUserOrg] = useState<string>();
+
+  // Get version info
+  const version = process.env.NEXT_PUBLIC_GIT_SHA || 'dev';
+  const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME;
+  const buildDate = buildTime ? new Date(buildTime).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  }) : '';
 
   // Fetch user's organization
   useEffect(() => {
@@ -49,6 +58,10 @@ export default function HomePage() {
           <p className="text-gray-600 mt-2">
             Search the global directory to quickly connect with colleagues
           </p>
+          <p className="text-sm text-gray-400 mt-1">
+            version {version}
+            {buildDate && ` • ${buildDate}`}
+          </p>
         </div>
         <UserIdentity />
       </div>
@@ -63,8 +76,6 @@ export default function HomePage() {
           View Technical Details →
         </Link>
       </div>
-
-      <Footer />
     </div>
   );
 }

@@ -73,6 +73,12 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
     availability?: string;
     activity?: string;
   } | null>(null);
+  const [selectedUserOOO, setSelectedUserOOO] = useState<{
+    isOOO: boolean;
+    message: string | null;
+    startTime: string | null;
+    endTime: string | null;
+  } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const { results, loading, error, nextCursor, search, reset } = useSearch();
@@ -230,6 +236,44 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
         } catch (err: any) {
           if (err.name !== 'AbortError') {
             setSelectedUserPresence(null);
+          }
+        }
+      })();
+
+      return () => controller.abort();
+    }, [selectedUser?.email]);
+
+    useEffect(() => {
+      const email = selectedUser?.email;
+      if (!email) {
+        setSelectedUserOOO(null);
+        return;
+      }
+
+      const controller = new AbortController();
+
+      (async () => {
+        try {
+          const res = await fetch(
+            `/api/graph/ooo/${encodeURIComponent(email)}`,
+            { signal: controller.signal }
+          );
+
+          if (!res.ok) {
+            setSelectedUserOOO(null);
+            return;
+          }
+
+          const data = await res.json();
+
+          if (data?.ok && data.data) {
+            setSelectedUserOOO(data.data);
+          } else {
+            setSelectedUserOOO(null);
+          }
+        } catch (err: any) {
+          if (err.name !== 'AbortError') {
+            setSelectedUserOOO(null);
           }
         }
       })();
@@ -718,7 +762,11 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                 </h2>
 
                 {selectedUserPresence?.availability && (() => {
-                  const config = PRESENCE_CONFIG[selectedUserPresence.availability] || PRESENCE_CONFIG.Offline;
+                  // If OOO is active, use OOO config instead of availability config
+                  const isOOO = selectedUserOOO?.isOOO === true;
+                  const config = isOOO
+                    ? PRESENCE_CONFIG.OutOfOffice
+                    : (PRESENCE_CONFIG[selectedUserPresence.availability] || PRESENCE_CONFIG.Offline);
                   const activity = selectedUserPresence.activity;
 
                   return (

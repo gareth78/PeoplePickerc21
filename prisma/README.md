@@ -33,10 +33,10 @@ npx prisma migrate dev
 After schema changes, regenerate the Prisma Client:
 
 ```bash
-npx prisma generate
+npm run prisma:generate
 ```
 
-The Prisma Client is imported in the application via `lib/prisma.ts`.
+This command wraps `prisma generate`, ensuring the client is regenerated locally and in CI builds. The Prisma Client is imported in the application via `lib/prisma.ts`.
 
 ## Notes
 

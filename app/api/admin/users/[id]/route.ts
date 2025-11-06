@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAdminAuth } from '@/lib/admin/middleware';
+import { verifyAdminAuth } from '@/lib/admin/middleware';
 import { createAuditLog } from '@/lib/admin/audit';
 import prisma from '@/lib/prisma';
 
 interface RouteContext {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 // DELETE admin
@@ -13,19 +13,16 @@ export async function DELETE(
   context: RouteContext
 ) {
   // Verify admin auth first
-  const authResult = await withAdminAuth(async (req, session) => {
-    return NextResponse.json({ session });
-  })(request);
+  const authResult = await verifyAdminAuth(request);
 
-  if (authResult.status === 401 || authResult.status === 403) {
-    return authResult;
+  if (!authResult.authenticated || !authResult.session) {
+    return authResult.response ?? NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const sessionData = await authResult.json();
-  const session = sessionData.session;
+  const session = authResult.session;
 
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
 
     // Find the admin to delete
     const admin = await prisma.admin.findUnique({

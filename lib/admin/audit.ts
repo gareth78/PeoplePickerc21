@@ -103,9 +103,10 @@ export async function getAuditStats(days: number = 30) {
   });
 
   const stats: Record<string, number> = {};
-  logs.forEach((log) => {
-    stats[log.action] = (stats[log.action] || 0) + 1;
-  });
+  for (const log of logs) {
+    const action = log.action as AuditAction;
+    stats[action] = (stats[action] || 0) + 1;
+  }
 
   return stats;
 }

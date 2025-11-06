@@ -23,8 +23,16 @@ export async function GET(
 
     // Fetch from Graph API
     const client = await getGraphClient();
+
+    // Lookup user to get Object ID (more reliable than email for presence)
+    const user = await client
+      .api(`/users/${normalizedEmail}`)
+      .select('id')
+      .get();
+
+    // Use Object ID for presence call
     const presence = await client
-      .api(`/users/${normalizedEmail}/presence`)
+      .api(`/users/${user.id}/presence`)
       .get();
 
     const presenceData = {

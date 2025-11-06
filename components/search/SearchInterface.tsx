@@ -36,6 +36,18 @@ function getBadgeIcon(variant: GroupBadgeVariant) {
   }
 }
 
+const PRESENCE_CONFIG: Record<string, { badge: string; dot: string; label: string }> = {
+  Available: { badge: 'bg-green-50 text-green-700 border border-green-200', dot: 'bg-green-500', label: 'Available' },
+  AvailableIdle: { badge: 'bg-green-50 text-green-700 border border-green-200', dot: 'bg-green-500', label: 'Available' },
+  Busy: { badge: 'bg-red-50 text-red-700 border border-red-200', dot: 'bg-red-500', label: 'Busy' },
+  BusyIdle: { badge: 'bg-red-50 text-red-700 border border-red-200', dot: 'bg-red-500', label: 'Busy' },
+  DoNotDisturb: { badge: 'bg-red-50 text-red-700 border border-red-200', dot: 'bg-red-600', label: 'Do Not Disturb' },
+  Away: { badge: 'bg-yellow-50 text-yellow-700 border border-yellow-200', dot: 'bg-yellow-500', label: 'Away' },
+  BeRightBack: { badge: 'bg-yellow-50 text-yellow-700 border border-yellow-200', dot: 'bg-yellow-500', label: 'Be Right Back' },
+  Offline: { badge: 'bg-gray-50 text-gray-600 border border-gray-200', dot: 'bg-gray-400', label: 'Offline' },
+  OutOfOffice: { badge: 'bg-purple-50 text-purple-700 border border-purple-200', dot: 'bg-purple-500', label: 'Out of Office' },
+};
+
 export default function SearchInterface({ userOrganization }: SearchInterfaceProps) {
   const [query, setQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -689,49 +701,22 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                   {selectedUser.displayName}
                 </h2>
 
-                {selectedUserPresence?.availability && (
-                  <div className="flex items-center justify-center gap-2 mt-2">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
-                        selectedUserPresence.availability === 'Available' || selectedUserPresence.availability === 'AvailableIdle'
-                          ? 'bg-green-100 text-green-800'
-                          : selectedUserPresence.availability === 'Busy' || selectedUserPresence.availability === 'BusyIdle'
-                          ? 'bg-red-100 text-red-800'
-                          : selectedUserPresence.availability === 'Away' || selectedUserPresence.availability === 'BeRightBack'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : selectedUserPresence.availability === 'DoNotDisturb'
-                          ? 'bg-gray-100 text-gray-800'
-                          : 'bg-gray-100 text-gray-500'
-                      }`}
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          selectedUserPresence.availability === 'Available' || selectedUserPresence.availability === 'AvailableIdle'
-                            ? 'bg-green-600'
-                            : selectedUserPresence.availability === 'Busy' || selectedUserPresence.availability === 'BusyIdle'
-                            ? 'bg-red-600'
-                            : selectedUserPresence.availability === 'Away' || selectedUserPresence.availability === 'BeRightBack'
-                            ? 'bg-yellow-600'
-                            : selectedUserPresence.availability === 'DoNotDisturb'
-                            ? 'bg-gray-600'
-                            : 'bg-gray-400'
-                        }`}
-                      />
-                      {selectedUserPresence.availability === 'AvailableIdle'
-                        ? 'Available'
-                        : selectedUserPresence.availability === 'BusyIdle'
-                        ? 'Busy'
-                        : selectedUserPresence.availability === 'BeRightBack'
-                        ? 'Be Right Back'
-                        : selectedUserPresence.availability === 'DoNotDisturb'
-                        ? 'Do Not Disturb'
-                        : selectedUserPresence.availability}
-                    </span>
-                    {selectedUserPresence.activity && (
-                      <span className="text-xs text-gray-500">({selectedUserPresence.activity})</span>
-                    )}
-                  </div>
-                )}
+                {selectedUserPresence?.availability && (() => {
+                  const config = PRESENCE_CONFIG[selectedUserPresence.availability] || PRESENCE_CONFIG.Offline;
+                  const activity = selectedUserPresence.activity;
+
+                  return (
+                    <div className="flex items-center justify-center gap-2 mt-3 mb-2">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${config.badge}`}>
+                        <span className={`w-2.5 h-2.5 rounded-full ${config.dot} animate-pulse`} />
+                        <span>{config.label}</span>
+                        {activity && activity !== selectedUserPresence.availability && activity !== 'Available' && (
+                          <span className="text-xs opacity-75">• {activity}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {selectedUser.title && (
                   <p className="text-lg text-gray-600 text-center mb-1">

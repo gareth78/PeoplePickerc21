@@ -48,6 +48,22 @@ const PRESENCE_CONFIG: Record<string, { badge: string; dot: string; label: strin
   OutOfOffice: { badge: 'bg-purple-50 text-purple-700 border border-purple-200', dot: 'bg-purple-500', label: 'Out of Office' },
 };
 
+const formatActivity = (activity: string): string => {
+  const activityMap: Record<string, string> = {
+    InACall: 'In a call',
+    InAConferenceCall: 'In a conference call',
+    InAMeeting: 'In a meeting',
+    OutOfOffice: 'Out of office',
+    OffWork: 'Off work',
+    BeRightBack: 'Be right back',
+    DoNotDisturb: 'Do not disturb',
+    Presenting: 'Presenting',
+    Focusing: 'Focusing',
+    UrgentInterruptionsOnly: 'Urgent interruptions only',
+  };
+  return activityMap[activity] || activity;
+};
+
 export default function SearchInterface({ userOrganization }: SearchInterfaceProps) {
   const [query, setQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -711,7 +727,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                         <span className={`w-2.5 h-2.5 rounded-full ${config.dot} animate-pulse`} />
                         <span>{config.label}</span>
                         {activity && activity !== selectedUserPresence.availability && activity !== 'Available' && (
-                          <span className="text-xs opacity-75">• {activity}</span>
+                          <span>• {formatActivity(activity)}</span>
                         )}
                       </div>
                     </div>

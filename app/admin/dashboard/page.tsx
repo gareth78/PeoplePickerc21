@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Footer from '@/components/Footer';
-import { RefreshCw, Book, Link as LinkIcon } from 'lucide-react';
+import { RefreshCw, Book } from 'lucide-react';
 
 interface CacheStats {
   connected: boolean;
@@ -20,7 +18,7 @@ interface OktaTestResult {
   error?: string;
 }
 
-export default function TechnicalPage() {
+export default function AdminDashboardPage() {
   const [buildInfo, setBuildInfo] = useState<{
     version: string;
     buildTime?: string;
@@ -132,16 +130,7 @@ export default function TechnicalPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-5 py-10">
-      <div className="mb-8">
-        <Link
-          href="/"
-          className="inline-flex items-center text-sm text-primary hover:text-primary-dark font-medium transition-colors"
-        >
-          ← Back to Search
-        </Link>
-      </div>
-
+    <div>
       {/* Header Section */}
       <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
         <div className="flex items-start justify-between">
@@ -150,7 +139,7 @@ export default function TechnicalPage() {
               People Picker
             </p>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              System Information
+              Admin Dashboard
             </h1>
             <p className="text-gray-600 leading-relaxed max-w-3xl">
               System diagnostics, build information, and API connectivity status for the People Picker application.
@@ -331,8 +320,6 @@ export default function TechnicalPage() {
           </a>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }

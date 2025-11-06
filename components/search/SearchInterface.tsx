@@ -159,33 +159,57 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
         .catch(() => {
           /* intentionally empty */
         });
-    } else {
-      setManagerData(null);
-    }
-  }, [selectedUser?.managerEmail]);
+      } else {
+        setManagerData(null);
+      }
+    }, [selectedUser?.managerEmail]);
 
-  useEffect(() => {
-    if (selectedUser?.email) {
-      fetch(`/api/graph/presence/${encodeURIComponent(selectedUser.email)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.ok) {
-            setSelectedUserPresence({
-              availability: data.data?.availability,
-              activity: data.data?.activity
-            });
+    useEffect(() => {
+      const email = selectedUser?.email;
+      if (!email) {
+        setSelectedUserPresence(null);
+        return;
+      }
+
+      const controller = new AbortController();
+
+      (async () => {
+        try {
+          const res = await fetch(
+            `/api/graph/presence/${encodeURIComponent(email)}`,
+            { signal: controller.signal }
+          );
+
+          if (!res.ok) {
+            setSelectedUserPresence(null);
+            return;
           }
-        })
-        .catch(() => {
-          // Silently fail - presence is optional
-          setSelectedUserPresence(null);
-        });
-    } else {
-      setSelectedUserPresence(null);
-    }
-  }, [selectedUser?.id]);
 
-  const handleLoadMore = () => {
+          const data = await res.json();
+
+          if (data?.ok && data.data) {
+            if (data.data.availability !== 'PresenceUnknown') {
+              setSelectedUserPresence({
+                availability: data.data.availability,
+                activity: data.data.activity
+              });
+            } else {
+              setSelectedUserPresence(null);
+            }
+          } else {
+            setSelectedUserPresence(null);
+          }
+        } catch (err: any) {
+          if (err.name !== 'AbortError') {
+            setSelectedUserPresence(null);
+          }
+        }
+      })();
+
+      return () => controller.abort();
+    }, [selectedUser?.email]);
+
+    const handleLoadMore = () => {
     if (nextCursor) {
       const trimmedQuery = query.trim();
       if (trimmedQuery.length >= 2) {

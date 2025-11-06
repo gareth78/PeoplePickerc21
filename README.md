@@ -87,7 +87,7 @@ ENTRA_CLIENT_SECRET=your-app-client-secret
 redis-connection-string=redis://localhost:6379
 
 # Admin System - Super Admins (comma-separated emails)
-NEXT_PUBLIC_SUPER_ADMINS=your.email@example.com
+SUPER_ADMINS=your.email@example.com
 ```
 
 4. **Run development server:**
@@ -211,7 +211,7 @@ The application uses Azure Container Apps Easy Auth with two providers:
 The admin system provides protected access to system diagnostics and user management. Only designated admin users can access the admin panel at `/admin`.
 
 ### Access Control Model
-- **Super Admins:** Defined via `NEXT_PUBLIC_SUPER_ADMINS` environment variable (comma-separated emails)
+- **Super Admins:** Defined via `SUPER_ADMINS` environment variable (comma-separated emails)
   - Cannot be removed through the UI or API
   - Have full admin access
   - Must be set before first deployment
@@ -221,8 +221,11 @@ The admin system provides protected access to system diagnostics and user manage
   - Have full admin access (same permissions as super admins)
   - Persistent storage (no TTL)
 
+> [!NOTE]
+> Earlier revisions of the admin system used the `NEXT_PUBLIC_SUPER_ADMINS` variable. For security, super admin emails are now configured through the server-only `SUPER_ADMINS` variable. The previous variable is still read as a fallback but will be removed in a future release.
+
 ### Bootstrap Process
-1. Set `NEXT_PUBLIC_SUPER_ADMINS` environment variable with initial admin email(s)
+1. Set `SUPER_ADMINS` environment variable with initial admin email(s)
 2. Deploy application
 3. Super admin logs in and sees "Admin" link in footer
 4. Navigate to `/admin/dashboard` or `/admin/users`
@@ -243,10 +246,10 @@ The admin system provides protected access to system diagnostics and user manage
 ### Example Configuration
 ```env
 # Single super admin
-NEXT_PUBLIC_SUPER_ADMINS=john.doe@example.com
+SUPER_ADMINS=john.doe@example.com
 
 # Multiple super admins
-NEXT_PUBLIC_SUPER_ADMINS=john.doe@example.com,jane.smith@example.com,admin@example.com
+SUPER_ADMINS=john.doe@example.com,jane.smith@example.com,admin@example.com
 ```
 
 ## ☁️ Azure Deployment
@@ -301,7 +304,7 @@ ENTRA_CLIENT_SECRET=<app-registration-secret>
 redis-connection-string=<azure-redis-connection-string>
 
 # Admin System - REQUIRED
-NEXT_PUBLIC_SUPER_ADMINS=admin1@example.com,admin2@example.com
+SUPER_ADMINS=admin1@example.com,admin2@example.com
 
 # Optional
 search-results-limit=100

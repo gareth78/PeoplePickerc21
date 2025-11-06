@@ -6,7 +6,14 @@ import { getRedisClient } from '@/lib/redis';
  * Super admins cannot be removed and have full access
  */
 function getSuperAdmins(): string[] {
-  const superAdminsEnv = process.env.NEXT_PUBLIC_SUPER_ADMINS || '';
+  const superAdminsEnv =
+    process.env.SUPER_ADMINS ?? process.env.NEXT_PUBLIC_SUPER_ADMINS ?? '';
+
+  if (!process.env.SUPER_ADMINS && process.env.NEXT_PUBLIC_SUPER_ADMINS) {
+    console.warn(
+      '[adminAuth] NEXT_PUBLIC_SUPER_ADMINS is deprecated. Please use SUPER_ADMINS instead.'
+    );
+  }
   return superAdminsEnv
     .split(',')
     .map((email) => email.trim().toLowerCase())

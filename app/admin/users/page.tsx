@@ -300,7 +300,7 @@ export default function AdminUsersPage() {
         <h3 className="text-sm font-semibold text-blue-900 mb-2">About Admin Roles</h3>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>
-            <strong>Super Admins:</strong> Defined via NEXT_PUBLIC_SUPER_ADMINS environment
+            <strong>Super Admins:</strong> Defined via SUPER_ADMINS environment
             variable and cannot be removed through the UI.
           </li>
           <li>

@@ -7,6 +7,7 @@ export const TTL = {
   SEARCH: 3600,      // 1 hour
   GROUPS: 604800,    // 7 days
   PRESENCE: 300,     // 5 minutes (future use)
+  OOO: 1800,         // 30 minutes
 } as const;
 
 // Get Redis connection string from env

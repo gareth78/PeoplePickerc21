@@ -13,6 +13,7 @@ RUN npm ci
 COPY . .
 
 # Build Next.js app
+RUN npx prisma generate
 RUN npm run build
 
 # Production stage

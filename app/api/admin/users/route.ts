@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { withAdminAuth } from '@/lib/admin/middleware';
 import { createAuditLog } from '@/lib/admin/audit';
 import prisma from '@/lib/prisma';
@@ -71,6 +72,7 @@ export const POST = withAdminAuth(async (request: NextRequest, session) => {
     // Create new admin
     const newAdmin = await prisma.admin.create({
       data: {
+        id: randomUUID(),
         email: normalizedEmail,
         username: normalizedUsername,
         createdBy: session.email,

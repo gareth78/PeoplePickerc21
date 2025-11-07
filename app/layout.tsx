@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
+import '@/lib/server/bootstrap';
 
 export const metadata: Metadata = {
   title: 'Org Contact Lookup',

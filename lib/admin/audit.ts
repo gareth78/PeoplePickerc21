@@ -1,5 +1,6 @@
-import prisma from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 import { headers } from 'next/headers';
+import prisma from '@/lib/prisma';
 
 export type AuditAction =
   | 'LOGIN'
@@ -36,6 +37,7 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
 
     await prisma.auditLog.create({
       data: {
+        id: randomUUID(),
         action,
         adminEmail: adminEmail.toLowerCase(),
         targetEmail: targetEmail?.toLowerCase(),

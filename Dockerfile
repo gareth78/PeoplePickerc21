@@ -10,6 +10,10 @@ COPY prisma ./prisma
 RUN npx prisma generate
 # Copy rest of the source
 COPY . .
+ARG DATABASE_URL
+ARG INITIAL_ADMIN_EMAIL
+ENV DATABASE_URL=${DATABASE_URL}
+ENV INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL}
 RUN npm run build
 
 # --- runner ---

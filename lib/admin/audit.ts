@@ -12,7 +12,8 @@ export type AuditAction =
   | 'VIEW_ADMINS'
   | 'VIEW_AUDIT_LOGS'
   | 'FAILED_LOGIN'
-  | 'UNAUTHORIZED_ACCESS';
+  | 'UNAUTHORIZED_ACCESS'
+  | 'UPDATE_OKTA_CONFIG';
 
 interface AuditLogParams {
   action: AuditAction;

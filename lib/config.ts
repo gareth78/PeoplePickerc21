@@ -149,8 +149,7 @@ export async function saveOktaConfig(
   // Create audit log
   await createAuditLog({
     action: 'UPDATE_OKTA_CONFIG',
-    email: adminEmail,
-    details: `Updated Okta configuration (orgUrl: ${config.orgUrl})`,
+    adminEmail: adminEmail,
     metadata: {
       orgUrl: config.orgUrl,
       timestamp: new Date().toISOString(),

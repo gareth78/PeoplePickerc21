@@ -260,21 +260,31 @@ export default function ConfigurationPage() {
                   </div>
                 )}
 
-                {/* Save/Cancel Buttons */}
-                {oktaChanged && (
-                  <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                {/* Save/Cancel Buttons - Always Visible */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                  {oktaChanged ? (
+                    <div className="flex items-center space-x-2 text-amber-600">
+                      <span className="text-sm font-medium">● Unsaved changes</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-sm font-medium">All changes saved</span>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-3">
                     <button
                       onClick={handleCancelOkta}
-                      disabled={oktaSaving}
-                      className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                      disabled={!oktaChanged || oktaSaving}
+                      className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <X className="w-4 h-4" />
                       <span>Cancel</span>
                     </button>
                     <button
                       onClick={handleSaveOkta}
-                      disabled={oktaSaving}
-                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      disabled={!oktaChanged || oktaSaving}
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {oktaSaving ? (
                         <>
@@ -284,12 +294,12 @@ export default function ConfigurationPage() {
                       ) : (
                         <>
                           <Save className="w-4 h-4" />
-                          <span>Save Changes</span>
+                          <span>Save to Database</span>
                         </>
                       )}
                     </button>
                   </div>
-                )}
+                </div>
               </>
             )}
           </div>

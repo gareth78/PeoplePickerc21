@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import SearchInterface from '@/components/search/SearchInterface';
-import UserIdentity from '@/components/UserIdentity';
+import UserMenu from '@/components/UserMenu';
 import Link from 'next/link';
 
 export default function HomePage() {
@@ -74,18 +74,9 @@ export default function HomePage() {
           <p className="text-sm text-gray-400 mt-1">
             version {version}
             {buildDate && ` • ${buildDate}`}
-            {adminStatus?.isAdmin ? (
-              <>
-                {' '}
-                •{' '}
-                <Link href="/admin/dashboard" className="text-primary hover:text-primary-dark">
-                  Admin
-                </Link>
-              </>
-            ) : null}
           </p>
         </div>
-        <UserIdentity />
+        <UserMenu isAdmin={adminStatus?.isAdmin || false} />
       </div>
 
       <SearchInterface userOrganization={userOrg} />

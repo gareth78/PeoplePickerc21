@@ -9,6 +9,7 @@ import {
   LogOut,
   Home,
   AlertTriangle,
+  Settings,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -87,6 +88,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { name: 'Dashboard', href: '/admin/dashboard', icon: Home },
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Audit Logs', href: '/admin/audit', icon: FileText },
+    { name: 'Configuration', href: '/admin/configuration', icon: Settings },
   ];
 
   return (

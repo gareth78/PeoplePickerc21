@@ -35,3 +35,61 @@ model AuditLog {
   @@index([createdAt])
   @@map("audit_logs")
 }
+
+// ============================================================================
+// Configuration System
+// ============================================================================
+
+// Generic key-value configuration store
+// Used for Okta config and other simple settings
+model Configuration {
+  id        String   @id @default(cuid()) @db.UniqueIdentifier
+  key       String   @unique @db.NVarChar(255)  // e.g., "okta_org_url", "okta_api_token"
+  value     String   @db.NVarChar(Max)           // Encrypted for sensitive fields
+  category  String   @db.NVarChar(50)            // "okta", "office365", "smtp", "general"
+  encrypted Boolean  @default(false)             // Whether value is encrypted
+  enabled   Boolean  @default(true)              // Whether this config is active
+  
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime2
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime2
+  createdBy String?  @map("created_by") @db.NVarChar(255)  // Admin email who created/updated
+  
+  @@index([category])
+  @@index([enabled])
+  @@map("configurations")
+}
+
+// Office 365 Tenancy Configuration
+// For future multi-tenancy support
+model OfficeTenancy {
+  id           String   @id @default(cuid()) @db.UniqueIdentifier
+  name         String   @db.NVarChar(255)      // "UK Office", "US Office"
+  tenantId     String   @unique @db.NVarChar(255)
+  clientId     String   @db.NVarChar(255)
+  clientSecret String   @db.NVarChar(Max)      // Encrypted
+  enabled      Boolean  @default(true)
+  
+  domains      SmtpDomain[]
+  
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime2
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.DateTime2
+  createdBy    String?  @map("created_by") @db.NVarChar(255)
+  
+  @@map("office_tenancies")
+}
+
+// SMTP Domain Routing
+// Maps email domains to Office 365 tenancies
+model SmtpDomain {
+  id         String   @id @default(cuid()) @db.UniqueIdentifier
+  domain     String   @unique @db.NVarChar(255)  // "plan-international.org.uk"
+  tenancyId  String   @map("tenancy_id") @db.UniqueIdentifier
+  tenancy    OfficeTenancy @relation(fields: [tenancyId], references: [id], onDelete: Cascade)
+  priority   Int      @default(0)                 // For routing priority
+  
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime2
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.DateTime2
+  
+  @@index([tenancyId])
+  @@map("smtp_domains")
+}

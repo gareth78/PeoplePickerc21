@@ -2,21 +2,10 @@
 // Uses 'q' parameter for simple text search across firstName, lastName, email
 
 import { User, OktaUser, SearchResult } from './types';
+import { getOktaConfig } from './config';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
-
-const OKTA_ORG_URL = process.env['okta-org-url'];
-const OKTA_API_TOKEN = process.env['okta-api-token'];
-
-function validateOktaConfig(): void {
-  if (!process.env['okta-org-url']) {
-    throw new Error("'okta-org-url' environment variable is required");
-  }
-  if (!process.env['okta-api-token']) {
-    throw new Error("'okta-api-token' environment variable is required");
-  }
-}
 
 export function normalizeUser(oktaUser: OktaUser): User {
   const profile = oktaUser.profile;
@@ -83,9 +72,9 @@ async function fetchWithRetry<T>(fn: () => Promise<T>, retryCount = 0): Promise<
 
 export async function searchUsers(query: string, limit = 100, cursor?: string): Promise<SearchResult> {
   return fetchWithRetry(async () => {
-    validateOktaConfig();
+    const config = await getOktaConfig();
 
-    const baseUrl = `${OKTA_ORG_URL}/api/v1/users`;
+    const baseUrl = `${config.orgUrl}/api/v1/users`;
     const params = new URLSearchParams();
 
     params.append('limit', limit.toString());
@@ -121,7 +110,7 @@ export async function searchUsers(query: string, limit = 100, cursor?: string): 
         method: 'GET',
         headers: {
           Accept: 'application/json',
-          Authorization: `SSWS ${OKTA_API_TOKEN}`,
+          Authorization: `SSWS ${config.apiToken}`,
         },
         signal: controller.signal,
       });
@@ -159,9 +148,9 @@ export async function searchUsers(query: string, limit = 100, cursor?: string): 
 
 export async function getUserById(id: string): Promise<User> {
   return fetchWithRetry(async () => {
-    validateOktaConfig();
+    const config = await getOktaConfig();
 
-    const url = `${OKTA_ORG_URL}/api/v1/users/${id}`;
+    const url = `${config.orgUrl}/api/v1/users/${id}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
@@ -171,7 +160,7 @@ export async function getUserById(id: string): Promise<User> {
         method: 'GET',
         headers: {
           Accept: 'application/json',
-          Authorization: `SSWS ${OKTA_API_TOKEN}`,
+          Authorization: `SSWS ${config.apiToken}`,
         },
         signal: controller.signal,
       });
@@ -190,9 +179,9 @@ export async function getUserById(id: string): Promise<User> {
 
 export async function searchUserByEmail(email: string): Promise<User | null> {
   return fetchWithRetry(async () => {
-    validateOktaConfig();
+    const config = await getOktaConfig();
 
-    const baseUrl = `${process.env['okta-org-url']}/api/v1/users`;
+    const baseUrl = `${config.orgUrl}/api/v1/users`;
     const params = new URLSearchParams();
     params.append('q', email);
     params.append('limit', '1');
@@ -207,7 +196,7 @@ export async function searchUserByEmail(email: string): Promise<User | null> {
         method: 'GET',
         headers: {
           Accept: 'application/json',
-          Authorization: `SSWS ${process.env['okta-api-token']}`,
+          Authorization: `SSWS ${config.apiToken}`,
         },
         signal: controller.signal,
       });

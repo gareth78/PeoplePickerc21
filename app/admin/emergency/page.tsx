@@ -1,8 +1,5 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Shield, AlertTriangle, Lock } from 'lucide-react';

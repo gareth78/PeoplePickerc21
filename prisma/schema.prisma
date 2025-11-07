@@ -13,6 +13,7 @@ datasource db {
 model Admin {
   id        String   @id @default(uuid()) @db.UniqueIdentifier
   email     String   @unique
+  username  String   @unique
   createdAt DateTime @default(now()) @map("created_at")
   createdBy String?  @map("created_by")
 

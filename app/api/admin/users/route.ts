@@ -31,22 +31,39 @@ export const GET = withAdminAuth(async (request: NextRequest, session) => {
 // POST - Create new admin
 export const POST = withAdminAuth(async (request: NextRequest, session) => {
   try {
-    const { email } = await request.json();
+    const { email, username } = await request.json();
 
     if (!email) {
       return NextResponse.json({ error: 'Email required' }, { status: 400 });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    if (!username) {
+      return NextResponse.json({ error: 'Username required' }, { status: 400 });
+    }
 
-    // Check if admin already exists
-    const existing = await prisma.admin.findUnique({
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedUsername = username.toLowerCase().trim();
+
+    // Check if admin already exists by email
+    const existingByEmail = await prisma.admin.findUnique({
       where: { email: normalizedEmail },
     });
 
-    if (existing) {
+    if (existingByEmail) {
       return NextResponse.json(
-        { error: 'Admin already exists' },
+        { error: 'Admin with this email already exists' },
+        { status: 409 }
+      );
+    }
+
+    // Check if username already exists
+    const existingByUsername = await prisma.admin.findUnique({
+      where: { username: normalizedUsername },
+    });
+
+    if (existingByUsername) {
+      return NextResponse.json(
+        { error: 'Username already taken' },
         { status: 409 }
       );
     }
@@ -55,6 +72,7 @@ export const POST = withAdminAuth(async (request: NextRequest, session) => {
     const newAdmin = await prisma.admin.create({
       data: {
         email: normalizedEmail,
+        username: normalizedUsername,
         createdBy: session.email,
       },
     });

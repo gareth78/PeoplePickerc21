@@ -23,11 +23,8 @@ export async function GET() {
         id: true,
         username: true,
         email: true,
-        isActive: true,
-        isSuperAdmin: true,
-        lastLoginAt: true,
         createdAt: true,
-        updatedAt: true,
+        createdBy: true,
       },
     });
 

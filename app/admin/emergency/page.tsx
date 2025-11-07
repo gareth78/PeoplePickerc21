@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Shield, AlertTriangle, Lock } from 'lucide-react';
 
-export default function EmergencyAccessPage() {
+function EmergencyAccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -209,5 +209,24 @@ export default function EmergencyAccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EmergencyAccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+            <div className="flex items-center justify-center mb-6">
+              <Shield className="w-12 h-12 text-orange-500 animate-pulse" />
+            </div>
+            <p className="text-center text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <EmergencyAccessContent />
+    </Suspense>
   );
 }

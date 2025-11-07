@@ -81,6 +81,21 @@ ENTRA_CLIENT_SECRET=your-app-client-secret
 redis-connection-string=redis://localhost:6379
 ```
 
+### SQL Server configuration
+
+- `DATABASE_URL` must point to Azure SQL using the SQL Server driver:
+
+  ```env
+  DATABASE_URL="sqlserver://USERNAME:PASSWORD@SERVERNAME.database.windows.net:1433?database=DBNAME&encrypt=true&trustServerCertificate=false&connectionTimeout=30"
+  INITIAL_ADMIN_EMAIL=admin@example.com
+  ```
+
+- URL-encode any reserved characters (such as `@`, `#`, `%`, or `:`) inside the password.
+- Provide the same `DATABASE_URL` at build time (`npm run build`) and runtime (Azure Container Apps environment variables) so Prisma targets the correct database.
+- After the app starts, confirm connectivity via:
+  - `GET /api/ping` → returns `{ "ok": true }`
+  - `GET /api/admin/check` (with your auth context) → returns `{ "isAdmin": true }` once the admin bootstrap has run.
+
 4. **Run development server:**
 ```bash
 npm run dev

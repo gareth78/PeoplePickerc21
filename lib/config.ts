@@ -110,41 +110,27 @@ export async function saveOktaConfig(
 ): Promise<void> {
   const encryptedToken = encrypt(config.apiToken);
 
-  // Upsert org URL
-  await prisma.configuration.upsert({
-    where: { key: 'okta_org_url' },
-    update: {
-      value: config.orgUrl,
-      updatedAt: new Date(),
-      createdBy: adminEmail,
-    },
-    create: {
-      key: 'okta_org_url',
-      value: config.orgUrl,
-      category: 'okta',
-      encrypted: false,
-      enabled: true,
-      createdBy: adminEmail,
-    },
-  });
+  // Use raw SQL to insert with NEWID() for SQL Server compatibility
+  await prisma.$executeRaw`
+    IF EXISTS (SELECT 1 FROM configurations WHERE [key] = 'okta_org_url')
+      UPDATE configurations 
+      SET [value] = ${config.orgUrl}, updated_at = GETDATE(), created_by = ${adminEmail}
+      WHERE [key] = 'okta_org_url'
+    ELSE
+      INSERT INTO configurations (id, [key], [value], category, encrypted, enabled, created_at, updated_at, created_by)
+      VALUES (NEWID(), 'okta_org_url', ${config.orgUrl}, 'okta', 0, 1, GETDATE(), GETDATE(), ${adminEmail})
+  `;
 
-  // Upsert API token
-  await prisma.configuration.upsert({
-    where: { key: 'okta_api_token' },
-    update: {
-      value: encryptedToken,
-      updatedAt: new Date(),
-      createdBy: adminEmail,
-    },
-    create: {
-      key: 'okta_api_token',
-      value: encryptedToken,
-      category: 'okta',
-      encrypted: true,
-      enabled: true,
-      createdBy: adminEmail,
-    },
-  });
+  // Use raw SQL for API token too
+  await prisma.$executeRaw`
+    IF EXISTS (SELECT 1 FROM configurations WHERE [key] = 'okta_api_token')
+      UPDATE configurations 
+      SET [value] = ${encryptedToken}, updated_at = GETDATE(), created_by = ${adminEmail}
+      WHERE [key] = 'okta_api_token'
+    ELSE
+      INSERT INTO configurations (id, [key], [value], category, encrypted, enabled, created_at, updated_at, created_by)
+      VALUES (NEWID(), 'okta_api_token', ${encryptedToken}, 'okta', 1, 1, GETDATE(), GETDATE(), ${adminEmail})
+  `;
 
   // Create audit log
   await createAuditLog({

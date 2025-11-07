@@ -11,14 +11,14 @@ datasource db {
 }
 
 model Admin {
-  id        String   @id @default(uuid()) @db.UniqueIdentifier
-  email     String   @unique
-  username  String   @unique
-  createdAt DateTime @default(now()) @map("created_at")
-  createdBy String?  @map("created_by")
+  id         String    @id @default(uuid()) @db.UniqueIdentifier
+  email      String    @unique @db.NVarChar(255)
+  createdAt  DateTime? @db.DateTime2 @map("created_at")
+  createdBy  String?   @db.UniqueIdentifier @map("created_by")
 
   @@map("admins")
 }
+
 
 model AuditLog {
   id          String   @id @default(uuid()) @db.UniqueIdentifier

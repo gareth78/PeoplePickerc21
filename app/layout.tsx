@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
-import '@/lib/server/bootstrap';
+import { bootstrapAdmin } from '@/lib/bootstrap';
+
+if (typeof window === 'undefined') {
+  void bootstrapAdmin();
+}
 
 export const metadata: Metadata = {
   title: 'Org Contact Lookup',

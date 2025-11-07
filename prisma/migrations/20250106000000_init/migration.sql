@@ -1,12 +1,27 @@
--- CreateTable
-CREATE TABLE "admins" (
-    "id" UUID NOT NULL,
-    "email" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "created_by" TEXT,
+BEGIN TRY
 
-    CONSTRAINT "admins_pkey" PRIMARY KEY ("id")
+BEGIN TRAN;
+
+-- CreateTable
+CREATE TABLE [dbo].[admins] (
+    [id] UNIQUEIDENTIFIER NOT NULL,
+    [email] NVARCHAR(1000) NOT NULL,
+    [created_at] DATETIME2 NOT NULL CONSTRAINT [admins_created_at_df] DEFAULT CURRENT_TIMESTAMP,
+    [created_by] NVARCHAR(1000),
+    CONSTRAINT [admins_pkey] PRIMARY KEY CLUSTERED ([id]),
+    CONSTRAINT [admins_email_key] UNIQUE NONCLUSTERED ([email])
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "admins_email_key" ON "admins"("email");
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH
+

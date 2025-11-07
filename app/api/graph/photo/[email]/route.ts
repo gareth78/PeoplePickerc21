@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getUserPhoto } from '@/lib/graph';
 import { getRedisClient, TTL } from '@/lib/redis';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(
   request: Request,
   { params }: { params: { email: string } }

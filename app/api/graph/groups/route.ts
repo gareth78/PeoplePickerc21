@@ -3,6 +3,7 @@ import { searchGroups, getGroupPhoto, getGroupMemberCount } from '@/lib/graph';
 import { cacheGet, cacheSet, TTL } from '@/lib/redis';
 import type { Group, GroupSearchResult } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {

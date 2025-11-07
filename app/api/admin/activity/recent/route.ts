@@ -3,6 +3,9 @@ import { withAdminAuth } from '@/lib/admin/middleware';
 import { getRecentAuditLogs } from '@/lib/admin/audit';
 import { createAuditLog } from '@/lib/admin/audit';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export const GET = withAdminAuth(async (request: NextRequest, session) => {
   try {
     await createAuditLog({

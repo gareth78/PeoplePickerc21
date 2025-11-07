@@ -1,12 +1,12 @@
 # Admin Authentication and Management System
 
-A comprehensive, production-grade admin authentication and management system with PostgreSQL backing, emergency break-glass access, and professional UI.
+A comprehensive, production-grade admin authentication and management system with Azure SQL Database (SQL Server) backing, emergency break-glass access, and professional UI.
 
 ## 🎯 Overview
 
 This system provides secure admin authentication and management for the People Picker application with:
 
-- **Database-backed authentication** using PostgreSQL
+- **Database-backed authentication** using Azure SQL Database (SQL Server)
 - **Emergency "break glass" access** via secure URL token
 - **Beautiful, professional UI** for admin operations
 - **Comprehensive audit logging** of all admin actions
@@ -82,11 +82,11 @@ npx prisma migrate dev
 
 ### 3. Create Initial Admin
 
-Connect to your PostgreSQL database and run:
+Connect to your SQL Server database and run:
 
 ```sql
 INSERT INTO admins (id, email, created_by)
-VALUES (gen_random_uuid(), 'your-email@domain.com', 'system');
+VALUES (NEWID(), 'your-email@domain.com', 'system');
 ```
 
 ## 📋 Database Schema
@@ -95,10 +95,10 @@ VALUES (gen_random_uuid(), 'your-email@domain.com', 'system');
 
 ```sql
 CREATE TABLE admins (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email TEXT UNIQUE NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  created_by TEXT
+  id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+  email NVARCHAR(320) UNIQUE NOT NULL,
+  created_at DATETIME2 DEFAULT SYSUTCDATETIME(),
+  created_by NVARCHAR(320)
 );
 ```
 
@@ -106,16 +106,18 @@ CREATE TABLE admins (
 
 ```sql
 CREATE TABLE audit_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  action TEXT NOT NULL,
-  admin_email TEXT NOT NULL,
-  target_email TEXT,
-  ip_address TEXT,
-  user_agent TEXT,
-  metadata JSONB,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+  action NVARCHAR(100) NOT NULL,
+  admin_email NVARCHAR(320) NOT NULL,
+  target_email NVARCHAR(320),
+  ip_address NVARCHAR(100),
+  user_agent NVARCHAR(400),
+  metadata NVARCHAR(MAX),
+  created_at DATETIME2 DEFAULT SYSUTCDATETIME()
 );
 ```
+
+> **Note:** The `metadata` column stores serialized text (such as JSON) for flexibility across audit events.
 
 ## 🔐 Security Features
 
@@ -299,7 +301,7 @@ export const GET = withAdminAuth(async (request, session) => {
 2. Via Database:
    ```sql
    INSERT INTO admins (id, email, created_by)
-   VALUES (gen_random_uuid(), 'new-admin@domain.com', 'existing-admin@domain.com');
+   VALUES (NEWID(), 'new-admin@domain.com', 'existing-admin@domain.com');
    ```
 
 ### Remove an Admin
@@ -322,9 +324,9 @@ export const GET = withAdminAuth(async (request, session) => {
 1. Via UI: Go to `/admin/audit`
 2. Via Database:
    ```sql
-   SELECT * FROM audit_logs
-   ORDER BY created_at DESC
-   LIMIT 100;
+   SELECT TOP (100) *
+   FROM audit_logs
+   ORDER BY created_at DESC;
    ```
 
 ### Check Who's an Admin
@@ -392,7 +394,7 @@ ORDER BY created_at DESC;
 ### Database Connection Issues
 
 1. Verify `DATABASE_URL` in `.env.local`
-2. Check PostgreSQL is running
+2. Confirm your Azure SQL Database (SQL Server) is reachable
 3. Verify migrations are applied:
    ```bash
    npx prisma migrate status
@@ -406,21 +408,21 @@ ORDER BY created_at DESC;
    ```sql
    SELECT COUNT(*) FROM audit_logs
    WHERE action = 'FAILED_LOGIN'
-   AND created_at > NOW() - INTERVAL '24 hours';
+   AND created_at > DATEADD(HOUR, -24, SYSUTCDATETIME());
    ```
 
 2. **Emergency Access Usage**
    ```sql
    SELECT COUNT(*) FROM audit_logs
    WHERE action IN ('BREAK_GLASS_ACCESS', 'BREAK_GLASS_LOGIN')
-   AND created_at > NOW() - INTERVAL '30 days';
+   AND created_at > DATEADD(DAY, -30, SYSUTCDATETIME());
    ```
 
 3. **Admin Activity**
    ```sql
-   SELECT admin_email, COUNT(*) as actions
+   SELECT admin_email, COUNT(*) AS actions
    FROM audit_logs
-   WHERE created_at > NOW() - INTERVAL '7 days'
+   WHERE created_at > DATEADD(DAY, -7, SYSUTCDATETIME())
    GROUP BY admin_email
    ORDER BY actions DESC;
    ```

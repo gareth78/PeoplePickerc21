@@ -31,17 +31,19 @@ npx prisma db push
 
 ### 4. Add Your First Admin
 
-Connect to your PostgreSQL database and run:
+Connect to your SQL Server database and run:
 
 ```sql
 INSERT INTO admins (id, email, created_by)
-VALUES (gen_random_uuid(), 'your-email@yourdomain.com', 'system');
+VALUES (NEWID(), 'your-email@yourdomain.com', 'system');
 ```
 
-Or use psql:
+Or use `sqlcmd`:
 ```bash
-psql $DATABASE_URL -c "INSERT INTO admins (id, email, created_by) VALUES (gen_random_uuid(), 'your-email@yourdomain.com', 'system');"
+sqlcmd -S your-server.database.windows.net -d peoplepicker -U sqladmin -P "<YourPassword>" -Q "INSERT INTO admins (id, email, created_by) VALUES (NEWID(), 'your-email@yourdomain.com', 'system');"
 ```
+
+> **Note:** Audit log metadata is stored as serialized text (for example, JSON) within SQL Server to support flexible event details.
 
 ### 5. Start the Application
 

@@ -1,26 +1,26 @@
+// app/api/admin/audit/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { withAdminAuth } from '@/lib/admin/middleware';
-import { getRecentAuditLogs, createAuditLog } from '@/lib/admin/audit';
+import { verifyAdminAuth } from '@/lib/admin/auth';
+import { getRecentActivity } from '@/lib/admin/stats';
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+export async function GET(request: NextRequest) {
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.authenticated || !authResult.session) {
+    return authResult.response!;
+  }
 
-export const GET = withAdminAuth(async (request: NextRequest, session) => {
   try {
-    await createAuditLog({
-      action: 'VIEW_AUDIT_LOGS',
-      adminEmail: session.email,
-      metadata: { type: 'full_audit_view' },
-    });
-
-    const logs = await getRecentAuditLogs(200);
-
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '10');
+    
+    const logs = await getRecentActivity(limit);
+    
     return NextResponse.json({ logs });
-  } catch (error) {
-    console.error('Audit logs fetch error:', error);
+  } catch (error: any) {
+    console.error('Audit API error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch audit logs' },
       { status: 500 }
     );
   }
-});
+}

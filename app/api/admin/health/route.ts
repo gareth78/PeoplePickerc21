@@ -1,7 +1,7 @@
-// app/api/admin/stats/route.ts
+// app/api/admin/health/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminAuth } from '@/lib/admin/auth';
-import { getDashboardStats } from '@/lib/admin/stats';
+import { checkSystemHealth } from '@/lib/admin/stats';
 
 export async function GET(request: NextRequest) {
   const authResult = await verifyAdminAuth(request);
@@ -10,12 +10,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const stats = await getDashboardStats();
-    return NextResponse.json(stats);
+    const health = await checkSystemHealth();
+    return NextResponse.json(health);
   } catch (error: any) {
-    console.error('Stats API error:', error);
+    console.error('Health check API error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch statistics' },
+      { error: 'Health check failed' },
       { status: 500 }
     );
   }

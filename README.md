@@ -218,6 +218,7 @@ GitHub → Actions → Container Registry → Container App
 
 **2. Configure GitHub Actions:**
 - Add secrets: `AZURE_CREDENTIALS`, `REGISTRY_LOGIN_SERVER`
+  - `AZURE_CREDENTIALS` must be JSON with camelCased keys: `clientId`, `clientSecret`, `subscriptionId`, `tenantId`.
 - Pipeline auto-builds on push to main
 
 **3. Configure Container App:**

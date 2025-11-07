@@ -11,6 +11,7 @@ env:
   AZURE_RG: PeoplePickerc21
   CONTAINER_APP_NAME: peoplepickerc21-env
   TASK: Stabilise Prisma build and deploy to Azure Container Apps
+  AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
 jobs:
   build-and-push:
@@ -74,9 +75,7 @@ jobs:
       - name: Azure login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Container Apps
         uses: azure/cli@v2

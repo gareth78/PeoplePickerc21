@@ -3,6 +3,7 @@ import { getGroupDetail, getGroupMembers, getGroupOwners, getGroupPhoto } from '
 import { cacheGet, cacheSet, TTL } from '@/lib/redis';
 import type { GroupDetail, GroupMember } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET(

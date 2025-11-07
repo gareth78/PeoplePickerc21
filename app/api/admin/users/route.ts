@@ -3,6 +3,9 @@ import { withAdminAuth } from '@/lib/admin/middleware';
 import { createAuditLog } from '@/lib/admin/audit';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // GET all admins
 export const GET = withAdminAuth(async (request: NextRequest, session) => {
   try {

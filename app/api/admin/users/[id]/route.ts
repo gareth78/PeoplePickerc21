@@ -3,6 +3,9 @@ import { verifyAdminAuth } from '@/lib/admin/middleware';
 import { createAuditLog } from '@/lib/admin/audit';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 interface RouteContext {
   params: { id: string };
 }

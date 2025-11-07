@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/admin/middleware';
 import { getRecentAuditLogs, createAuditLog } from '@/lib/admin/audit';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export const GET = withAdminAuth(async (request: NextRequest, session) => {
   try {
     await createAuditLog({

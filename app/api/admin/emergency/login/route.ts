@@ -6,6 +6,9 @@ import {
 } from '@/lib/admin/auth';
 import { createAuditLog } from '@/lib/admin/audit';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password, token } = await request.json();

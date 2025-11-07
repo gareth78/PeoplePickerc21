@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyEmergencyToken } from '@/lib/admin/auth';
 import { createAuditLog } from '@/lib/admin/audit';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     const { token } = await request.json();

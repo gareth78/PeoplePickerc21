@@ -1,14 +1,41 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import type { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
 const secret = new TextEncoder().encode(JWT_SECRET);
+const SESSION_COOKIE_NAME = 'admin_token';
 
 export interface AdminSession {
   email: string;
   isEmergency: boolean;
   exp: number;
+}
+
+function extractTokenFromRequest(req: Request | NextRequest): string | null {
+  const anyReq = req as NextRequest & { cookies?: { get?: (name: string) => { value?: string } | undefined } };
+  if (anyReq?.cookies?.get) {
+    const cookie = anyReq.cookies.get(SESSION_COOKIE_NAME);
+    if (cookie?.value) {
+      return cookie.value;
+    }
+  }
+
+  const header = req.headers.get('cookie');
+  if (!header) {
+    return null;
+  }
+
+  const parts = header.split(';');
+  for (const part of parts) {
+    const [rawName, ...rest] = part.trim().split('=');
+    if (rawName === SESSION_COOKIE_NAME) {
+      return rest.length > 0 ? decodeURIComponent(rest.join('=')) : '';
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -44,9 +71,18 @@ export async function verifyAdminToken(token: string): Promise<AdminSession | nu
 /**
  * Get the current admin session from cookies
  */
-export async function getAdminSession(): Promise<AdminSession | null> {
+export async function getAdminSession(req?: Request | NextRequest): Promise<AdminSession | null> {
+  if (req) {
+    const token = extractTokenFromRequest(req);
+    if (!token) {
+      return null;
+    }
+
+    return verifyAdminToken(token);
+  }
+
   const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token');
+  const token = cookieStore.get(SESSION_COOKIE_NAME);
 
   if (!token) {
     return null;
@@ -62,7 +98,7 @@ export async function setAdminSession(email: string, isEmergency: boolean = fals
   const token = await createAdminToken(email, isEmergency);
   const cookieStore = await cookies();
 
-  cookieStore.set('admin_token', token, {
+  cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -76,7 +112,30 @@ export async function setAdminSession(email: string, isEmergency: boolean = fals
  */
 export async function clearAdminSession(): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.delete('admin_token');
+  cookieStore.delete(SESSION_COOKIE_NAME);
+}
+
+export async function createJwtForEmail(email: string, isEmergency: boolean = false) {
+  return createAdminToken(email, isEmergency);
+}
+
+export function setSessionCookie(
+  res: NextResponse,
+  token: string,
+  isEmergency: boolean = false
+) {
+  res.cookies.set(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: isEmergency ? 60 * 60 : 60 * 60 * 24,
+    path: '/',
+  });
+}
+
+export async function hasValidSession(req: Request | NextRequest): Promise<boolean> {
+  const session = await getAdminSession(req);
+  return session !== null;
 }
 
 /**
@@ -90,9 +149,13 @@ export async function isAdmin(email: string): Promise<boolean> {
     const normalizedEmail = email.toLowerCase();
     console.log('[ADMIN DEBUG] Executing query: prisma.admin.findUnique({ where: { email:', normalizedEmail, '} })');
 
-    const admin = await prisma.admin.findUnique({
-      where: { email: normalizedEmail },
-    });
+    const admin =
+      (await prisma.admin.findUnique({
+        where: { email: normalizedEmail },
+      })) ??
+      (await prisma.admin.findUnique({
+        where: { email },
+      }));
 
     console.log('[ADMIN DEBUG] Query result:', admin);
 

@@ -18,6 +18,7 @@ interface AdminLayoutProps {
 interface AdminSession {
   email: string;
   isEmergency: boolean;
+  exp?: number;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -32,10 +33,25 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('/api/admin/session');
+      const response = await fetch('/api/admin/session', { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
-        setSession(data.session);
+        if (data.authenticated) {
+          setSession(
+            data.session ?? {
+              email: data.email,
+              isEmergency: false,
+            }
+          );
+          return;
+        }
+
+        const params = new URLSearchParams();
+        params.set('error', data.reason ?? 'unauthorized');
+        if (data.email) {
+          params.set('email', data.email);
+        }
+        router.push(`/?${params.toString()}`);
       } else {
         router.push('/?error=unauthorized');
       }

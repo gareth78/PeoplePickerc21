@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 export default function HomePage() {
   const [userOrg, setUserOrg] = useState<string>();
+  const [adminStatus, setAdminStatus] = useState<{ isAdmin: boolean; email?: string | null } | null>(null);
 
   // Get version info
   const version = process.env.NEXT_PUBLIC_GIT_SHA || 'dev';
@@ -50,6 +51,18 @@ export default function HomePage() {
       });
   }, []);
 
+  useEffect(() => {
+    fetch('/api/admin/check', { cache: 'no-store' })
+      .then(res => res.ok ? res.json() : { isAdmin: false })
+      .then(data => {
+        setAdminStatus(data);
+      })
+      .catch(err => {
+        console.error('❌ Error checking admin status:', err);
+        setAdminStatus({ isAdmin: false });
+      });
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto px-5 py-8">
       <div className="flex items-center justify-between mb-8">
@@ -61,6 +74,15 @@ export default function HomePage() {
           <p className="text-sm text-gray-400 mt-1">
             version {version}
             {buildDate && ` • ${buildDate}`}
+            {adminStatus?.isAdmin ? (
+              <>
+                {' '}
+                •{' '}
+                <Link href="/admin/dashboard" className="text-primary hover:text-primary-dark">
+                  Admin
+                </Link>
+              </>
+            ) : null}
           </p>
         </div>
         <UserIdentity />

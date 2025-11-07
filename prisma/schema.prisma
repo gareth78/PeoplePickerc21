@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlserver"
   url      = env("DATABASE_URL")
 }
 
 model Admin {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(uuid()) @db.UniqueIdentifier
   email     String   @unique
   createdAt DateTime @default(now()) @map("created_at")
   createdBy String?  @map("created_by")
@@ -20,7 +20,7 @@ model Admin {
 }
 
 model AuditLog {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String   @id @default(uuid()) @db.UniqueIdentifier
   action      String   // e.g., "LOGIN", "LOGOUT", "CREATE_ADMIN", "DELETE_ADMIN", "BREAK_GLASS_ACCESS"
   adminEmail  String   @map("admin_email")
   targetEmail String?  @map("target_email") // For actions on other admins

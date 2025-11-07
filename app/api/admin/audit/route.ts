@@ -1,6 +1,6 @@
 // app/api/admin/audit/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminAuth } from '@/lib/admin/auth';
+import { verifyAdminAuth } from '@/lib/admin/middleware';
 import { getRecentActivity } from '@/lib/admin/stats';
 
 export async function GET(request: NextRequest) {

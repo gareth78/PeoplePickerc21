@@ -1,6 +1,6 @@
 // app/api/admin/stats/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminAuth } from '@/lib/admin/auth';
+import { verifyAdminAuth } from '@/lib/admin/middleware';
 import { getDashboardStats } from '@/lib/admin/stats';
 
 export async function GET(request: NextRequest) {

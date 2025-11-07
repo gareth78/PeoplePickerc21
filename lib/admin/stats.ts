@@ -1,5 +1,6 @@
 // lib/admin/stats.ts
-import { prisma } from '@/lib/db';
+import prisma from '@/lib/prisma';
+import { getRecentAuditLogs } from '@/lib/admin/audit';
 
 export interface DashboardStats {
   searches: {
@@ -49,56 +50,74 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   try {
     // Get audit log counts for search tracking
-    const [totalSearches, todaySearches, weekSearches, lastWeekSearches] = await Promise.all([
-      prisma.audit_logs.count({
-        where: { action: 'SEARCH' }
-      }),
-      prisma.audit_logs.count({
+    const [
+      totalActivity,
+      todayActivity,
+      weekActivity,
+      lastWeekActivity
+    ] = await Promise.all([
+      prisma.auditLog.count(),
+      prisma.auditLog.count({
         where: {
-          action: 'SEARCH',
-          timestamp: { gte: todayStart }
+          createdAt: { gte: todayStart }
         }
       }),
-      prisma.audit_logs.count({
+      prisma.auditLog.count({
         where: {
-          action: 'SEARCH',
-          timestamp: { gte: weekStart }
+          createdAt: { gte: weekStart }
         }
       }),
-      prisma.audit_logs.count({
+      prisma.auditLog.count({
         where: {
-          action: 'SEARCH',
-          timestamp: { gte: lastWeekStart, lt: weekStart }
+          createdAt: {
+            gte: lastWeekStart,
+            lt: weekStart
+          }
         }
       })
     ]);
 
-    // Calculate trend
-    const searchTrend = lastWeekSearches > 0 
-      ? ((weekSearches - lastWeekSearches) / lastWeekSearches) * 100 
+    const searchTrend = lastWeekActivity > 0
+      ? ((weekActivity - lastWeekActivity) / lastWeekActivity) * 100
       : 0;
 
-    // Get unique users from audit logs
-    const uniqueUsersResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
-      SELECT COUNT(DISTINCT details) as count
-      FROM audit_logs
-      WHERE action = 'SEARCH'
-    `;
-    const totalUsers = Number(uniqueUsersResult[0]?.count || 0);
-
-    const activeUsersResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
-      SELECT COUNT(DISTINCT details) as count
-      FROM audit_logs
-      WHERE action = 'SEARCH' AND timestamp >= ${todayStart}
-    `;
-    const activeToday = Number(activeUsersResult[0]?.count || 0);
-
-    // Get database record counts
-    const [configCount, auditCount] = await Promise.all([
-      prisma.configurations.count(),
-      prisma.audit_logs.count()
+    const [totalAdmins, weeklyActiveAdmins, previousWeeklyActiveAdmins, activeTodayAdmins] = await Promise.all([
+      prisma.admin.count(),
+      prisma.auditLog.findMany({
+        where: {
+          createdAt: { gte: weekStart }
+        },
+        distinct: ['adminEmail'],
+        select: { adminEmail: true }
+      }),
+      prisma.auditLog.findMany({
+        where: {
+          createdAt: {
+            gte: lastWeekStart,
+            lt: weekStart
+          }
+        },
+        distinct: ['adminEmail'],
+        select: { adminEmail: true }
+      }),
+      prisma.auditLog.findMany({
+        where: {
+          createdAt: { gte: todayStart }
+        },
+        distinct: ['adminEmail'],
+        select: { adminEmail: true }
+      })
     ]);
 
+    const userTrend = previousWeeklyActiveAdmins.length > 0
+      ? ((weeklyActiveAdmins.length - previousWeeklyActiveAdmins.length) / previousWeeklyActiveAdmins.length) * 100
+      : 0;
+
+    const configCountResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*) as count FROM configurations
+    `;
+    const configCount = Number(configCountResult[0]?.count || 0);
+    const auditCount = totalActivity;
     const totalRecords = configCount + auditCount;
 
     // System info
@@ -109,15 +128,15 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
     return {
       searches: {
-        today: todaySearches,
-        thisWeek: weekSearches,
-        total: totalSearches,
+        today: todayActivity,
+        thisWeek: weekActivity,
+        total: totalActivity,
         trend: Math.round(searchTrend * 10) / 10
       },
       users: {
-        total: totalUsers,
-        activeToday: activeToday,
-        trend: 0 // Could calculate this based on historical data
+        total: totalAdmins,
+        activeToday: activeTodayAdmins.length,
+        trend: Math.round(userTrend * 10) / 10
       },
       database: {
         totalRecords,
@@ -214,23 +233,13 @@ export async function checkSystemHealth(): Promise<SystemHealth> {
 
 export async function getRecentActivity(limit: number = 10) {
   try {
-    const activities = await prisma.audit_logs.findMany({
-      orderBy: { timestamp: 'desc' },
-      take: limit,
-      select: {
-        id: true,
-        action: true,
-        adminEmail: true,
-        timestamp: true,
-        metadata: true
-      }
-    });
+    const activities = await getRecentAuditLogs(limit);
 
     return activities.map(activity => ({
       id: activity.id,
       action: activity.action,
       user: activity.adminEmail || 'System',
-      timestamp: activity.timestamp,
+      timestamp: activity.createdAt,
       metadata: activity.metadata
     }));
   } catch (error) {

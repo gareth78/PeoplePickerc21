@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { StatCard } from '@/components/admin/StatCard';
 import { SystemStatus } from '@/components/admin/SystemStatus';
 import { QuickActions } from '@/components/admin/QuickActions';

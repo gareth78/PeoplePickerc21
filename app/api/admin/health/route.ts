@@ -1,7 +1,7 @@
-// app/api/admin/audit/route.ts
+// app/api/admin/health/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminAuth } from '@/lib/admin/middleware';
-import { getRecentActivity } from '@/lib/admin/stats';
+import { checkSystemHealth } from '@/lib/admin/stats';
 
 export async function GET(request: NextRequest) {
   const authResult = await verifyAdminAuth(request);
@@ -10,16 +10,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '10');
-    
-    const logs = await getRecentActivity(limit);
-    
-    return NextResponse.json({ logs });
+    const health = await checkSystemHealth();
+    return NextResponse.json(health);
   } catch (error: any) {
-    console.error('Audit API error:', error);
+    console.error('Health check API error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch audit logs' },
+      { error: 'Health check failed' },
       { status: 500 }
     );
   }

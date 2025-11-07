@@ -83,11 +83,27 @@ export async function clearAdminSession(): Promise<void> {
  * Check if a user is an admin (exists in the admins table)
  */
 export async function isAdmin(email: string): Promise<boolean> {
-  const admin = await prisma.admin.findUnique({
-    where: { email: email.toLowerCase() },
-  });
+  console.log('[ADMIN DEBUG] Checking email:', email);
+  console.log('[ADMIN DEBUG] Prisma client status:', prisma ? 'initialized' : 'not initialized');
 
-  return !!admin;
+  try {
+    const normalizedEmail = email.toLowerCase();
+    console.log('[ADMIN DEBUG] Executing query: prisma.admin.findUnique({ where: { email:', normalizedEmail, '} })');
+
+    const admin = await prisma.admin.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    console.log('[ADMIN DEBUG] Query result:', admin);
+
+    return !!admin;
+  } catch (error) {
+    console.log('[ADMIN DEBUG] Error occurred during admin check');
+    console.log('[ADMIN DEBUG] Error message:', error instanceof Error ? error.message : String(error));
+    console.log('[ADMIN DEBUG] Full stack trace:', error instanceof Error ? error.stack : 'No stack trace available');
+    console.log('[ADMIN DEBUG] Error object:', error);
+    throw error;
+  }
 }
 
 /**

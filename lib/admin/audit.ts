@@ -41,7 +41,7 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
         targetEmail: targetEmail?.toLowerCase(),
         ipAddress,
         userAgent,
-        metadata: metadata || {},
+        metadata: metadata ? JSON.stringify(metadata) : null,
       },
     });
 
@@ -53,35 +53,63 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
 }
 
 /**
+ * Parse metadata string to object
+ */
+function parseMetadata(metadata: string | null): Record<string, any> | null {
+  if (!metadata) return null;
+  try {
+    return JSON.parse(metadata);
+  } catch (error) {
+    console.error('Failed to parse audit log metadata:', error);
+    return null;
+  }
+}
+
+/**
  * Get recent audit logs
  */
 export async function getRecentAuditLogs(limit: number = 100) {
-  return prisma.auditLog.findMany({
+  const logs = await prisma.auditLog.findMany({
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
+
+  return logs.map(log => ({
+    ...log,
+    metadata: parseMetadata(log.metadata),
+  }));
 }
 
 /**
  * Get audit logs for a specific admin
  */
 export async function getAdminAuditLogs(adminEmail: string, limit: number = 50) {
-  return prisma.auditLog.findMany({
+  const logs = await prisma.auditLog.findMany({
     where: { adminEmail: adminEmail.toLowerCase() },
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
+
+  return logs.map(log => ({
+    ...log,
+    metadata: parseMetadata(log.metadata),
+  }));
 }
 
 /**
  * Get audit logs by action type
  */
 export async function getAuditLogsByAction(action: AuditAction, limit: number = 50) {
-  return prisma.auditLog.findMany({
+  const logs = await prisma.auditLog.findMany({
     where: { action },
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
+
+  return logs.map(log => ({
+    ...log,
+    metadata: parseMetadata(log.metadata),
+  }));
 }
 
 /**

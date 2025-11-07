@@ -26,7 +26,7 @@ model AuditLog {
   targetEmail String?  @map("target_email") // For actions on other admins
   ipAddress   String?  @map("ip_address")
   userAgent   String?  @map("user_agent")
-  metadata    Json?    // Additional context about the action
+  metadata    String?  // Additional context about the action (stored as JSON string)
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("audit_logs")

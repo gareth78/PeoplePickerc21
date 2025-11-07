@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { testOktaConfig } from '@/lib/config';
-import { getAdminFromRequest } from '@/lib/admin/middleware';
+import { verifyAdminAuth } from '@/lib/admin/middleware';
 
 export const runtime = 'nodejs';
 
@@ -14,12 +14,9 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   try {
     // Verify admin authentication
-    const admin = await getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.authenticated || !authResult.session) {
+      return authResult.response!;
     }
 
     // Parse request body

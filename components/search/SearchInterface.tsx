@@ -202,12 +202,26 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
       const email = selectedUser?.email;
       if (!email) {
         setSelectedUserPresence(null);
-        return;
+        return undefined;
       }
 
-      const controller = new AbortController();
+      setSelectedUserPresence(null);
 
-      (async () => {
+      let isActive = true;
+      let controller: AbortController | null = null;
+      let intervalId: ReturnType<typeof setInterval> | null = null;
+
+      const fetchPresence = async () => {
+        if (!isActive) {
+          return;
+        }
+
+        if (controller) {
+          controller.abort();
+        }
+
+        controller = new AbortController();
+
         try {
           const res = await fetch(
             `/api/graph/presence/${encodeURIComponent(email)}`,
@@ -215,32 +229,52 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
           );
 
           if (!res.ok) {
-            setSelectedUserPresence(null);
+            if (isActive) {
+              setSelectedUserPresence(null);
+            }
             return;
           }
 
           const data = await res.json();
 
-          if (data?.ok && data.data) {
-            if (data.data.availability !== 'PresenceUnknown') {
-              setSelectedUserPresence({
-                availability: data.data.availability,
-                activity: data.data.activity
-              });
-            } else {
-              setSelectedUserPresence(null);
-            }
+          if (!isActive) {
+            return;
+          }
+
+          if (data?.ok && data.data && data.data.availability !== 'PresenceUnknown') {
+            setSelectedUserPresence({
+              availability: data.data.availability,
+              activity: data.data.activity
+            });
           } else {
             setSelectedUserPresence(null);
           }
         } catch (err: any) {
-          if (err.name !== 'AbortError') {
+          if (err?.name === 'AbortError') {
+            return;
+          }
+
+          if (isActive) {
             setSelectedUserPresence(null);
           }
         }
-      })();
+      };
 
-      return () => controller.abort();
+      void fetchPresence();
+
+      intervalId = setInterval(() => {
+        void fetchPresence();
+      }, 60_000);
+
+      return () => {
+        isActive = false;
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+        if (controller) {
+          controller.abort();
+        }
+      };
     }, [selectedUser?.email]);
 
     useEffect(() => {

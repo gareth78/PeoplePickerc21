@@ -10,8 +10,7 @@ env:
   IMAGE_NAME: peoplepickerc21
   AZURE_RG: PeoplePickerc21
   CONTAINER_APP_NAME: peoplepickerc21-env
-
-
+  TASK: Stabilise Prisma build and deploy to Azure Container Apps
 
 jobs:
   build-and-push:
@@ -27,6 +26,19 @@ jobs:
           if [[ "${REGISTRY}" == https* || "${REGISTRY}" == */* ]]; then
             echo "::error:: AZURE_CONTAINER_REGISTRY must be like 'yourregistry.azurecr.io' (no https://, no slash)"; exit 1;
           fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Prisma generate (SQL Server artifacts)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma generate
 
       - name: Docker login to ACR
         uses: docker/login-action@v3
@@ -49,32 +61,30 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
           provenance: false
+
       - name: Azure login
         uses: azure/login@v2
         with:
-          # Use your SP JSON secret you created earlier
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-          # (Optional OIDC alternative)
-          # client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          # tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          # subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy new image to Container App (creates new revision)
+      - name: Deploy to Azure Container Apps
         uses: azure/cli@v2
         with:
           inlineScript: |
-            az containerapp revision set-mode \
-              --name ${{ env.CONTAINER_APP_NAME }} \
-              --resource-group ${{ env.AZURE_RG }} \
-              --mode Single
-
+            set -euo pipefail
+            IMG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+            echo "Deploying $IMG to ${{ env.CONTAINER_APP_NAME }} in RG ${{ env.AZURE_RG }}"
             az containerapp update \
-              --name ${{ env.CONTAINER_APP_NAME }} \
-              --resource-group ${{ env.AZURE_RG }} \
-              --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+              --name "${{ env.CONTAINER_APP_NAME }}" \
+              --resource-group "${{ env.AZURE_RG }}" \
+              --image "$IMG"
+            echo "Deployment complete."
 
       - name: Summary
         run: |
+          echo "Task: $TASK"
           echo "Pushed:"
           echo " - $REGISTRY/$IMAGE_NAME:latest"
           echo " - $REGISTRY/$IMAGE_NAME:${{ github.sha }}"

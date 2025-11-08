@@ -6,8 +6,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="People Picker" />
   <Description DefaultValue="Search, view, and insert presence-aware contact blocks without leaving Outlook." />
-  <IconUrl DefaultValue="http://localhost:3000/favicon-32x32.png" />
-  <HighResolutionIconUrl DefaultValue="http://localhost:3000/android-chrome-192x192.png" />
+  <IconUrl DefaultValue="http://localhost:5173/icons/favicon-32x32.png" />
+  <HighResolutionIconUrl DefaultValue="http://localhost:5173/icons/android-chrome-192x192.png" />
   <SupportUrl DefaultValue="https://peoplepicker.example.org/support" />
   <AppDomains>
     <AppDomain>localhost:5173</AppDomain>
@@ -95,9 +95,9 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Assets.Icon16" DefaultValue="http://localhost:3000/favicon-16x16.png" />
-        <bt:Image id="Assets.Icon32" DefaultValue="http://localhost:3000/favicon-32x32.png" />
-        <bt:Image id="Assets.Icon80" DefaultValue="http://localhost:3000/android-chrome-192x192.png" />
+        <bt:Image id="Assets.Icon16" DefaultValue="http://localhost:5173/icons/favicon-16x16.png" />
+        <bt:Image id="Assets.Icon32" DefaultValue="http://localhost:5173/icons/favicon-32x32.png" />
+        <bt:Image id="Assets.Icon80" DefaultValue="http://localhost:5173/icons/android-chrome-192x192.png" />
       </bt:Images>
       <bt:Urls>
         <bt:Url id="Commands.Url" DefaultValue="http://localhost:5173/index.html" />

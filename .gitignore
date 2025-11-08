@@ -25,6 +25,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# build artifacts
+dist/
+apps/*/dist
+packages/*/dist
+
 # package manager artifacts
 .pnp
 .pnp.js

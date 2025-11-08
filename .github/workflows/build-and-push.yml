@@ -10,7 +10,7 @@ env:
   IMAGE_NAME: peoplepickerc21
   AZURE_RG: PeoplePickerc21
   CONTAINER_APP_NAME: peoplepickerc21-env
-  TASK: Stabilise Prisma build and deploy to Azure Container Apps
+  TASK: Set Prisma schema path and make CI call prisma generate successfully
   AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
 jobs:
@@ -37,9 +37,10 @@ jobs:
         run: npm ci
 
       - name: Prisma Generate
+        working-directory: apps/web
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: Build
         run: npm run build

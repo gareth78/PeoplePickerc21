@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSession, isAdmin, AdminSession } from './auth';
 import { createAuditLog } from './audit';
-import { getEmailFromEasyAuth } from './easyauth';
+import { getEmailFromEasyAuth, getEmailFromBearerToken } from './easyauth';
 
 interface AdminAuthResult {
   authenticated: boolean;
@@ -48,7 +48,14 @@ export async function verifyAdminAuth(request: NextRequest): Promise<AdminAuthRe
     };
   }
 
-  const email = getEmailFromEasyAuth(request);
+  // Try EasyAuth first
+  let email = getEmailFromEasyAuth(request);
+
+  // If not found, try Bearer token
+  if (!email) {
+    email = getEmailFromBearerToken(request);
+  }
+
   if (email) {
     const adminExists = await isAdmin(email);
     if (adminExists) {

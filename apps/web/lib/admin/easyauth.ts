@@ -29,3 +29,41 @@ export function getEmailFromEasyAuth(req: Request): string | null {
     return null;
   }
 }
+
+/**
+ * Extract email from Bearer token (Office.js SSO token)
+ * Returns the email address from the token's preferred_username or upn claim
+ */
+export function getEmailFromBearerToken(req: Request): string | null {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  try {
+    const token = authHeader.substring(7);
+    // JWT tokens have 3 parts separated by dots: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
+
+    // Decode the payload (second part)
+    const payload = parts[1];
+    // JWT uses base64url encoding, which needs to be converted to regular base64
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const json = b64ToUtf8(base64);
+    const claims = JSON.parse(json) as {
+      preferred_username?: string;
+      upn?: string;
+      email?: string;
+      unique_name?: string;
+    };
+
+    // Return the email from various possible claims
+    return claims.preferred_username ?? claims.upn ?? claims.email ?? claims.unique_name ?? null;
+  } catch (error) {
+    // Token parsing failed
+    return null;
+  }
+}

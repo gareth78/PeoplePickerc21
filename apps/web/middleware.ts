@@ -7,6 +7,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://localhost:3000',
   'https://localhost:5173',
   'https://addin.example.org',
+  'https://jolly-sky-08c0ccf03.3.azurestaticapps.net',
 ] as const;
 
 const parseOrigins = (raw: string | null | undefined): string[] => {

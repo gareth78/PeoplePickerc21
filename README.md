@@ -47,26 +47,26 @@ Modern, production-ready people directory application integrating Okta user data
 
 ### Prerequisites
 - Node.js 20 LTS
-- Docker Desktop (optional, for local container testing)
-- Azure subscription (for deployment)
-- Okta admin access (for API token)
-- Microsoft Entra ID admin access (for Graph API)
+- npm (bundled with Node 20)
+- Okta admin access (API token)
+- Microsoft Entra ID admin access (Graph API client)
+- Docker Desktop (optional, for container testing)
+- Outlook on the web (Monarch) if you plan to sideload the add-in
 
-### Local Development
+### Install dependencies
 
-1. **Clone and install:**
 ```bash
 git clone https://github.com/YOUR_ORG/PeoplePickerc21.git
 cd PeoplePickerc21
 npm install
 ```
 
-2. **Configure environment:**
-```bash
-cp .env.local.example .env.local
-```
+The repository uses npm workspaces; running `npm install` at the root bootstraps the Next.js admin app (`apps/web`), the Outlook add-in (`apps/addin`), and shared packages (`packages/*`).
 
-3. **Add credentials to `.env.local`:**
+### Configure environment (backend)
+
+Create `apps/web/.env.local` and add the required secrets:
+
 ```env
 # Okta Configuration
 okta-org-url=https://your-org.okta.com
@@ -79,29 +79,25 @@ ENTRA_CLIENT_SECRET=your-app-client-secret
 
 # Optional: Redis for caching
 redis-connection-string=redis://localhost:6379
+
+# SQL Server (Prisma)
+DATABASE_URL="sqlserver://USERNAME:PASSWORD@SERVERNAME.database.windows.net:1433?database=DBNAME&encrypt=true&trustServerCertificate=false&connectionTimeout=30"
+INITIAL_ADMIN_EMAIL=admin@example.com
 ```
 
-### SQL Server configuration
+> Encode reserved characters in the SQL password. Use the same `DATABASE_URL` for build and runtime so Prisma targets the correct database.
 
-- `DATABASE_URL` must point to Azure SQL using the SQL Server driver:
+### Run development servers
 
-  ```env
-  DATABASE_URL="sqlserver://USERNAME:PASSWORD@SERVERNAME.database.windows.net:1433?database=DBNAME&encrypt=true&trustServerCertificate=false&connectionTimeout=30"
-  INITIAL_ADMIN_EMAIL=admin@example.com
-  ```
-
-- URL-encode any reserved characters (such as `@`, `#`, `%`, or `:`) inside the password.
-- Provide the same `DATABASE_URL` at build time (`npm run build`) and runtime (Azure Container Apps environment variables) so Prisma targets the correct database.
-- After the app starts, confirm connectivity via:
-  - `GET /api/ping` → returns `{ "ok": true }`
-  - `GET /api/admin/check` (with your auth context) → returns `{ "isAdmin": true }` once the admin bootstrap has run.
-
-4. **Run development server:**
 ```bash
 npm run dev
 ```
 
-5. **Open:** http://localhost:3000
+This starts:
+- `apps/web` at http://localhost:3000 (Next.js admin + API)
+- `apps/addin` at https://localhost:5173 (Vite dev server with HTTPS and `/api` proxy)
+
+Sideload the add-in during development by pointing Outlook to `https://localhost:5173/manifest.xml`.
 
 ### Docker Development
 ```bash
@@ -113,35 +109,31 @@ Access at http://localhost:3000
 ## 📁 Project Structure
 ```
 PeoplePickerc21/
-├── app/
-│   ├── page.tsx                    # Main search interface
-│   ├── user/[id]/                  # Full user profile pages
-│   ├── diagnostics/                # System diagnostics
-│   ├── technical/                  # Technical details page
-│   └── api/
-│       ├── okta/                   # Okta API routes
-│       │   └── users/              # User search & lookup
-│       ├── graph/
-│       │   ├── photo/              # Profile photo fetching
-│       │   └── presence/           # Teams presence status
-│       └── cache/                  # Cache management
-├── components/
-│   ├── search/
-│   │   ├── SearchInterface.tsx     # Main search UI
-│   │   └── UserCard.tsx            # Search result cards
-│   ├── UserAvatar.tsx              # Avatar with photo & presence
-│   ├── PresenceBadge.tsx           # Teams status indicator
-│   └── diagnostics/                # Diagnostic components
-├── lib/
-│   ├── okta.ts                     # Okta API client
-│   ├── graph.ts                    # Microsoft Graph client
-│   ├── redis.ts                    # Redis caching
-│   └── types.ts                    # TypeScript definitions
-├── middleware.ts                   # Authentication middleware (future)
-├── Dockerfile                      # Container definition
-├── docker-compose.yml              # Local Docker setup
-└── .github/workflows/
-    └── azure-container-deploy.yml  # CI/CD pipeline
+├── apps/
+│   ├── web/                        # Next.js admin + API (existing People Picker app)
+│   │   ├── app/                    # App Router routes (/api preserved)
+│   │   ├── components/             # UI components
+│   │   ├── lib/                    # Okta, Graph, Redis utilities
+│   │   ├── prisma/                 # Schema, migrations, seed script
+│   │   ├── next.config.js
+│   │   └── package.json
+│   └── addin/                      # Outlook task-pane add-in (React + Vite)
+│       ├── src/                    # Task pane UI, hooks, commands
+│       ├── public/                 # Manifest + icons
+│       ├── index.html              # Task pane entry point
+│       ├── commands.html           # Ribbon command host
+│       └── package.json
+├── packages/
+│   └── sdk/                        # Shared TypeScript SDK (fetch wrappers)
+│       ├── src/index.ts
+│       ├── dist/                   # Build output (gitignored)
+│       └── package.json
+├── docs/                           # Add-in dev/deploy guides
+├── package.json                    # Workspace root (scripts, dev deps)
+├── tsconfig.base.json              # Shared TypeScript settings
+├── tsconfig.json                   # Project references
+├── docker-compose.yml
+└── Dockerfile
 ```
 
 ## 🔌 API Endpoints
@@ -159,7 +151,10 @@ PeoplePickerc21/
 
 ### Microsoft Graph Integration
 - `GET /api/graph/photo/{email}` - User profile photo (24h cache)
-- `GET /api/graph/presence/{email}` - Teams presence status (5min cache)
+- `GET /api/graph/presence/{email}` - Teams presence status (configurable cache, 30–300s)
+
+### Add-in Support
+- `GET /api/config/public` - Safe public metadata for task panes (name, org, feature flags)
 
 Full API documentation: `/api-docs` (coming soon)
 

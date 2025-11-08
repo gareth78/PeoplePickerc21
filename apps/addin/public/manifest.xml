@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xsi:type="MailApp"
+>
+  <Id>c8f4f3c0-1b55-4dd6-a5e6-6b8ad3a4bf5c</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Plan International</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="People Picker" />
+  <Description DefaultValue="Search the Plan International directory, view presence, and add recipients without leaving Outlook." />
+  <SupportUrl DefaultValue="https://plan-international.org" />
+
+  <IconUrl DefaultValue="https://localhost:5173/icons/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://localhost:5173/icons/icon-80.png" />
+
+  <AppDomains>
+    <AppDomain>https://localhost:5173</AppDomain>
+    <AppDomain>https://addin.example.org</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Mailbox" />
+  </Hosts>
+
+  <Requirements>
+    <Sets>
+      <Set Name="Mailbox" MinVersion="1.1" />
+    </Sets>
+  </Requirements>
+
+  <Permissions>ReadWriteMailbox</Permissions>
+
+  <Rule xsi:type="RuleCollection" Mode="Or">
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read" />
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Edit" />
+  </Rule>
+
+  <FormSettings>
+    <Form xsi:type="ItemRead">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://localhost:5173/index.html" />
+        <RequestedHeight>640</RequestedHeight>
+      </DesktopSettings>
+    </Form>
+    <Form xsi:type="ItemCompose">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://localhost:5173/index.html" />
+        <RequestedHeight>640</RequestedHeight>
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+
+  <DisableEntityHighlighting>false</DisableEntityHighlighting>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://localhost:5173/index.html" />
+  </DefaultSettings>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" Version="1.1">
+    <Hosts>
+      <Host xsi:type="MailHost">
+        <Runtimes>
+          <Runtime resid="TaskPane.Url" lifetime="long" />
+          <Runtime resid="Commands.Url" lifetime="long" />
+        </Runtimes>
+
+        <ExtensionPoint xsi:type="MessageComposeCommandSurface">
+          <OfficeTab id="TabDefault">
+            <Group id="Commands.Group">
+              <Label resid="Commands.Group.Label" />
+              <Control xsi:type="Button" id="Commands.PeoplePicker">
+                <Label resid="Commands.PeoplePicker.Label" />
+                <Supertip>
+                  <Title resid="Commands.PeoplePicker.Label" />
+                  <Description resid="Commands.PeoplePicker.Description" />
+                </Supertip>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16" />
+                  <bt:Image size="32" resid="Icon.32x32" />
+                  <bt:Image size="80" resid="Icon.80x80" />
+                </Icon>
+                <Action xsi:type="ShowTaskpane">
+                  <TaskpaneId>TaskPane.PeoplePicker</TaskpaneId>
+                  <SourceLocation resid="TaskPane.Url" />
+                </Action>
+              </Control>
+            </Group>
+          </OfficeTab>
+        </ExtensionPoint>
+
+        <ExtensionPoint xsi:type="MessageReadCommandSurface">
+          <OfficeTab id="TabDefault">
+            <Group id="Commands.Group.Read">
+              <Label resid="Commands.Group.Label" />
+              <Control xsi:type="Button" id="Commands.PeoplePicker.Read">
+                <Label resid="Commands.PeoplePicker.Label" />
+                <Supertip>
+                  <Title resid="Commands.PeoplePicker.Label" />
+                  <Description resid="Commands.PeoplePicker.Description" />
+                </Supertip>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16" />
+                  <bt:Image size="32" resid="Icon.32x32" />
+                  <bt:Image size="80" resid="Icon.80x80" />
+                </Icon>
+                <Action xsi:type="ExecuteFunction">
+                  <FunctionName>showTaskPane</FunctionName>
+                </Action>
+              </Control>
+            </Group>
+          </OfficeTab>
+        </ExtensionPoint>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://localhost:5173/icons/icon-16.png" />
+        <bt:Image id="Icon.32x32" DefaultValue="https://localhost:5173/icons/icon-32.png" />
+        <bt:Image id="Icon.80x80" DefaultValue="https://localhost:5173/icons/icon-80.png" />
+      </bt:Images>
+
+      <bt:Urls>
+        <bt:Url id="TaskPane.Url" DefaultValue="https://localhost:5173/index.html">
+          <bt:Override Locale="en-US" Value="https://localhost:5173/index.html" />
+        </bt:Url>
+        <bt:Url id="Commands.Url" DefaultValue="https://localhost:5173/commands.html">
+          <bt:Override Locale="en-US" Value="https://localhost:5173/commands.html" />
+        </bt:Url>
+      </bt:Urls>
+
+      <bt:ShortStrings>
+        <bt:String id="Commands.Group.Label" DefaultValue="People Picker" />
+        <bt:String id="Commands.PeoplePicker.Label" DefaultValue="People Picker" />
+      </bt:ShortStrings>
+
+      <bt:LongStrings>
+        <bt:String id="Commands.PeoplePicker.Description" DefaultValue="Open the People Picker task pane." />
+      </bt:LongStrings>
+    </Resources>
+
+  </VersionOverrides>
+
+  <!-- Production deployment: replace https://localhost:5173 with https://addin.example.org -->
+</OfficeApp>

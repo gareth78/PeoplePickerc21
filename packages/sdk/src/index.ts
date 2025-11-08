@@ -44,6 +44,7 @@ interface RequestOptions extends Omit<RequestInit, 'signal'> {
   query?: Record<string, QueryValue>;
   timeoutMs?: number;
   signal?: AbortSignal;
+  token?: string;
 }
 
 interface ApiResponse<T> {
@@ -124,24 +125,23 @@ const toUrl = (path: string, query?: Record<string, QueryValue>): string => {
   return suffix ? `${base}?${suffix}` : base;
 };
 
-const resolveHeaders = (init?: RequestOptions['headers']) => {
-  if (!init) {
-    return new Headers({
-      Accept: 'application/json',
-    });
-  }
+const resolveHeaders = (init?: RequestOptions['headers'], token?: string) => {
+  const headers = !init
+    ? new Headers({
+        Accept: 'application/json',
+      })
+    : init instanceof Headers
+    ? init
+    : new Headers(init);
 
-  if (init instanceof Headers) {
-    if (!init.has('Accept')) {
-      init.set('Accept', 'application/json');
-    }
-    return init;
-  }
-
-  const headers = new Headers(init);
   if (!headers.has('Accept')) {
     headers.set('Accept', 'application/json');
   }
+
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
   return headers;
 };
 
@@ -149,7 +149,7 @@ const request = async <T = unknown>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> => {
-  const { query, timeoutMs = DEFAULT_TIMEOUT_MS, signal, headers, ...rest } = options;
+  const { query, timeoutMs = DEFAULT_TIMEOUT_MS, signal, headers, token, ...rest } = options;
   const url = toUrl(path, query);
   const controller = new AbortController();
   const timeoutId =
@@ -167,7 +167,7 @@ const request = async <T = unknown>(
     }
   }
 
-  const finalHeaders = resolveHeaders(headers);
+  const finalHeaders = resolveHeaders(headers, token);
   const method = rest.method ?? 'GET';
   const body = rest.body;
 
@@ -240,6 +240,7 @@ const users = {
       cursor?: string;
       timeoutMs?: number;
       signal?: AbortSignal;
+      token?: string;
     } = {}
   ): Promise<UsersResult> {
     if (!q || q.trim().length === 0) {
@@ -254,6 +255,7 @@ const users = {
       },
       timeoutMs: opts.timeoutMs,
       signal: opts.signal,
+      token: opts.token,
     });
 
     if (!payload?.ok || !payload.data) {
@@ -272,6 +274,7 @@ const presence = {
       ttl?: number;
       timeoutMs?: number;
       signal?: AbortSignal;
+      token?: string;
     } = {}
   ): Promise<PresenceResult | null> {
     if (!email || email.trim().length === 0) {
@@ -287,6 +290,7 @@ const presence = {
         },
         timeoutMs: opts.timeoutMs,
         signal: opts.signal,
+        token: opts.token,
       }
     );
 
@@ -310,6 +314,7 @@ const photo = {
     opts: {
       timeoutMs?: number;
       signal?: AbortSignal;
+      token?: string;
     } = {}
   ): Promise<string | null> {
     if (!email || email.trim().length === 0) {
@@ -321,6 +326,7 @@ const photo = {
       {
         timeoutMs: opts.timeoutMs,
         signal: opts.signal,
+        token: opts.token,
       }
     );
 
@@ -334,6 +340,7 @@ const ooo = {
     opts: {
       timeoutMs?: number;
       signal?: AbortSignal;
+      token?: string;
     } = {}
   ): Promise<OOOResult | null> {
     if (!email || email.trim().length === 0) {
@@ -345,6 +352,7 @@ const ooo = {
       {
         timeoutMs: opts.timeoutMs,
         signal: opts.signal,
+        token: opts.token,
       }
     );
 

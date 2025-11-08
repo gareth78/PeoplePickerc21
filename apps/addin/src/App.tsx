@@ -199,9 +199,9 @@ const enhanceUsers = (
     presence: presenceCache[user.email],
   }));
 
-const requestPhoto = async (email: string): Promise<string | null> => {
+const requestPhoto = async (email: string, token?: string | null): Promise<string | null> => {
   try {
-    return await sdk.photo.get(email);
+    return await sdk.photo.get(email, { token: token ?? undefined });
   } catch (error) {
     logDev('Photo request failed', error);
     return null;
@@ -210,10 +210,10 @@ const requestPhoto = async (email: string): Promise<string | null> => {
 
 const requestPresence = async (
   email: string,
-  opts?: { noCache?: boolean; ttl?: number },
+  opts?: { noCache?: boolean; ttl?: number; token?: string | null },
 ): Promise<PresenceResult | null> => {
   try {
-    return await sdk.presence.get(email, opts);
+    return await sdk.presence.get(email, { ...opts, token: opts?.token ?? undefined });
   } catch (error) {
     if (error instanceof PeoplePickerError) {
       logDev('Presence request failed', error);
@@ -223,9 +223,9 @@ const requestPresence = async (
   }
 };
 
-const requestOOO = async (email: string): Promise<OOOResult | null> => {
+const requestOOO = async (email: string, token?: string | null): Promise<OOOResult | null> => {
   try {
-    return await sdk.ooo.get(email);
+    return await sdk.ooo.get(email, { token: token ?? undefined });
   } catch (error) {
     logDev('OOO request failed', error);
     return null;
@@ -249,6 +249,7 @@ export default function App() {
   const [insertStatus, setInsertStatus] = useState<StatusMessage | null>(null);
   const [recipientStatus, setRecipientStatus] = useState<StatusMessage | null>(null);
   const [inserting, setInserting] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const photoCacheRef = useRef<Record<string, string | null>>({});
   const [photoCache, setPhotoCache] = useState<Record<string, string | null>>({});
@@ -282,6 +283,33 @@ export default function App() {
     };
 
     bootstrap().catch((error) => logDev('Bootstrap error', error));
+  }, []);
+
+  useEffect(() => {
+    const getToken = async () => {
+      if (typeof Office === 'undefined' || !Office.context?.mailbox) {
+        logDev('Office.js not available, skipping SSO');
+        return;
+      }
+
+      try {
+        if (typeof Office.auth?.getAccessToken === 'function') {
+          const token = await Office.auth.getAccessToken({
+            allowSignInPrompt: true,
+            allowConsentPrompt: true,
+            forMSGraphAccess: true,
+          });
+          setAccessToken(token);
+          logDev('SSO token obtained successfully');
+        } else {
+          logDev('Office.auth.getAccessToken not available');
+        }
+      } catch (error) {
+        logDev('Failed to get SSO token', error);
+      }
+    };
+
+    getToken().catch((error) => logDev('SSO error', error));
   }, []);
 
   useEffect(() => {
@@ -324,7 +352,7 @@ export default function App() {
     setSearchError(null);
 
     sdk.users
-      .search(debouncedQuery.trim(), { signal: controller.signal })
+      .search(debouncedQuery.trim(), { signal: controller.signal, token: accessToken ?? undefined })
       .then((result) => {
         const enhanced = enhanceUsers(result, photoCacheRef.current, presenceCacheRef.current);
         setSearchResults(enhanced);
@@ -359,7 +387,7 @@ export default function App() {
     return () => {
       controller.abort();
     };
-  }, [debouncedQuery]);
+  }, [debouncedQuery, accessToken]);
 
   useEffect(() => {
     const email = selectedUser?.email;
@@ -377,6 +405,7 @@ export default function App() {
         const result = await requestPresence(email, {
           noCache: true,
           ttl: PRESENCE_TTL_SECONDS,
+          token: accessToken,
         });
         if (!cancelled) {
           upsertState(setPresenceCache, email, result);
@@ -437,7 +466,7 @@ export default function App() {
         }
         document.removeEventListener('visibilitychange', handleVisibility);
       };
-  }, [activeTab, selectedUser?.email]);
+  }, [activeTab, selectedUser?.email, accessToken]);
 
   useEffect(() => {
     const email = selectedUser?.email;
@@ -451,7 +480,7 @@ export default function App() {
 
     let cancelled = false;
 
-    requestOOO(email)
+    requestOOO(email, accessToken)
       .then((result) => {
         if (!cancelled) {
           upsertState(setOooCache, email, result);
@@ -468,7 +497,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, selectedUser?.email]);
+  }, [activeTab, selectedUser?.email, accessToken]);
 
   const selectedPresence = selectedUser ? presenceCache[selectedUser.email] : undefined;
   const selectedPhoto = selectedUser ? photoCache[selectedUser.email] ?? selectedUser.photo ?? null : null;
@@ -485,7 +514,7 @@ export default function App() {
     if (hasCacheValue(photoCacheRef, email)) {
       return;
     }
-    requestPhoto(email)
+    requestPhoto(email, accessToken)
       .then((photo) => {
         upsertState(setPhotoCache, email, photo);
       })
@@ -496,7 +525,7 @@ export default function App() {
     if (hasCacheValue(presenceCacheRef, email)) {
       return;
     }
-    requestPresence(email)
+    requestPresence(email, { token: accessToken })
       .then((presenceResult) => {
         upsertState(setPresenceCache, email, presenceResult);
       })
@@ -600,7 +629,7 @@ export default function App() {
             return;
           }
           setPresenceRefreshing(true);
-          requestPresence(selectedUser.email, { noCache: true, ttl: PRESENCE_TTL_SECONDS })
+          requestPresence(selectedUser.email, { noCache: true, ttl: PRESENCE_TTL_SECONDS, token: accessToken })
             .then((presenceResult) => {
               upsertState(setPresenceCache, selectedUser.email, presenceResult);
               setPresenceError(null);

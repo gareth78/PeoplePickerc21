@@ -1,0 +1,33 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "jsx": "react-jsx",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@peoplepicker/sdk": [
+        "../../packages/sdk/src"
+      ]
+    },
+    "types": [
+      "vite/client",
+      "office-js"
+    ],
+    "declaration": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "references": [
+    {
+      "path": "../../packages/sdk"
+    }
+  ]
+}

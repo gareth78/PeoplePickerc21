@@ -29,6 +29,3 @@ next-env.d.ts
 .pnp
 .pnp.js
 .yarn/
-# build outputs
-apps/addin/dist
-packages/sdk/dist

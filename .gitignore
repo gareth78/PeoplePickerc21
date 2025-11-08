@@ -31,5 +31,4 @@ next-env.d.ts
 .yarn/
 # build outputs
 apps/addin/dist
-apps/addin/public/icons
 packages/sdk/dist

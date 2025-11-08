@@ -1,4 +1,4 @@
-name: Build & Deploy
+name: Build and Push to ACR
 
 on:
   push:
@@ -6,20 +6,16 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+  REGISTRY: ${{ secrets.AZURE_CONTAINER_REGISTRY }}   # e.g. peoplepickerc21acr.azurecr.io (no https://)
   IMAGE_NAME: peoplepickerc21
   AZURE_RG: PeoplePickerc21
   CONTAINER_APP_NAME: peoplepickerc21-env
-  TASK: Fix npm ci in monorepo CI by using root lockfile, then build Prisma + app in APP_DIR, and deploy to Azure Container Apps
+  TASK: Stabilise Prisma build and deploy to Azure Container Apps
   AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
 jobs:
-  build:
-    name: Build & Deploy
+  build-and-push:
     runs-on: ubuntu-latest
-
-    env:
-      APP_DIR: apps/peoplepicker
 
     steps:
       - name: Checkout
@@ -29,39 +25,27 @@ jobs:
         run: |
           echo "Using registry: ${REGISTRY}"
           if [[ "${REGISTRY}" == https* || "${REGISTRY}" == */* ]]; then
-            echo "::error:: AZURE_CONTAINER_REGISTRY must be like 'yourregistry.azurecr.io' (no https://, no slash)"
-            exit 1
+            echo "::error:: AZURE_CONTAINER_REGISTRY must be like 'yourregistry.azurecr.io' (no https://, no slash)"; exit 1;
           fi
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: package-lock.json
 
-      - name: Verify root lockfile exists
-        run: |
-          if [ ! -f package-lock.json ]; then
-            echo "::error::Root package-lock.json not found. Run 'npm install --workspaces --package-lock-only' locally and commit the lockfile."
-            exit 1
-          fi
+      - name: Install
+        run: npm ci
 
-      - name: Install dependencies (root workspaces)
-        run: npm ci --workspaces
-
-      - name: Generate Prisma client
-        working-directory: ${{ env.APP_DIR }}
+      - name: Prisma Generate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx prisma generate
 
-      - name: Build app
-        working-directory: ${{ env.APP_DIR }}
+      - name: Build
+        run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           INITIAL_ADMIN_EMAIL: ${{ secrets.INITIAL_ADMIN_EMAIL }}
-        run: npm run build
 
       - name: Docker login to ACR
         uses: docker/login-action@v3
@@ -73,15 +57,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push image
+      - name: Build and push (with cache)
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ env.APP_DIR }}/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          provenance: false
+          build-args: |
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            INITIAL_ADMIN_EMAIL=${{ secrets.INITIAL_ADMIN_EMAIL }}
 
       - name: Azure login
         uses: azure/login@v2
@@ -89,17 +78,22 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Container Apps
-        run: |
-          az extension add -n containerapp --yes
-          az containerapp update \
-            --name "${{ env.CONTAINER_APP_NAME }}" \
-            --resource-group "${{ env.AZURE_RG }}" \
-            --image "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" \
-            --set-env-vars "INITIAL_ADMIN_EMAIL=${{ secrets.INITIAL_ADMIN_EMAIL }}"
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            IMG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+            echo "Deploying $IMG to ${{ env.CONTAINER_APP_NAME }} in RG ${{ env.AZURE_RG }}"
+            az containerapp update \
+              --name "${{ env.CONTAINER_APP_NAME }}" \
+              --resource-group "${{ env.AZURE_RG }}" \
+              --image "$IMG" \
+              --set-env-vars "INITIAL_ADMIN_EMAIL=${{ secrets.INITIAL_ADMIN_EMAIL }}"
+            echo "Deployment complete."
 
       - name: Summary
         run: |
           echo "Task: $TASK"
           echo "Pushed:"
-          echo " - $REGISTRY/$IMAGE_NAME:${{ github.sha }}"
           echo " - $REGISTRY/$IMAGE_NAME:latest"
+          echo " - $REGISTRY/$IMAGE_NAME:${{ github.sha }}"

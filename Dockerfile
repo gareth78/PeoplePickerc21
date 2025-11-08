@@ -5,9 +5,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -
 COPY package*.json ./
 RUN npm ci
 # Copy prisma schema early to leverage caching for generate
-COPY prisma ./prisma
+COPY apps/web/prisma ./apps/web/prisma
+ARG PRISMA_SCHEMA=./prisma/schema.prisma
+ENV PRISMA_SCHEMA=${PRISMA_SCHEMA}
 # Prisma generate does not require a live DB; it reads the schema.
-RUN npx prisma generate
+WORKDIR /app/apps/web
+RUN npx prisma generate --schema "$PRISMA_SCHEMA"
+WORKDIR /app
 # Copy rest of the source
 COPY . .
 ARG DATABASE_URL

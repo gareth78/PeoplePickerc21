@@ -7,6 +7,7 @@ import type { ServerOptions as HttpsServerOptions } from 'node:https';
 const httpsOption: HttpsServerOptions = {};
 
 export default defineConfig({
+  publicDir: 'public',
   plugins: [basicSsl(), react()],
   server: {
     host: 'localhost',

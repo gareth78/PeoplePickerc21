@@ -48,6 +48,11 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
 
   const [showSecret, setShowSecret] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -98,6 +103,33 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleTestConnection = async () => {
+    setTesting(true);
+    setTestResult(null);
+
+    try {
+      const response = await fetch('/api/admin/tenancies/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: formData.tenantId,
+          clientId: formData.clientId,
+          clientSecret: formData.clientSecret,
+        }),
+      });
+
+      const result = await response.json();
+      setTestResult(result);
+    } catch (error) {
+      setTestResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setTesting(false);
+    }
   };
 
   const handleSave = async () => {
@@ -285,6 +317,70 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
                 : 'Secret will be encrypted before storage'}
             </p>
           </div>
+
+          {/* Test Connection Button */}
+          <div>
+            <button
+              type="button"
+              onClick={handleTestConnection}
+              disabled={
+                testing ||
+                !formData.tenantId ||
+                !formData.clientId ||
+                !formData.clientSecret ||
+                formData.clientSecret.includes('••••')
+              }
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              {testing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Testing...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Test Connection</span>
+                </>
+              )}
+            </button>
+            <p className="mt-1 text-xs text-gray-500">
+              Test credentials before saving (recommended)
+            </p>
+          </div>
+
+          {/* Test Result */}
+          {testResult && (
+            <div
+              className={`flex items-start space-x-3 p-4 rounded-lg ${
+                testResult.success
+                  ? 'bg-green-50 border border-green-200'
+                  : 'bg-red-50 border border-red-200'
+              }`}
+            >
+              {testResult.success ? (
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1">
+                <p
+                  className={`text-sm font-medium ${
+                    testResult.success ? 'text-green-800' : 'text-red-800'
+                  }`}
+                >
+                  {testResult.success ? 'Success' : 'Error'}
+                </p>
+                <p
+                  className={`text-sm ${
+                    testResult.success ? 'text-green-700' : 'text-red-700'
+                  }`}
+                >
+                  {testResult.message}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Enabled Toggle */}
           <div className="flex items-center space-x-3">

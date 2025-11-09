@@ -17,11 +17,12 @@
     "node": "20.x"
   },
   "dependencies": {
-    "@people-picker/sdk": "0.1.0",
     "@azure/identity": "^4.0.0",
     "@microsoft/microsoft-graph-client": "^3.0.7",
+    "@people-picker/sdk": "0.1.0",
     "@prisma/client": "^6.19.0",
     "bcrypt": "^6.0.0",
+    "framer-motion": "^11.0.0",
     "ioredis": "^5.8.2",
     "isomorphic-fetch": "^3.0.0",
     "jose": "^6.1.0",
@@ -30,7 +31,6 @@
     "next": "14.2.33",
     "react": "^18",
     "react-dom": "^18",
-    "framer-motion": "^11.0.0",
     "recharts": "^2.10.0"
   },
   "devDependencies": {

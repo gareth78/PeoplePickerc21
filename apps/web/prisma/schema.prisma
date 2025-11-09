@@ -69,6 +69,13 @@ model OfficeTenancy {
   clientSecret String   @db.NVarChar(Max)      // Encrypted
   enabled      Boolean  @default(true)
   
+  // Feature flags for Graph API capabilities
+  enablePresence      Boolean  @default(true)  @map("enable_presence")       // Presence.Read.All permission
+  enablePhotos        Boolean  @default(true)  @map("enable_photos")         // User.Read.All / User.ReadBasic.All
+  enableOutOfOffice   Boolean  @default(true)  @map("enable_out_of_office")  // MailboxSettings.Read permission
+  enableLocalGroups   Boolean  @default(false) @map("enable_local_groups")   // Query local tenant groups
+  enableGlobalGroups  Boolean  @default(false) @map("enable_global_groups")  // Show Groups tab in UI
+  
   domains      SmtpDomain[]
   
   createdAt    DateTime @default(now()) @map("created_at") @db.DateTime2

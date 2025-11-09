@@ -13,7 +13,15 @@ export type AuditAction =
   | 'VIEW_AUDIT_LOGS'
   | 'FAILED_LOGIN'
   | 'UNAUTHORIZED_ACCESS'
-  | 'UPDATE_OKTA_CONFIG';
+  | 'UPDATE_OKTA_CONFIG'
+  | 'CREATE_TENANCY'
+  | 'UPDATE_TENANCY'
+  | 'DELETE_TENANCY'
+  | 'VIEW_TENANCIES'
+  | 'CREATE_DOMAIN'
+  | 'UPDATE_DOMAIN'
+  | 'DELETE_DOMAIN'
+  | 'VIEW_DOMAINS';
 
 interface AuditLogParams {
   action: AuditAction;

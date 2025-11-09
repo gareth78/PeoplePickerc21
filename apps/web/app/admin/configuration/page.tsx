@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import { 
   Settings, 
   Server, 
-  Cloud, 
-  Mail, 
   Eye, 
   EyeOff, 
   CheckCircle, 
@@ -15,6 +13,8 @@ import {
   X
 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
+import OfficeTenancyManager from '@/components/admin/OfficeTenancyManager';
+import SmtpDomainManager from '@/components/admin/SmtpDomainManager';
 
 interface OktaConfig {
   orgUrl: string;
@@ -305,71 +305,11 @@ export default function ConfigurationPage() {
           </div>
         </div>
 
-        {/* Office 365 Tenancies - COMING SOON */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden opacity-60">
-          <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Cloud className="w-6 h-6 text-gray-400" />
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Office 365 Tenancies</h2>
-                  <p className="text-sm text-gray-600">Manage multiple Office 365 tenants</p>
-                </div>
-              </div>
-              <span className="px-3 py-1 bg-gray-400 text-white text-xs font-medium rounded-full">
-                COMING SOON
-              </span>
-            </div>
-          </div>
+        {/* Office 365 Tenancies - ACTIVE */}
+        <OfficeTenancyManager />
 
-          <div className="p-6 space-y-4">
-            <p className="text-gray-500">
-              Add and manage multiple Office 365 tenants for multi-tenancy support.
-            </p>
-            <button
-              disabled
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
-            >
-              <span>+ Add Tenant</span>
-            </button>
-            <div className="text-center py-8 text-gray-400">
-              No tenants configured yet
-            </div>
-          </div>
-        </div>
-
-        {/* SMTP Domain Routing - COMING SOON */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden opacity-60">
-          <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Mail className="w-6 h-6 text-gray-400" />
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">SMTP Domain Routing</h2>
-                  <p className="text-sm text-gray-600">Configure email domain to tenant routing</p>
-                </div>
-              </div>
-              <span className="px-3 py-1 bg-gray-400 text-white text-xs font-medium rounded-full">
-                COMING SOON
-              </span>
-            </div>
-          </div>
-
-          <div className="p-6 space-y-4">
-            <p className="text-gray-500">
-              Map email domains to specific Office 365 tenants for intelligent routing.
-            </p>
-            <button
-              disabled
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
-            >
-              <span>+ Add Domain</span>
-            </button>
-            <div className="text-center py-8 text-gray-400">
-              No domains configured yet
-            </div>
-          </div>
-        </div>
+        {/* SMTP Domain Routing - ACTIVE */}
+        <SmtpDomainManager />
       </div>
     </AdminLayout>
   );

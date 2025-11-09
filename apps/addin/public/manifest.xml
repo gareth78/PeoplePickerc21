@@ -19,7 +19,6 @@
 
   <AppDomains>
     <AppDomain>https://jolly-sky-08c0ccf03.3.azurestaticapps.net</AppDomain>
-    <AppDomain>https://addin.example.org</AppDomain>
   </AppDomains>
 
   <Hosts>

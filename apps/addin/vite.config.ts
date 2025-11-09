@@ -13,6 +13,17 @@ export default defineConfig({
     basicSsl(),
     react(),
     {
+      name: 'xml-mime-type',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url?.endsWith('.xml')) {
+            res.setHeader('Content-Type', 'application/xml');
+          }
+          next();
+        });
+      },
+    },
+    {
       name: 'copy-static-config',
       writeBundle() {
         const configPath = resolve(__dirname, 'staticwebapp.config.json');

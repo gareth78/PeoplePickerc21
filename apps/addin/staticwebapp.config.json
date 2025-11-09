@@ -4,7 +4,8 @@
     ".mjs": "text/javascript",
     ".jsx": "text/javascript",
     ".ts": "text/javascript",
-    ".tsx": "text/javascript"
+    ".tsx": "text/javascript",
+    ".xml": "application/xml"
   },
   "navigationFallback": {
     "rewrite": "/index.html",

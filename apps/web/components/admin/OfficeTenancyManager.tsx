@@ -44,11 +44,13 @@ export default function OfficeTenancyManager() {
 
   const loadTenancies = async () => {
     setLoading(true);
+    setError(null); // Clear previous errors
     try {
       const response = await fetch('/api/admin/tenancies');
       if (response.ok) {
         const data = await response.json();
         setTenancies(data.tenancies);
+        setError(null); // Clear any previous errors on success
       } else {
         setError('Failed to load tenancies');
       }
@@ -154,20 +156,7 @@ export default function OfficeTenancyManager() {
 
       {/* Content */}
       <div className="p-6">
-        {/* Notifications */}
-        {error && (
-          <div className="mb-4 flex items-start space-x-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-red-800">Error</p>
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
-              <XCircle className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
+        {/* Success Notification */}
         {success && (
           <div className="mb-4 flex items-start space-x-3 p-4 bg-green-50 border border-green-200 rounded-lg">
             <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -183,8 +172,22 @@ export default function OfficeTenancyManager() {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
           </div>
+        ) : error ? (
+          /* Error State - API/DB failure */
+          <div className="text-center py-12">
+            <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load tenancies</h3>
+            <p className="text-gray-500 mb-6">{error}. Please check your connection.</p>
+            <button
+              onClick={loadTenancies}
+              className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Loader2 className="w-4 h-4" />
+              <span>Retry</span>
+            </button>
+          </div>
         ) : tenancies.length === 0 ? (
-          /* Empty State */
+          /* Empty State - No tenancies exist */
           <div className="text-center py-12">
             <Cloud className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No tenants configured yet</h3>

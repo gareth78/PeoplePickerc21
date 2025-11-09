@@ -1,6 +1,35 @@
 {
   "mimeTypes": {
     ".js": "text/javascript",
-    ".mjs": "text/javascript"
+    ".mjs": "text/javascript",
+    ".jsx": "text/javascript",
+    ".ts": "text/javascript",
+    ".tsx": "text/javascript"
+  },
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*",
+      "/icons/*",
+      "/*.css",
+      "/*.js",
+      "/*.mjs",
+      "/*.png",
+      "/*.gif",
+      "/*.ico",
+      "/*.jpg",
+      "/*.jpeg",
+      "/*.svg",
+      "/*.woff",
+      "/*.woff2",
+      "/*.json",
+      "/*.xml"
+    ]
+  },
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
   }
 }

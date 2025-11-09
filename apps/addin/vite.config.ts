@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { resolve } from 'node:path';
-import { copyFileSync, existsSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import type { ServerOptions as HttpsServerOptions } from 'node:https';
 
 const httpsOption: HttpsServerOptions = {};
@@ -23,6 +23,37 @@ export default defineConfig({
         } else {
           console.warn('⚠ staticwebapp.config.json not found');
         }
+      }
+    },
+    {
+      name: 'copy-icons',
+      writeBundle() {
+        const iconsSourceDir = resolve(__dirname, 'public/icons');
+        const iconsDestDir = resolve(__dirname, 'dist/icons');
+        
+        if (!existsSync(iconsSourceDir)) {
+          console.warn('⚠ public/icons/ directory not found');
+          return;
+        }
+
+        // Ensure destination directory exists
+        if (!existsSync(iconsDestDir)) {
+          mkdirSync(iconsDestDir, { recursive: true });
+        }
+
+        // Copy all files from public/icons/ to dist/icons/
+        const files = readdirSync(iconsSourceDir);
+        let copiedCount = 0;
+        for (const file of files) {
+          const sourcePath = resolve(iconsSourceDir, file);
+          const destPath = resolve(iconsDestDir, file);
+          const stat = statSync(sourcePath);
+          if (stat.isFile()) {
+            copyFileSync(sourcePath, destPath);
+            copiedCount++;
+          }
+        }
+        console.log(`✓ Copied ${copiedCount} icon(s) to dist/icons/`);
       }
     }
   ],

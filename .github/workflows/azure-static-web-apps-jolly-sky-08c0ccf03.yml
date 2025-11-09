@@ -17,6 +17,18 @@ jobs:
         with:
           submodules: true
           lfs: false
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build SDK package
+        run: npm run build --workspace=packages/sdk
+      
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1

@@ -3,7 +3,7 @@
   xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
-  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides"
   xsi:type="MailApp"
 >
   <Id>c8f4f3c0-1b55-4dd6-a5e6-6b8ad3a4bf5c</Id>
@@ -12,16 +12,14 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="People Picker" />
   <Description DefaultValue="Search the Plan International directory, view presence, and add recipients without leaving Outlook." />
-  <SupportUrl DefaultValue="https://plan-international.org" />
-
   <IconUrl DefaultValue="https://jolly-sky-08c0ccf03.3.azurestaticapps.net/icons/icon-32.png" />
   <HighResolutionIconUrl DefaultValue="https://jolly-sky-08c0ccf03.3.azurestaticapps.net/icons/icon-80.png" />
+  <SupportUrl DefaultValue="https://plan-international.org" />
 
   <AppDomains>
     <AppDomain>https://jolly-sky-08c0ccf03.3.azurestaticapps.net</AppDomain>
-    <AppDomain>https://addin.example.org</AppDomain>
   </AppDomains>
-
+  
   <Hosts>
     <Host Name="Mailbox" />
   </Hosts>
@@ -32,6 +30,20 @@
     </Sets>
   </Requirements>
 
+  <FormSettings>
+    <Form xsi:type="ItemRead">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://jolly-sky-08c0ccf03.3.azurestaticapps.net/index.html" />
+        <RequestedHeight>450</RequestedHeight>
+      </DesktopSettings>
+    </Form>
+    <Form xsi:type="ItemEdit">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://jolly-sky-08c0ccf03.3.azurestaticapps.net/index.html" />
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+
   <Permissions>ReadWriteMailbox</Permissions>
 
   <Rule xsi:type="RuleCollection" Mode="Or">
@@ -39,83 +51,69 @@
     <Rule xsi:type="ItemIs" ItemType="Message" FormType="Edit" />
   </Rule>
 
-  <FormSettings>
-    <Form xsi:type="ItemRead">
-      <DesktopSettings>
-        <SourceLocation DefaultValue="https://jolly-sky-08c0ccf03.3.azurestaticapps.net/index.html" />
-        <RequestedHeight>640</RequestedHeight>
-      </DesktopSettings>
-    </Form>
-    <Form xsi:type="ItemCompose">
-      <DesktopSettings>
-        <SourceLocation DefaultValue="https://jolly-sky-08c0ccf03.3.azurestaticapps.net/index.html" />
-        <RequestedHeight>640</RequestedHeight>
-      </DesktopSettings>
-    </Form>
-  </FormSettings>
-
   <DisableEntityHighlighting>false</DisableEntityHighlighting>
 
-  <DefaultSettings>
-    <SourceLocation DefaultValue="https://jolly-sky-08c0ccf03.3.azurestaticapps.net/index.html" />
-  </DefaultSettings>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="mailappor:VersionOverridesV1_0">
+        <Description resid="CmdPickerDesc" />
+      <Requirements>
+        <bt:Sets DefaultMinVersion="1.3">
+          <bt:Set Name="Mailbox" />
+        </bt:Sets>
+      </Requirements>
 
-  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" Version="1.1">
-    <Hosts>
-      <Host xsi:type="MailHost">
-        <Runtimes>
-          <Runtime resid="TaskPane.Url" lifetime="long" />
-          <Runtime resid="Commands.Url" lifetime="long" />
-        </Runtimes>
+      <Hosts>
+        <Host xsi:type="MailHost">
+          <DesktopFormFactor>
+            <FunctionFile resid="Commands.Url" />
 
-        <ExtensionPoint xsi:type="MessageComposeCommandSurface">
-          <OfficeTab id="TabDefault">
-            <Group id="Commands.Group">
-              <Label resid="Commands.Group.Label" />
-              <Control xsi:type="Button" id="Commands.PeoplePicker">
-                <Label resid="Commands.PeoplePicker.Label" />
-                <Supertip>
-                  <Title resid="Commands.PeoplePicker.Label" />
-                  <Description resid="Commands.PeoplePicker.Description" />
-                </Supertip>
-                <Icon>
-                  <bt:Image size="16" resid="Icon.16x16" />
-                  <bt:Image size="32" resid="Icon.32x32" />
-                  <bt:Image size="80" resid="Icon.80x80" />
-                </Icon>
-                <Action xsi:type="ShowTaskpane">
-                  <TaskpaneId>TaskPane.PeoplePicker</TaskpaneId>
-                  <SourceLocation resid="TaskPane.Url" />
-                </Action>
-              </Control>
-            </Group>
-          </OfficeTab>
-        </ExtensionPoint>
+            <ExtensionPoint xsi:type="MessageComposeCommandSurface">
+              <OfficeTab id="TabDefault">
+                <Group id="Commands.Group">
+                  <Label resid="CmdGroupLabel" />
+                  <Control xsi:type="Button" id="Commands.PeoplePicker">
+                    <Label resid="CmdPickerLabel" />
+                    <Supertip>
+                      <Title resid="CmdPickerLabel" />
+                      <Description resid="CmdPickerDesc" />
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.16x16" />
+                      <bt:Image size="32" resid="Icon.32x32" />
+                      <bt:Image size="80" resid="Icon.80x80" />
+                    </Icon>
+                    <Action xsi:type="ShowTaskpane">
+                      <SourceLocation resid="TaskPane.Url" />
+                    </Action>
+                  </Control>
+                </Group>
+              </OfficeTab>
+            </ExtensionPoint>
 
-        <ExtensionPoint xsi:type="MessageReadCommandSurface">
-          <OfficeTab id="TabDefault">
-            <Group id="Commands.Group.Read">
-              <Label resid="Commands.Group.Label" />
-              <Control xsi:type="Button" id="Commands.PeoplePicker.Read">
-                <Label resid="Commands.PeoplePicker.Label" />
-                <Supertip>
-                  <Title resid="Commands.PeoplePicker.Label" />
-                  <Description resid="Commands.PeoplePicker.Description" />
-                </Supertip>
-                <Icon>
-                  <bt:Image size="16" resid="Icon.16x16" />
-                  <bt:Image size="32" resid="Icon.32x32" />
-                  <bt:Image size="80" resid="Icon.80x80" />
-                </Icon>
-                <Action xsi:type="ExecuteFunction">
-                  <FunctionName>showTaskPane</FunctionName>
-                </Action>
-              </Control>
-            </Group>
-          </OfficeTab>
-        </ExtensionPoint>
-      </Host>
-    </Hosts>
+            <ExtensionPoint xsi:type="MessageReadCommandSurface">
+              <OfficeTab id="TabDefault">
+                <Group id="Commands.Group.Read">
+                  <Label resid="CmdGroupLabel" />
+                  <Control xsi:type="Button" id="Commands.PeoplePicker.Read">
+                    <Label resid="CmdPickerLabel" />
+                    <Supertip>
+                      <Title resid="CmdPickerLabel" />
+                      <Description resid="CmdPickerDesc" />
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.16x16" />
+                      <bt:Image size="32" resid="Icon.32x32" />
+                      <bt:Image size="80" resid="Icon.80x80" />
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>showTaskPane</FunctionName>
+                    </Action>
+                  </Control>
+                </Group>
+              </OfficeTab>
+            </ExtensionPoint>
+          </DesktopFormFactor>
+        </Host>
+      </Hosts>
 
     <Resources>
       <bt:Images>
@@ -133,14 +131,14 @@
         </bt:Url>
       </bt:Urls>
 
-      <bt:ShortStrings>
-        <bt:String id="Commands.Group.Label" DefaultValue="People Picker" />
-        <bt:String id="Commands.PeoplePicker.Label" DefaultValue="People Picker" />
-      </bt:ShortStrings>
+        <bt:ShortStrings>
+          <bt:String id="CmdGroupLabel" DefaultValue="People Picker" />
+          <bt:String id="CmdPickerLabel" DefaultValue="People Picker" />
+        </bt:ShortStrings>
 
-      <bt:LongStrings>
-        <bt:String id="Commands.PeoplePicker.Description" DefaultValue="Open the People Picker task pane." />
-      </bt:LongStrings>
+        <bt:LongStrings>
+          <bt:String id="CmdPickerDesc" DefaultValue="Open the People Picker task pane." />
+        </bt:LongStrings>
     </Resources>
 
   </VersionOverrides>

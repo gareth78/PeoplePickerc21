@@ -60,13 +60,15 @@
     <SourceLocation DefaultValue="https://jolly-sky-08c0ccf03.3.azurestaticapps.net/index.html" />
   </DefaultSettings>
 
-  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" Version="1.1">
     <Hosts>
       <Host xsi:type="MailHost">
-        <DesktopFormFactor>
-          <FunctionFile resid="Commands.Url" />
+        <Runtimes>
+          <Runtime resid="TaskPane.Url" lifetime="long" />
+          <Runtime resid="Commands.Url" lifetime="long" />
+        </Runtimes>
 
-          <ExtensionPoint xsi:type="MessageComposeCommandSurface">
+        <ExtensionPoint xsi:type="MessageComposeCommandSurface">
           <OfficeTab id="TabDefault">
             <Group id="Commands.Group">
               <Label resid="Commands.Group.Label" />
@@ -90,29 +92,28 @@
           </OfficeTab>
         </ExtensionPoint>
 
-          <ExtensionPoint xsi:type="MessageReadCommandSurface">
-            <OfficeTab id="TabDefault">
-              <Group id="Commands.Group.Read">
-                <Label resid="Commands.Group.Label" />
-                <Control xsi:type="Button" id="Commands.PeoplePicker.Read">
-                  <Label resid="Commands.PeoplePicker.Label" />
-                  <Supertip>
-                    <Title resid="Commands.PeoplePicker.Label" />
-                    <Description resid="Commands.PeoplePicker.Description" />
-                  </Supertip>
-                  <Icon>
-                    <bt:Image size="16" resid="Icon.16x16" />
-                    <bt:Image size="32" resid="Icon.32x32" />
-                    <bt:Image size="80" resid="Icon.80x80" />
-                  </Icon>
-                  <Action xsi:type="ExecuteFunction">
-                    <FunctionName>showTaskPane</FunctionName>
-                  </Action>
-                </Control>
-              </Group>
-            </OfficeTab>
-          </ExtensionPoint>
-        </DesktopFormFactor>
+        <ExtensionPoint xsi:type="MessageReadCommandSurface">
+          <OfficeTab id="TabDefault">
+            <Group id="Commands.Group.Read">
+              <Label resid="Commands.Group.Label" />
+              <Control xsi:type="Button" id="Commands.PeoplePicker.Read">
+                <Label resid="Commands.PeoplePicker.Label" />
+                <Supertip>
+                  <Title resid="Commands.PeoplePicker.Label" />
+                  <Description resid="Commands.PeoplePicker.Description" />
+                </Supertip>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16" />
+                  <bt:Image size="32" resid="Icon.32x32" />
+                  <bt:Image size="80" resid="Icon.80x80" />
+                </Icon>
+                <Action xsi:type="ExecuteFunction">
+                  <FunctionName>showTaskPane</FunctionName>
+                </Action>
+              </Control>
+            </Group>
+          </OfficeTab>
+        </ExtensionPoint>
       </Host>
     </Hosts>
 

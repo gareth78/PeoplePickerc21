@@ -3,6 +3,15 @@ name: Build and Push to ACR
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'apps/web/**'
+      - 'packages/sdk/**'
+      - '.github/workflows/build-and-push.yml'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.base.json'
+      - 'tsconfig.json'
   workflow_dispatch:
 
 env:

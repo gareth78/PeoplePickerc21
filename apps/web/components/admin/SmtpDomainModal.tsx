@@ -40,11 +40,13 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
     domain: '',
     tenancyId: '',
     priority: 0,
-    enablePresence: null as boolean | null,
-    enablePhotos: null as boolean | null,
-    enableOutOfOffice: null as boolean | null,
-    enableLocalGroups: null as boolean | null,
-    enableGlobalGroups: null as boolean | null,
+    // NEW DOMAIN: Default to false (explicitly disabled, opt-in model)
+    // EXISTING DOMAIN: Will be overwritten in useEffect with actual values
+    enablePresence: false as boolean | null,
+    enablePhotos: false as boolean | null,
+    enableOutOfOffice: false as boolean | null,
+    enableLocalGroups: false as boolean | null,
+    enableGlobalGroups: false as boolean | null,
   });
 
   const [tenancies, setTenancies] = useState<OfficeTenancy[]>([]);
@@ -54,19 +56,27 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
 
   useEffect(() => {
     loadTenancies();
-    if (domain) {
+  }, []);
+
+  // Separate effect to handle domain loading and sanitization after tenancies are loaded
+  useEffect(() => {
+    if (domain && tenancies.length > 0) {
+      const selectedTenancy = tenancies.find((t) => t.id === domain.tenancyId);
+
+      // Load actual values from existing domain
+      // If tenancy has feature disabled, force to NULL (cannot override at domain level)
       setFormData({
         domain: domain.domain,
         tenancyId: domain.tenancyId,
         priority: domain.priority,
-        enablePresence: domain.enablePresence ?? null,
-        enablePhotos: domain.enablePhotos ?? null,
-        enableOutOfOffice: domain.enableOutOfOffice ?? null,
-        enableLocalGroups: domain.enableLocalGroups ?? null,
-        enableGlobalGroups: domain.enableGlobalGroups ?? null,
+        enablePresence: selectedTenancy?.enablePresence === false ? null : (domain.enablePresence ?? null),
+        enablePhotos: selectedTenancy?.enablePhotos === false ? null : (domain.enablePhotos ?? null),
+        enableOutOfOffice: selectedTenancy?.enableOutOfOffice === false ? null : (domain.enableOutOfOffice ?? null),
+        enableLocalGroups: selectedTenancy?.enableLocalGroups === false ? null : (domain.enableLocalGroups ?? null),
+        enableGlobalGroups: selectedTenancy?.enableGlobalGroups === false ? null : (domain.enableGlobalGroups ?? null),
       });
     }
-  }, [domain]);
+  }, [domain, tenancies]);
 
   const loadTenancies = async () => {
     setLoadingTenancies(true);
@@ -141,17 +151,30 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Tri-state toggle: null -> true -> false -> null
+  // Tri-state toggle: false -> true -> null -> false
   const toggleFeatureFlag = (flag: keyof typeof formData) => {
     const currentValue = formData[flag];
+    const selectedTenancy = getSelectedTenancy();
+
+    // Extract the feature name from the flag (e.g., 'enablePresence' -> 'Presence')
+    const featureName = flag.toString().replace('enable', '') as keyof OfficeTenancy;
+    const tenancyFeatureKey = `enable${featureName}` as keyof OfficeTenancy;
+    const tenancyValue = selectedTenancy ? selectedTenancy[tenancyFeatureKey] : false;
+
+    // If tenancy has feature disabled, cannot change at domain level
+    if (tenancyValue === false) {
+      return; // Do nothing - toggle is locked
+    }
+
+    // Cycle through states: false -> true -> null -> false
     let newValue: boolean | null;
 
-    if (currentValue === null) {
-      newValue = true;
+    if (currentValue === false) {
+      newValue = true;  // Off -> Explicitly enable
     } else if (currentValue === true) {
-      newValue = false;
+      newValue = null;  // Explicitly enable -> Inherit
     } else {
-      newValue = null;
+      newValue = false; // Inherit (null) -> Off
     }
 
     setFormData({ ...formData, [flag]: newValue });
@@ -171,6 +194,19 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
     setSaving(true);
 
     try {
+      const selectedTenancy = getSelectedTenancy();
+
+      // Sanitize form data: force NULL for any features where tenancy is disabled
+      // This prevents saving invalid states when tenancy disables a feature
+      const sanitizedFormData = {
+        ...formData,
+        enablePresence: selectedTenancy?.enablePresence === false ? null : formData.enablePresence,
+        enablePhotos: selectedTenancy?.enablePhotos === false ? null : formData.enablePhotos,
+        enableOutOfOffice: selectedTenancy?.enableOutOfOffice === false ? null : formData.enableOutOfOffice,
+        enableLocalGroups: selectedTenancy?.enableLocalGroups === false ? null : formData.enableLocalGroups,
+        enableGlobalGroups: selectedTenancy?.enableGlobalGroups === false ? null : formData.enableGlobalGroups,
+      };
+
       const url = isEditing
         ? `/api/admin/domains/${domain.id}`
         : '/api/admin/domains';
@@ -179,7 +215,7 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(sanitizedFormData),
       });
 
       if (response.ok) {
@@ -431,26 +467,36 @@ function FeatureFlagToggle({
   error,
   onClick,
 }: FeatureFlagToggleProps) {
-  // Determine the effective value (domain override or inherited)
-  const effectiveValue = value ?? tenancyValue;
-  const isInherited = value === null;
+  // Determine visual state based on tenancy and domain values
+  let toggleColor: string;
+  let togglePosition: string;
+  let statusText: string;
+  let statusColor: string;
 
-  // Visual state
-  let toggleColor = 'bg-gray-300'; // Default (null/inheriting)
-  let togglePosition = 'translate-x-0';
-
-  if (!isInherited) {
-    if (value === true) {
-      toggleColor = 'bg-green-500';
-      togglePosition = 'translate-x-5';
-    } else {
-      toggleColor = 'bg-red-500';
-      togglePosition = 'translate-x-0';
-    }
-  } else if (effectiveValue) {
-    // Inherited and enabled
+  if (tenancyValue === false) {
+    // Tenancy disabled - gray and disabled, cannot be changed
+    toggleColor = 'bg-gray-300';
+    togglePosition = 'translate-x-1';
+    statusText = 'Disabled at tenancy level';
+    statusColor = 'text-gray-500';
+  } else if (value === false) {
+    // Explicitly disabled - gray, switch left
+    toggleColor = 'bg-gray-300';
+    togglePosition = 'translate-x-1';
+    statusText = 'Explicitly disabled';
+    statusColor = 'text-red-600';
+  } else if (value === true) {
+    // Explicitly enabled - green, switch right
+    toggleColor = 'bg-green-600';
+    togglePosition = 'translate-x-6';
+    statusText = 'Explicitly enabled';
+    statusColor = 'text-green-600';
+  } else {
+    // Inheriting (null) - gray, switch position depends on inherited value
     toggleColor = 'bg-gray-400';
-    togglePosition = 'translate-x-5';
+    togglePosition = tenancyValue ? 'translate-x-6' : 'translate-x-1';
+    statusText = `Inheriting from ${tenancyName}: ${tenancyValue ? 'enabled' : 'disabled'}`;
+    statusColor = 'text-gray-600';
   }
 
   return (
@@ -458,16 +504,9 @@ function FeatureFlagToggle({
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <label className="text-sm font-medium text-gray-700">{label}</label>
-          {isInherited && (
-            <p className="text-xs text-gray-500 mt-0.5">
-              Inheriting from {tenancyName}: {effectiveValue ? 'enabled' : 'disabled'}
-            </p>
-          )}
-          {!isInherited && (
-            <p className="text-xs text-gray-500 mt-0.5">
-              {value ? 'Explicitly enabled' : 'Explicitly disabled'}
-            </p>
-          )}
+          <p className={`text-xs mt-0.5 ${statusColor}`}>
+            {statusText}
+          </p>
         </div>
 
         {/* Tri-state toggle */}
@@ -484,12 +523,6 @@ function FeatureFlagToggle({
       </div>
 
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-
-      {disabled && !error && (
-        <p className="mt-1 text-xs text-yellow-600">
-          Tenancy does not support this feature
-        </p>
-      )}
     </div>
   );
 }

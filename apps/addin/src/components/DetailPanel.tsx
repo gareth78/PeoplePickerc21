@@ -1,13 +1,16 @@
 import { motion } from 'framer-motion';
-import { 
-  Mail, 
-  Briefcase, 
-  MapPin, 
-  Building2, 
-  User, 
-  RefreshCw,
+import {
+  Mail,
+  Phone,
+  Briefcase,
+  MapPin,
+  Building2,
+  User,
+  UserPlus,
   Calendar,
-  Clock
+  Clock,
+  FileText,
+  Loader2
 } from 'lucide-react';
 import type { OOOResult, PresenceResult } from '@people-picker/sdk';
 import type { EnhancedUser } from '../types';
@@ -22,6 +25,14 @@ interface DetailPanelProps {
   ooo: OOOResult | null | undefined;
   oooError: string | null;
   onRefreshPresence: () => void;
+  // Action handlers
+  isCompose: boolean;
+  supportsRecipients: boolean;
+  inserting: boolean;
+  onInsert: () => void;
+  onAddTo: () => void;
+  onAddCc: () => void;
+  onAddBcc: () => void;
 }
 
 const formatTimestamp = (value: string | null | undefined) => {
@@ -49,6 +60,13 @@ export function DetailPanel({
   ooo,
   oooError,
   onRefreshPresence,
+  isCompose,
+  supportsRecipients,
+  inserting,
+  onInsert,
+  onAddTo,
+  onAddCc,
+  onAddBcc,
 }: DetailPanelProps) {
   const displayPhoto = photo ?? user.photo ?? null;
 
@@ -58,166 +76,217 @@ export function DetailPanel({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="bg-white rounded-2xl border-2 border-slate-200 shadow-xl overflow-hidden"
+      className="space-y-0"
     >
-      {/* Header with gradient */}
-      <div className="bg-gradient-to-br from-primary-500 to-primary-600 px-6 py-8">
-        <div className="flex items-start gap-4">
-          {/* Large Avatar */}
+      {/* Blue Hero Card - Full Width, Centered Content */}
+      <div className="bg-gradient-to-br from-primary-500 to-primary-600 -mx-4 px-4 py-6">
+        <div className="flex flex-col items-center text-center text-white space-y-3">
+          {/* Avatar */}
           {displayPhoto ? (
             <img
               src={displayPhoto}
               alt={user.displayName}
-              className="w-20 h-20 rounded-full object-cover ring-4 ring-white/30 shadow-lg"
+              className="w-16 h-16 rounded-full object-cover ring-2 ring-white/30 shadow-lg"
             />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm
-                          flex items-center justify-center text-white font-bold text-2xl
-                          ring-4 ring-white/30 shadow-lg">
+            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm
+                          flex items-center justify-center text-white font-bold text-xl
+                          ring-2 ring-white/30 shadow-lg">
               {getInitials(user.displayName)}
             </div>
           )}
 
-          {/* User Info */}
-          <div className="flex-1 min-w-0 text-white">
-            <h2 className="text-2xl font-bold mb-1 text-balance">{user.displayName}</h2>
+          {/* User Info - Centered */}
+          <div className="space-y-1">
+            <h2 className="text-lg font-bold">{user.displayName}</h2>
             {user.title && (
-              <p className="text-primary-50 text-sm font-medium mb-2">{user.title}</p>
+              <p className="text-primary-50 text-xs">{user.title}</p>
             )}
-            <div className="flex items-center gap-2 text-sm text-primary-100">
-              <Mail size={14} />
-              <span className="truncate">{user.email}</span>
-            </div>
+            {user.department && (
+              <p className="text-primary-100 text-xs">{user.department}</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-6 space-y-6">
-        {/* Presence Section */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
-              Presence
-            </h3>
+      {/* Presence Section - Compact, Centered, No Label */}
+      <div className="bg-white px-4 py-3 text-center border-b border-slate-200">
+        {presenceError ? (
+          <div className="text-xs text-red-600">{presenceError}</div>
+        ) : (
+          <div className="inline-flex flex-col items-center gap-1">
+            <PresenceBadge presence={presence} refreshing={presenceRefreshing} size="md" />
+            {presence?.fetchedAt && (
+              <p className="text-xs text-slate-500">
+                {formatTimestamp(presence.fetchedAt)}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Add as Recipient Section */}
+      {isCompose && supportsRecipients && (
+        <div className="bg-white px-4 py-3 border-b border-slate-200">
+          <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2 text-center">
+            Add as Recipient
+          </h4>
+          <div className="grid grid-cols-3 gap-2">
             <button
-              onClick={onRefreshPresence}
-              disabled={presenceRefreshing}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
-              aria-label="Refresh presence"
+              onClick={onAddTo}
+              className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium py-2 px-3 rounded-lg
+                       border border-slate-200 hover:border-primary-300
+                       transition-all duration-200
+                       hover:shadow-sm
+                       flex items-center justify-center gap-1 text-xs"
             >
-              <RefreshCw 
-                size={16} 
-                className={`text-slate-600 ${presenceRefreshing ? 'animate-spin' : ''}`} 
-              />
+              <UserPlus size={14} />
+              <span>To</span>
+            </button>
+            <button
+              onClick={onAddCc}
+              className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium py-2 px-3 rounded-lg
+                       border border-slate-200 hover:border-primary-300
+                       transition-all duration-200
+                       hover:shadow-sm
+                       flex items-center justify-center gap-1 text-xs"
+            >
+              <UserPlus size={14} />
+              <span>CC</span>
+            </button>
+            <button
+              onClick={onAddBcc}
+              className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium py-2 px-3 rounded-lg
+                       border border-slate-200 hover:border-primary-300
+                       transition-all duration-200
+                       hover:shadow-sm
+                       flex items-center justify-center gap-1 text-xs"
+            >
+              <UserPlus size={14} />
+              <span>BCC</span>
             </button>
           </div>
-
-          {presenceError ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-              {presenceError}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <PresenceBadge presence={presence} refreshing={presenceRefreshing} size="lg" />
-              {presence?.fetchedAt && (
-                <p className="text-xs text-slate-500 flex items-center gap-1">
-                  <Clock size={12} />
-                  Last updated: {formatTimestamp(presence.fetchedAt)}
-                </p>
-              )}
-            </div>
-          )}
         </div>
+      )}
 
-        {/* Details Grid */}
-        <div className="grid grid-cols-1 gap-4">
+      {/* Contact Details - Consolidated List */}
+      <div className="bg-white px-4 py-3 border-b border-slate-200">
+        <div className="space-y-2">
+          {/* Email */}
+          <div className="flex items-center gap-2 text-xs">
+            <Mail size={14} className="text-slate-400 flex-shrink-0" />
+            <span className="text-slate-600 font-medium">Email:</span>
+            <span className="text-slate-900 truncate">{user.email}</span>
+          </div>
+
+          {/* Title */}
           {user.title && (
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-              <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Briefcase size={16} />
-                <span className="text-xs font-semibold uppercase tracking-wider">Title</span>
-              </div>
-              <p className="text-slate-900 font-medium">{user.title}</p>
+            <div className="flex items-center gap-2 text-xs">
+              <Briefcase size={14} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-600 font-medium">Title:</span>
+              <span className="text-slate-900 truncate">{user.title}</span>
             </div>
           )}
 
+          {/* Department */}
           {user.department && (
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-              <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Building2 size={16} />
-                <span className="text-xs font-semibold uppercase tracking-wider">Department</span>
-              </div>
-              <p className="text-slate-900 font-medium">{user.department}</p>
+            <div className="flex items-center gap-2 text-xs">
+              <Building2 size={14} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-600 font-medium">Department:</span>
+              <span className="text-slate-900 truncate">{user.department}</span>
             </div>
           )}
 
+          {/* Location */}
           {user.officeLocation && (
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-              <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <MapPin size={16} />
-                <span className="text-xs font-semibold uppercase tracking-wider">Location</span>
-              </div>
-              <p className="text-slate-900 font-medium">{user.officeLocation}</p>
+            <div className="flex items-center gap-2 text-xs">
+              <MapPin size={14} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-600 font-medium">Location:</span>
+              <span className="text-slate-900 truncate">{user.officeLocation}</span>
             </div>
           )}
 
+          {/* Manager */}
           {user.managerEmail && (
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-              <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <User size={16} />
-                <span className="text-xs font-semibold uppercase tracking-wider">Manager</span>
-              </div>
-              <p className="text-slate-900 font-medium">{user.managerEmail}</p>
+            <div className="flex items-center gap-2 text-xs">
+              <User size={14} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-600 font-medium">Manager:</span>
+              <span className="text-slate-900 truncate">{user.managerEmail}</span>
             </div>
-          )}
-        </div>
-
-        {/* Out of Office */}
-        <div>
-          <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-3">
-            Out of Office
-          </h3>
-
-          {oooError ? (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-700">
-              {oooError}
-            </div>
-          ) : ooo === undefined ? (
-            <div className="text-sm text-slate-500">Checking automatic replies...</div>
-          ) : ooo === null || !ooo.isOOO ? (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-600">
-              No automatic replies are enabled.
-            </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 space-y-3"
-            >
-              <div className="flex items-center gap-2 text-amber-900 font-semibold">
-                <Calendar size={16} />
-                <span>Automatic replies active</span>
-              </div>
-              {ooo.message && (
-                <p className="text-sm text-amber-800 leading-relaxed whitespace-pre-wrap">
-                  {ooo.message}
-                </p>
-              )}
-              {(ooo.startTime || ooo.endTime) && (
-                <div className="text-xs text-amber-700 space-y-1">
-                  {ooo.startTime && (
-                    <div>Starts: {new Date(ooo.startTime).toLocaleString()}</div>
-                  )}
-                  {ooo.endTime && (
-                    <div>Ends: {new Date(ooo.endTime).toLocaleString()}</div>
-                  )}
-                </div>
-              )}
-            </motion.div>
           )}
         </div>
       </div>
+
+      {/* Out of Office */}
+      <div className="bg-white px-4 py-3 border-b border-slate-200">
+        <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+          Out of Office
+        </h4>
+
+        {oooError ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-700">
+            {oooError}
+          </div>
+        ) : ooo === undefined ? (
+          <div className="text-xs text-slate-500">Checking...</div>
+        ) : ooo === null || !ooo.isOOO ? (
+          <div className="text-xs text-slate-600">No automatic replies enabled</div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2"
+          >
+            <div className="flex items-center gap-2 text-amber-900 font-semibold text-xs">
+              <Calendar size={14} />
+              <span>Automatic replies active</span>
+            </div>
+            {ooo.message && (
+              <p className="text-xs text-amber-800 leading-relaxed">
+                {ooo.message}
+              </p>
+            )}
+            {(ooo.startTime || ooo.endTime) && (
+              <div className="text-xs text-amber-700 space-y-0.5">
+                {ooo.startTime && (
+                  <div>Starts: {new Date(ooo.startTime).toLocaleString()}</div>
+                )}
+                {ooo.endTime && (
+                  <div>Ends: {new Date(ooo.endTime).toLocaleString()}</div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </div>
+
+      {/* Insert Summary Button */}
+      {isCompose && (
+        <div className="bg-white px-4 py-3">
+          <button
+            onClick={onInsert}
+            disabled={inserting}
+            className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700
+                     text-white font-semibold py-2.5 px-4 rounded-lg
+                     transition-all duration-200
+                     hover:shadow-lg hover:shadow-primary-200
+                     disabled:opacity-50 disabled:cursor-not-allowed
+                     flex items-center justify-center gap-2 text-sm"
+          >
+            {inserting ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Inserting...</span>
+              </>
+            ) : (
+              <>
+                <FileText size={16} />
+                <span>Insert Summary</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }

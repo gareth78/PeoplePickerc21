@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { sdk, PeoplePickerError, type OOOResult, type PresenceResult, type UsersResult } from '@people-picker/sdk';
 import { useDebounce } from './hooks/useDebounce';
 import type { EnhancedUser, PublicConfig } from './types';
@@ -9,7 +9,6 @@ import type { EnhancedUser, PublicConfig } from './types';
 import { SearchInput } from './components/SearchInput';
 import { UserCard } from './components/UserCard';
 import { DetailPanel } from './components/DetailPanel';
-import { ActionButtons } from './components/ActionButtons';
 import { EmptyState } from './components/EmptyState';
 import { SkeletonUserCard } from './components/SkeletonLoader';
 import { Toast } from './components/Toast';
@@ -591,70 +590,42 @@ export default function App() {
 
       {/* Main Container */}
       <div className="max-w-2xl mx-auto min-h-full flex flex-col">
-        {/* Header */}
+        {/* Fixed Blue Header with Search */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 px-6 py-8 shadow-lg"
+          className="sticky top-0 z-40 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 px-4 py-4 shadow-lg"
         >
-          <div className="flex items-center gap-4">
-            {config.orgLogoUrl ? (
-              <img
-                src={config.orgLogoUrl}
-                alt={`${config.orgName} logo`}
-                className="w-12 h-12 rounded-full object-cover ring-4 ring-white/30 shadow-lg"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg ring-4 ring-white/30 shadow-lg">
-                {(config.orgName ?? 'PP').slice(0, 2).toUpperCase()}
-              </div>
-            )}
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-white">{config.appName}</h1>
-                <Sparkles size={20} className="text-primary-200" />
-              </div>
-              <p className="text-primary-100 text-sm font-medium">{config.orgName}</p>
-            </div>
-          </div>
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            isSearching={searching}
+            placeholder="Search by name, title, or email..."
+            autoFocus
+          />
         </motion.header>
 
         {/* Content */}
-        <main className="flex-1 p-6 space-y-6 custom-scrollbar overflow-y-auto">
+        <main className="flex-1 p-4 space-y-4 custom-scrollbar overflow-y-auto">
           {/* Back Button (when user is selected) */}
           {selectedUser && (
             <motion.button
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               onClick={() => setSelectedUser(null)}
-              className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-primary-600 transition-colors"
+              className="flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-primary-600 transition-colors"
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={14} />
               <span>Back to search results</span>
             </motion.button>
           )}
-
-          {/* Search Input */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              isSearching={searching}
-              placeholder="Search by name, title, or email..."
-              autoFocus
-            />
-          </motion.div>
 
           {/* Search Error */}
           {searchError && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700"
+              className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700"
             >
               {searchError}
             </motion.div>
@@ -670,7 +641,7 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-6"
+                className="space-y-4"
               >
                 <DetailPanel
                   user={selectedUser}
@@ -696,16 +667,13 @@ export default function App() {
                         setPresenceRefreshing(false);
                       });
                   }}
-                />
-
-                <ActionButtons
+                  isCompose={officeContext.isCompose}
+                  supportsRecipients={officeContext.supportsRecipients}
+                  inserting={inserting}
                   onInsert={handleInsert}
                   onAddTo={() => handleAddRecipient('to')}
                   onAddCc={() => handleAddRecipient('cc')}
                   onAddBcc={() => handleAddRecipient('bcc')}
-                  isCompose={officeContext.isCompose}
-                  supportsRecipients={officeContext.supportsRecipients}
-                  inserting={inserting}
                 />
               </motion.div>
             ) : searching ? (
@@ -715,7 +683,7 @@ export default function App() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="space-y-3"
+                className="space-y-2"
               >
                 {[...Array(3)].map((_, i) => (
                   <SkeletonUserCard key={i} />
@@ -734,7 +702,7 @@ export default function App() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="space-y-3"
+                className="space-y-2"
               >
                 {orderedResults.map((user, index) => (
                   <UserCard

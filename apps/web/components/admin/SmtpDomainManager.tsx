@@ -11,6 +11,9 @@ import {
   XCircle,
   GripVertical,
   Save,
+  Check,
+  X,
+  Minus,
 } from 'lucide-react';
 import SmtpDomainModal from './SmtpDomainModal';
 
@@ -40,96 +43,58 @@ interface SmtpDomain {
   tenancy: OfficeTenancy;
 }
 
-// Component to display feature flags with color-coded inheritance indicators
-interface FeatureFlagsDisplayProps {
-  domain: SmtpDomain;
+// Component to display feature flags matching Office 365 Tenancies style
+interface FeatureFlagBadgeProps {
+  label: string;
+  domainValue: boolean | null;
+  tenancyValue: boolean;
+  tenancyName: string;
 }
 
-function FeatureFlagsDisplay({ domain }: FeatureFlagsDisplayProps) {
-  const features = [
-    {
-      key: 'Presence',
-      abbr: 'PR',
-      domainValue: domain.enablePresence,
-      tenancyValue: domain.tenancy.enablePresence,
-      title: 'Presence Lookup',
-    },
-    {
-      key: 'Photos',
-      abbr: 'PH',
-      domainValue: domain.enablePhotos,
-      tenancyValue: domain.tenancy.enablePhotos,
-      title: 'Profile Photos',
-    },
-    {
-      key: 'OutOfOffice',
-      abbr: 'OOO',
-      domainValue: domain.enableOutOfOffice,
-      tenancyValue: domain.tenancy.enableOutOfOffice,
-      title: 'Out of Office Status',
-    },
-    {
-      key: 'LocalGroups',
-      abbr: 'LG',
-      domainValue: domain.enableLocalGroups,
-      tenancyValue: domain.tenancy.enableLocalGroups,
-      title: 'Local Groups',
-    },
-    {
-      key: 'GlobalGroups',
-      abbr: 'GG',
-      domainValue: domain.enableGlobalGroups,
-      tenancyValue: domain.tenancy.enableGlobalGroups,
-      title: 'Global Groups',
-    },
-  ];
-
+function FeatureFlagBadge({ label, domainValue, tenancyValue, tenancyName }: FeatureFlagBadgeProps) {
+  let icon: React.ReactNode;
+  let bgColor: string;
+  let textColor: string;
+  let tooltip: string;
+  
+  // Determine status and styling
+  if (domainValue === false) {
+    // Explicitly disabled at domain level (RED)
+    icon = <X className="w-3 h-3" />;
+    bgColor = "bg-red-100";
+    textColor = "text-red-800";
+    tooltip = `${label}: Explicitly disabled for this domain (overriding tenancy)`;
+  } 
+  else if (domainValue === true) {
+    // Explicitly enabled at domain level (GREEN)
+    icon = <Check className="w-3 h-3" />;
+    bgColor = "bg-green-100";
+    textColor = "text-green-800";
+    tooltip = `${label}: Explicitly enabled for this domain`;
+  } 
+  else if (domainValue === null && tenancyValue === true) {
+    // Inherited as enabled (GREEN)
+    icon = <Check className="w-3 h-3" />;
+    bgColor = "bg-green-100";
+    textColor = "text-green-800";
+    tooltip = `${label}: Enabled (inherited from ${tenancyName})`;
+  } 
+  else {
+    // Inherited as disabled / blocked by tenancy (GRAY)
+    icon = <Minus className="w-3 h-3" />;
+    bgColor = "bg-gray-100";
+    textColor = "text-gray-600";
+    tooltip = `${label}: Disabled at tenancy level - cannot be enabled for this domain`;
+  }
+  
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {features.map((feature) => {
-        const isInherited = feature.domainValue === null;
-        const effectiveValue = feature.domainValue ?? feature.tenancyValue;
-        
-        // Determine badge color based on inheritance and value
-        let badgeClass = '';
-        let statusIcon = '';
-        
-        if (isInherited) {
-          // Inherited from tenant (purple/blue)
-          if (effectiveValue) {
-            badgeClass = 'bg-purple-100 text-purple-700 border border-purple-200';
-            statusIcon = '↑✓';
-          } else {
-            badgeClass = 'bg-gray-100 text-gray-600 border border-gray-200';
-            statusIcon = '↑✗';
-          }
-        } else {
-          // Explicitly set
-          if (feature.domainValue === true) {
-            badgeClass = 'bg-green-100 text-green-700 border border-green-300';
-            statusIcon = '✓';
-          } else {
-            badgeClass = 'bg-red-100 text-red-700 border border-red-300';
-            statusIcon = '✗';
-          }
-        }
-
-        const tooltipText = isInherited
-          ? `${feature.title}: ${effectiveValue ? 'Enabled' : 'Disabled'} (inherited from tenant)`
-          : `${feature.title}: ${feature.domainValue ? 'Enabled' : 'Disabled'} (domain override)`;
-
-        return (
-          <span
-            key={feature.key}
-            className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${badgeClass}`}
-            title={tooltipText}
-          >
-            <span className="font-semibold">{feature.abbr}</span>
-            <span className="ml-0.5 text-[10px]">{statusIcon}</span>
-          </span>
-        );
-      })}
-    </div>
+    <span 
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
+      title={tooltip}
+    >
+      {icon}
+      {label}
+    </span>
   );
 }
 
@@ -382,20 +347,14 @@ export default function SmtpDomainManager() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="w-12 px-3 py-3"></th>
+                  <th className="w-8"></th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Domain
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Assigned Tenant
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Feature Flags
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Priority
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Actions
                   </th>
                 </tr>
@@ -404,38 +363,80 @@ export default function SmtpDomainManager() {
                 {orderedDomains.map((domain, index) => (
                   <tr
                     key={domain.id}
-                    draggable
-                    onDragStart={() => handleDragStart(index)}
                     onDragOver={(e) => handleDragOver(e, index)}
-                    onDragEnd={handleDragEnd}
-                    className={`hover:bg-gray-50 cursor-move ${
+                    className={`hover:bg-gray-50 ${
                       draggedIndex === index ? 'opacity-50' : ''
                     }`}
                   >
-                    <td className="px-3 py-4 whitespace-nowrap">
-                      <GripVertical className="w-5 h-5 text-gray-400" />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Mail className="w-4 h-4 text-gray-400 mr-2" />
-                        <span className="text-sm font-medium text-gray-900">{domain.domain}</span>
+                    {/* Column 1: Drag handle (spans all 3 visual rows) */}
+                    <td className="px-3 py-4 align-top">
+                      <div
+                        draggable
+                        onDragStart={() => handleDragStart(index)}
+                        onDragEnd={handleDragEnd}
+                        className="cursor-grab active:cursor-grabbing"
+                      >
+                        <GripVertical className="w-5 h-5 text-gray-400" />
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{domain.tenancy.name}</div>
-                      <div className="text-xs text-gray-500 font-mono truncate max-w-xs">
-                        {domain.tenancy.tenantId}
-                      </div>
-                    </td>
+
+                    {/* Column 2: Domain info (contains all 3 lines) */}
                     <td className="px-6 py-4">
-                      <FeatureFlagsDisplay domain={domain} />
+                      {/* Line 1: Domain name */}
+                      <div className="flex items-center mb-2">
+                        <Mail className="w-4 h-4 text-gray-400 mr-2" />
+                        <span className="font-medium text-gray-900">{domain.domain}</span>
+                      </div>
+                      
+                      {/* Line 2: Tenancy name + UUID */}
+                      <div className="text-sm text-gray-500 mb-2">
+                        {domain.tenancy.name} ({domain.tenancy.tenantId})
+                      </div>
+                      
+                      {/* Line 3: Feature flags */}
+                      <div className="flex flex-wrap gap-2">
+                        <FeatureFlagBadge 
+                          label="Presence"
+                          domainValue={domain.enablePresence ?? null}
+                          tenancyValue={domain.tenancy.enablePresence}
+                          tenancyName={domain.tenancy.name}
+                        />
+                        <FeatureFlagBadge 
+                          label="Photos"
+                          domainValue={domain.enablePhotos ?? null}
+                          tenancyValue={domain.tenancy.enablePhotos}
+                          tenancyName={domain.tenancy.name}
+                        />
+                        <FeatureFlagBadge 
+                          label="OOO"
+                          domainValue={domain.enableOutOfOffice ?? null}
+                          tenancyValue={domain.tenancy.enableOutOfOffice}
+                          tenancyName={domain.tenancy.name}
+                        />
+                        <FeatureFlagBadge 
+                          label="Local Groups"
+                          domainValue={domain.enableLocalGroups ?? null}
+                          tenancyValue={domain.tenancy.enableLocalGroups}
+                          tenancyName={domain.tenancy.name}
+                        />
+                        <FeatureFlagBadge 
+                          label="Global Groups"
+                          domainValue={domain.enableGlobalGroups ?? null}
+                          tenancyValue={domain.tenancy.enableGlobalGroups}
+                          tenancyName={domain.tenancy.name}
+                        />
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+
+                    {/* Column 3: Priority badge (centered, spans full height) */}
+                    <td className="text-center align-top pt-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {index + 1}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+
+                    {/* Column 4: Actions (aligned top) */}
+                    <td className="px-6 text-right align-top pt-4">
                       <div className="flex items-center justify-end space-x-2">
                         <button
                           onClick={() => handleEdit(domain)}

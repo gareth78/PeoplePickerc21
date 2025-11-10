@@ -1,13 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Save, Loader2, XCircle } from 'lucide-react';
+import { X, Save, Loader2, XCircle, Info } from 'lucide-react';
 
 interface OfficeTenancy {
   id: string;
   name: string;
   tenantId: string;
   enabled: boolean;
+  enablePresence: boolean;
+  enablePhotos: boolean;
+  enableOutOfOffice: boolean;
+  enableLocalGroups: boolean;
+  enableGlobalGroups: boolean;
 }
 
 interface SmtpDomain {
@@ -15,6 +20,11 @@ interface SmtpDomain {
   domain: string;
   tenancyId: string;
   priority: number;
+  enablePresence?: boolean | null;
+  enablePhotos?: boolean | null;
+  enableOutOfOffice?: boolean | null;
+  enableLocalGroups?: boolean | null;
+  enableGlobalGroups?: boolean | null;
   tenancy: OfficeTenancy;
 }
 
@@ -30,6 +40,11 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
     domain: '',
     tenancyId: '',
     priority: 0,
+    enablePresence: null as boolean | null,
+    enablePhotos: null as boolean | null,
+    enableOutOfOffice: null as boolean | null,
+    enableLocalGroups: null as boolean | null,
+    enableGlobalGroups: null as boolean | null,
   });
 
   const [tenancies, setTenancies] = useState<OfficeTenancy[]>([]);
@@ -44,6 +59,11 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
         domain: domain.domain,
         tenancyId: domain.tenancyId,
         priority: domain.priority,
+        enablePresence: domain.enablePresence ?? null,
+        enablePhotos: domain.enablePhotos ?? null,
+        enableOutOfOffice: domain.enableOutOfOffice ?? null,
+        enableLocalGroups: domain.enableLocalGroups ?? null,
+        enableGlobalGroups: domain.enableGlobalGroups ?? null,
       });
     }
   }, [domain]);
@@ -73,6 +93,10 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
     }
   };
 
+  const getSelectedTenancy = (): OfficeTenancy | null => {
+    return tenancies.find((t) => t.id === formData.tenancyId) || null;
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -93,8 +117,50 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
       newErrors.tenancyId = 'Please select a tenant';
     }
 
+    // Validate feature flags - domain can't enable features tenancy doesn't support
+    const selectedTenancy = getSelectedTenancy();
+    if (selectedTenancy) {
+      if (formData.enablePresence === true && !selectedTenancy.enablePresence) {
+        newErrors.enablePresence = `Cannot enable Presence - parent tenancy '${selectedTenancy.name}' does not support this feature`;
+      }
+      if (formData.enablePhotos === true && !selectedTenancy.enablePhotos) {
+        newErrors.enablePhotos = `Cannot enable Photos - parent tenancy '${selectedTenancy.name}' does not support this feature`;
+      }
+      if (formData.enableOutOfOffice === true && !selectedTenancy.enableOutOfOffice) {
+        newErrors.enableOutOfOffice = `Cannot enable Out of Office - parent tenancy '${selectedTenancy.name}' does not support this feature`;
+      }
+      if (formData.enableLocalGroups === true && !selectedTenancy.enableLocalGroups) {
+        newErrors.enableLocalGroups = `Cannot enable Local Groups - parent tenancy '${selectedTenancy.name}' does not support this feature`;
+      }
+      if (formData.enableGlobalGroups === true && !selectedTenancy.enableGlobalGroups) {
+        newErrors.enableGlobalGroups = `Cannot enable Global Groups - parent tenancy '${selectedTenancy.name}' does not support this feature`;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Tri-state toggle: null -> true -> false -> null
+  const toggleFeatureFlag = (flag: keyof typeof formData) => {
+    const currentValue = formData[flag];
+    let newValue: boolean | null;
+
+    if (currentValue === null) {
+      newValue = true;
+    } else if (currentValue === true) {
+      newValue = false;
+    } else {
+      newValue = null;
+    }
+
+    setFormData({ ...formData, [flag]: newValue });
+    // Clear error for this field if any
+    if (errors[flag]) {
+      const newErrors = { ...errors };
+      delete newErrors[flag];
+      setErrors(newErrors);
+    }
   };
 
   const handleSave = async () => {
@@ -240,6 +306,75 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
                   Higher priority domains are checked first (default: 0)
                 </p>
               </div>
+
+              {/* Feature Flags Section */}
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <h4 className="text-sm font-semibold text-gray-900">Feature Flags</h4>
+                  <Info className="w-4 h-4 text-gray-400" />
+                </div>
+                <p className="text-xs text-gray-600 mb-4">
+                  Configure which Microsoft Graph features are enabled for this domain. Leave blank to inherit from tenancy.
+                </p>
+
+                {/* Feature Flag Toggles */}
+                <div className="space-y-3">
+                  {/* Enable Presence */}
+                  <FeatureFlagToggle
+                    label="Enable Presence Lookup"
+                    value={formData.enablePresence}
+                    tenancyValue={getSelectedTenancy()?.enablePresence ?? false}
+                    tenancyName={getSelectedTenancy()?.name ?? ''}
+                    disabled={!getSelectedTenancy()?.enablePresence}
+                    error={errors.enablePresence}
+                    onClick={() => toggleFeatureFlag('enablePresence')}
+                  />
+
+                  {/* Enable Photos */}
+                  <FeatureFlagToggle
+                    label="Enable Profile Photos"
+                    value={formData.enablePhotos}
+                    tenancyValue={getSelectedTenancy()?.enablePhotos ?? false}
+                    tenancyName={getSelectedTenancy()?.name ?? ''}
+                    disabled={!getSelectedTenancy()?.enablePhotos}
+                    error={errors.enablePhotos}
+                    onClick={() => toggleFeatureFlag('enablePhotos')}
+                  />
+
+                  {/* Enable Out of Office */}
+                  <FeatureFlagToggle
+                    label="Enable Out of Office Status"
+                    value={formData.enableOutOfOffice}
+                    tenancyValue={getSelectedTenancy()?.enableOutOfOffice ?? false}
+                    tenancyName={getSelectedTenancy()?.name ?? ''}
+                    disabled={!getSelectedTenancy()?.enableOutOfOffice}
+                    error={errors.enableOutOfOffice}
+                    onClick={() => toggleFeatureFlag('enableOutOfOffice')}
+                  />
+
+                  {/* Enable Local Groups */}
+                  <FeatureFlagToggle
+                    label="Enable Local Groups"
+                    value={formData.enableLocalGroups}
+                    tenancyValue={getSelectedTenancy()?.enableLocalGroups ?? false}
+                    tenancyName={getSelectedTenancy()?.name ?? ''}
+                    disabled={!getSelectedTenancy()?.enableLocalGroups}
+                    error={errors.enableLocalGroups}
+                    onClick={() => toggleFeatureFlag('enableLocalGroups')}
+                  />
+
+                  {/* Enable Global Groups */}
+                  <FeatureFlagToggle
+                    label="Enable Global Groups"
+                    value={formData.enableGlobalGroups}
+                    tenancyValue={getSelectedTenancy()?.enableGlobalGroups ?? false}
+                    tenancyName={getSelectedTenancy()?.name ?? ''}
+                    disabled={!getSelectedTenancy()?.enableGlobalGroups}
+                    error={errors.enableGlobalGroups}
+                    onClick={() => toggleFeatureFlag('enableGlobalGroups')}
+                  />
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -272,6 +407,89 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Tri-state toggle component for feature flags
+interface FeatureFlagToggleProps {
+  label: string;
+  value: boolean | null;
+  tenancyValue: boolean;
+  tenancyName: string;
+  disabled: boolean;
+  error?: string;
+  onClick: () => void;
+}
+
+function FeatureFlagToggle({
+  label,
+  value,
+  tenancyValue,
+  tenancyName,
+  disabled,
+  error,
+  onClick,
+}: FeatureFlagToggleProps) {
+  // Determine the effective value (domain override or inherited)
+  const effectiveValue = value ?? tenancyValue;
+  const isInherited = value === null;
+
+  // Visual state
+  let toggleColor = 'bg-gray-300'; // Default (null/inheriting)
+  let togglePosition = 'translate-x-0';
+
+  if (!isInherited) {
+    if (value === true) {
+      toggleColor = 'bg-green-500';
+      togglePosition = 'translate-x-5';
+    } else {
+      toggleColor = 'bg-red-500';
+      togglePosition = 'translate-x-0';
+    }
+  } else if (effectiveValue) {
+    // Inherited and enabled
+    toggleColor = 'bg-gray-400';
+    togglePosition = 'translate-x-5';
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <label className="text-sm font-medium text-gray-700">{label}</label>
+          {isInherited && (
+            <p className="text-xs text-gray-500 mt-0.5">
+              Inheriting from {tenancyName}: {effectiveValue ? 'enabled' : 'disabled'}
+            </p>
+          )}
+          {!isInherited && (
+            <p className="text-xs text-gray-500 mt-0.5">
+              {value ? 'Explicitly enabled' : 'Explicitly disabled'}
+            </p>
+          )}
+        </div>
+
+        {/* Tri-state toggle */}
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+            disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+          } ${toggleColor}`}
+        >
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${togglePosition}`} />
+        </button>
+      </div>
+
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+
+      {disabled && !error && (
+        <p className="mt-1 text-xs text-yellow-600">
+          Tenancy does not support this feature
+        </p>
+      )}
     </div>
   );
 }

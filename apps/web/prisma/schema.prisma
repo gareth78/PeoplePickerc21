@@ -70,9 +70,9 @@ model OfficeTenancy {
   enabled      Boolean  @default(true)
   
   // Feature flags for Graph API capabilities
-  enablePresence      Boolean  @default(true)  @map("enable_presence")       // Presence.Read.All permission
-  enablePhotos        Boolean  @default(true)  @map("enable_photos")         // User.Read.All / User.ReadBasic.All
-  enableOutOfOffice   Boolean  @default(true)  @map("enable_out_of_office")  // MailboxSettings.Read permission
+  enablePresence      Boolean  @default(false)  @map("enable_presence")       // Presence.Read.All permission
+  enablePhotos        Boolean  @default(false)  @map("enable_photos")         // User.Read.All / User.ReadBasic.All
+  enableOutOfOffice   Boolean  @default(false)  @map("enable_out_of_office")  // MailboxSettings.Read permission
   enableLocalGroups   Boolean  @default(false) @map("enable_local_groups")   // Query local tenant groups
   enableGlobalGroups  Boolean  @default(false) @map("enable_global_groups")  // Show Groups tab in UI
   
@@ -93,6 +93,13 @@ model SmtpDomain {
   tenancyId  String   @map("tenancy_id") @db.UniqueIdentifier
   tenancy    OfficeTenancy @relation(fields: [tenancyId], references: [id], onDelete: Cascade)
   priority   Int      @default(0)                 // For routing priority
+  
+  // Domain-level feature flags (NULL = inherit from tenancy)
+  enablePresence      Boolean? @map("enable_presence") @db.Bit
+  enablePhotos        Boolean? @map("enable_photos") @db.Bit
+  enableOutOfOffice   Boolean? @map("enable_out_of_office") @db.Bit
+  enableLocalGroups   Boolean? @map("enable_local_groups") @db.Bit
+  enableGlobalGroups  Boolean? @map("enable_global_groups") @db.Bit
   
   createdAt  DateTime @default(now()) @map("created_at") @db.DateTime2
   updatedAt  DateTime @updatedAt @map("updated_at") @db.DateTime2

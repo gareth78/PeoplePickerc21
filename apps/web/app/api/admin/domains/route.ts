@@ -31,6 +31,11 @@ export async function GET(request: NextRequest) {
             name: true,
             tenantId: true,
             enabled: true,
+            enablePresence: true,
+            enablePhotos: true,
+            enableOutOfOffice: true,
+            enableLocalGroups: true,
+            enableGlobalGroups: true,
           },
         },
       },
@@ -57,7 +62,16 @@ export async function POST(request: NextRequest) {
     const admin = authResult.session;
 
     const body = await request.json();
-    const { domain, tenancyId, priority = 0 } = body;
+    const {
+      domain,
+      tenancyId,
+      priority = 0,
+      enablePresence = null,
+      enablePhotos = null,
+      enableOutOfOffice = null,
+      enableLocalGroups = null,
+      enableGlobalGroups = null,
+    } = body;
 
     // Validation
     if (!domain || !tenancyId) {
@@ -115,6 +129,11 @@ export async function POST(request: NextRequest) {
         domain: domain.toLowerCase(),
         tenancyId,
         priority,
+        enablePresence,
+        enablePhotos,
+        enableOutOfOffice,
+        enableLocalGroups,
+        enableGlobalGroups,
       },
       include: {
         tenancy: {
@@ -123,6 +142,11 @@ export async function POST(request: NextRequest) {
             name: true,
             tenantId: true,
             enabled: true,
+            enablePresence: true,
+            enablePhotos: true,
+            enableOutOfOffice: true,
+            enableLocalGroups: true,
+            enableGlobalGroups: true,
           },
         },
       },
@@ -136,6 +160,13 @@ export async function POST(request: NextRequest) {
         domain: newDomain.domain,
         tenancyId: newDomain.tenancyId,
         tenancyName: tenancy.name,
+        featureFlags: {
+          enablePresence,
+          enablePhotos,
+          enableOutOfOffice,
+          enableLocalGroups,
+          enableGlobalGroups,
+        },
       },
     });
 

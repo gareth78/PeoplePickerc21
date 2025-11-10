@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { sdk, PeoplePickerError, type OOOResult, type PresenceResult, type UsersResult } from '@people-picker/sdk';
 import { useDebounce } from './hooks/useDebounce';
-import { SearchTab } from './components/SearchTab';
-import { DetailsTab } from './components/DetailsTab';
-import { InsertTab } from './components/InsertTab';
+import { SearchBar } from './components/SearchBar';
+import { ResultCard } from './components/ResultCard';
+import { DetailPanel } from './components/DetailPanel';
+import { ToastContainer, type ToastMessage } from './components/Toast';
+import { SearchSkeleton } from './components/SkeletonLoader';
 import type { EnhancedUser, PublicConfig } from './types';
-
-type TabKey = 'search' | 'details' | 'insert';
+import { Building2, Search as SearchIcon } from 'lucide-react';
 
 interface OfficeContextState {
   isCompose: boolean;
@@ -15,11 +16,6 @@ interface OfficeContextState {
     displayName: string | null;
     email: string | null;
   };
-}
-
-interface StatusMessage {
-  tone: 'success' | 'error' | 'info';
-  text: string;
 }
 
 const MIN_QUERY_LENGTH = 2;
@@ -234,22 +230,18 @@ const requestOOO = async (email: string, token?: string | null): Promise<OOOResu
 
 export default function App() {
   const [config, setConfig] = useState<PublicConfig>(defaultConfig);
-  const [configError, setConfigError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabKey>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
   const [searchResults, setSearchResults] = useState<EnhancedUser[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<EnhancedUser | null>(null);
+  const [showDetailPanel, setShowDetailPanel] = useState(false);
   const [officeContext, setOfficeContext] = useState<OfficeContextState>(getInitialOfficeContext);
-  const [presenceError, setPresenceError] = useState<string | null>(null);
   const [presenceRefreshing, setPresenceRefreshing] = useState(false);
-  const [oooError, setOooError] = useState<string | null>(null);
-  const [insertStatus, setInsertStatus] = useState<StatusMessage | null>(null);
-  const [recipientStatus, setRecipientStatus] = useState<StatusMessage | null>(null);
   const [inserting, setInserting] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const photoCacheRef = useRef<Record<string, string | null>>({});
   const [photoCache, setPhotoCache] = useState<Record<string, string | null>>({});
@@ -258,6 +250,15 @@ export default function App() {
   const oooCacheRef = useRef<Record<string, OOOResult | null>>({});
   const [oooCache, setOooCache] = useState<Record<string, OOOResult | null>>({});
   const prefillRef = useRef<string | null>(null);
+
+  const addToast = (type: ToastMessage['type'], message: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToasts((prev) => [...prev, { id, type, message }]);
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   useEffect(() => {
     photoCacheRef.current = photoCache;
@@ -277,7 +278,6 @@ export default function App() {
         const publicConfig = await resolvePublicConfig();
         setConfig(publicConfig);
       } catch (error) {
-        setConfigError('Unable to load organization details.');
         logDev('Public config failed', error);
       }
     };
@@ -363,7 +363,7 @@ export default function App() {
           );
           if (match) {
             setSelectedUser(match);
-            setActiveTab('details');
+            setShowDetailPanel(true);
             prefillRef.current = null;
           }
         } else if (selectedUser) {
@@ -391,7 +391,7 @@ export default function App() {
 
   useEffect(() => {
     const email = selectedUser?.email;
-    if (!email || activeTab !== 'details') {
+    if (!email || !showDetailPanel) {
       return;
     }
 
@@ -400,7 +400,6 @@ export default function App() {
 
     const hydratePresence = async () => {
       setPresenceRefreshing(true);
-      setPresenceError(null);
       try {
         const result = await requestPresence(email, {
           noCache: true,
@@ -415,9 +414,6 @@ export default function App() {
           return;
         }
         logDev('Presence refresh failed', error);
-        if (!cancelled) {
-          setPresenceError('Presence unavailable');
-        }
       } finally {
         if (!cancelled) {
           setPresenceRefreshing(false);
@@ -425,52 +421,52 @@ export default function App() {
       }
     };
 
-      hydratePresence().catch((error) => logDev('Presence hydrate error', error));
+    hydratePresence().catch((error) => logDev('Presence hydrate error', error));
 
-      let timer: number | undefined;
+    let timer: number | undefined;
 
-      const schedule = () => {
-        if (cancelled) {
-          return;
-        }
-        if (document.visibilityState !== 'visible') {
-          return;
-        }
-        timer = window.setTimeout(() => {
-          hydratePresence()
-            .then(() => schedule())
-            .catch((error) => logDev('Presence poll error', error));
-        }, PRESENCE_TTL_SECONDS * 1000);
-      };
+    const schedule = () => {
+      if (cancelled) {
+        return;
+      }
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+      timer = window.setTimeout(() => {
+        hydratePresence()
+          .then(() => schedule())
+          .catch((error) => logDev('Presence poll error', error));
+      }, PRESENCE_TTL_SECONDS * 1000);
+    };
 
-      schedule();
+    schedule();
 
-      const handleVisibility = () => {
-        if (document.visibilityState === 'visible') {
-          hydratePresence()
-            .then(() => schedule())
-            .catch((error) => logDev('Visibility refresh error', error));
-        } else if (timer !== undefined) {
-          window.clearTimeout(timer);
-          timer = undefined;
-        }
-      };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        hydratePresence()
+          .then(() => schedule())
+          .catch((error) => logDev('Visibility refresh error', error));
+      } else if (timer !== undefined) {
+        window.clearTimeout(timer);
+        timer = undefined;
+      }
+    };
 
-      document.addEventListener('visibilitychange', handleVisibility);
+    document.addEventListener('visibilitychange', handleVisibility);
 
-      return () => {
-        cancelled = true;
-        controller.abort();
-        if (timer !== undefined) {
-          window.clearTimeout(timer);
-        }
-        document.removeEventListener('visibilitychange', handleVisibility);
-      };
-  }, [activeTab, selectedUser?.email, accessToken]);
+    return () => {
+      cancelled = true;
+      controller.abort();
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [showDetailPanel, selectedUser?.email, accessToken]);
 
   useEffect(() => {
     const email = selectedUser?.email;
-    if (!email || activeTab !== 'details') {
+    if (!email || !showDetailPanel) {
       return;
     }
 
@@ -484,20 +480,16 @@ export default function App() {
       .then((result) => {
         if (!cancelled) {
           upsertState(setOooCache, email, result);
-          setOooError(null);
         }
       })
       .catch((error) => {
         logDev('OOO fetch failed', error);
-        if (!cancelled) {
-          setOooError('Unable to check automatic replies.');
-        }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [activeTab, selectedUser?.email, accessToken]);
+  }, [showDetailPanel, selectedUser?.email, accessToken]);
 
   const selectedPresence = selectedUser ? presenceCache[selectedUser.email] : undefined;
   const selectedPhoto = selectedUser ? photoCache[selectedUser.email] ?? selectedUser.photo ?? null : null;
@@ -507,7 +499,7 @@ export default function App() {
     setSelectedUser(user);
     prefetchPhoto(user.email);
     prefetchPresence(user.email);
-    setActiveTab('details');
+    setShowDetailPanel(true);
   };
 
   const prefetchPhoto = (email: string) => {
@@ -534,30 +526,23 @@ export default function App() {
 
   const handleInsert = async () => {
     if (!selectedUser) {
-      setInsertStatus({ tone: 'error', text: 'Select a person first.' });
+      addToast('error', 'Select a person first.');
       return;
     }
     if (!officeContext.isCompose) {
-      setInsertStatus({
-        tone: 'error',
-        text: 'Insert is only available when composing a message.',
-      });
+      addToast('error', 'Insert is only available when composing a message.');
       return;
     }
 
     setInserting(true);
-    setInsertStatus({ tone: 'info', text: 'Inserting details…' });
 
     try {
       const markup = buildInsertMarkup(selectedUser, selectedPresence, selectedOOO);
       await insertHtmlAsync(markup);
-      setInsertStatus({ tone: 'success', text: 'People Picker details inserted.' });
+      addToast('success', 'Details inserted successfully!');
     } catch (error) {
       logDev('Insert failed', error);
-      setInsertStatus({
-        tone: 'error',
-        text: error instanceof Error ? error.message : 'Unable to insert details.',
-      });
+      addToast('error', error instanceof Error ? error.message : 'Unable to insert details.');
     } finally {
       setInserting(false);
     }
@@ -565,136 +550,153 @@ export default function App() {
 
   const handleAddRecipient = async (kind: 'to' | 'cc' | 'bcc') => {
     if (!selectedUser) {
-      setRecipientStatus({ tone: 'error', text: 'Select a person first.' });
+      addToast('error', 'Select a person first.');
       return;
     }
     if (!officeContext.supportsRecipients) {
-      setRecipientStatus({
-        tone: 'error',
-        text: 'Recipients can only be updated while composing.',
-      });
+      addToast('error', 'Recipients can only be updated while composing.');
       return;
     }
 
     try {
       await addRecipientAsync(kind, selectedUser);
-      setRecipientStatus({
-        tone: 'success',
-        text: `${selectedUser.displayName} added to ${kind.toUpperCase()}.`,
-      });
+      addToast('success', `${selectedUser.displayName} added to ${kind.toUpperCase()}.`);
     } catch (error) {
       logDev('Add recipient failed', error);
-      setRecipientStatus({
-        tone: 'error',
-        text: error instanceof Error ? error.message : 'Unable to add recipient.',
-      });
+      addToast('error', error instanceof Error ? error.message : 'Unable to add recipient.');
     }
   };
 
-  const headerSubtitle = useMemo(() => {
-    if (configError) {
-      return configError;
-    }
-    return config.orgName;
-  }, [config.orgName, configError]);
+  const handleRefreshPresence = () => {
+    if (!selectedUser) return;
+    
+    setPresenceRefreshing(true);
+    requestPresence(selectedUser.email, { noCache: true, ttl: PRESENCE_TTL_SECONDS, token: accessToken })
+      .then((presenceResult) => {
+        upsertState(setPresenceCache, selectedUser.email, presenceResult);
+        addToast('success', 'Presence updated!');
+      })
+      .catch((error) => {
+        logDev('Manual presence refresh failed', error);
+        addToast('error', 'Failed to refresh presence.');
+      })
+      .finally(() => {
+        setPresenceRefreshing(false);
+      });
+  };
 
-  const tabPanels = {
-    search: (
-      <SearchTab
-        query={searchQuery}
-        onQueryChange={setSearchQuery}
-        results={searchResults}
-        isSearching={searching}
-        error={searchError}
-        selectedEmail={selectedUser?.email ?? null}
-        minQueryLength={MIN_QUERY_LENGTH}
-        onSelect={handleSelectUser}
-        onHover={(email) => {
-          prefetchPhoto(email);
-          prefetchPresence(email);
-        }}
-      />
-    ),
-    details: (
-      <DetailsTab
-        user={selectedUser}
-        photo={selectedPhoto}
-        presence={selectedPresence}
-        presenceError={presenceError}
-        presenceRefreshing={presenceRefreshing}
-        ooo={selectedOOO}
-        oooError={oooError}
-        onRefreshPresence={() => {
-          if (!selectedUser) {
-            return;
-          }
-          setPresenceRefreshing(true);
-          requestPresence(selectedUser.email, { noCache: true, ttl: PRESENCE_TTL_SECONDS, token: accessToken })
-            .then((presenceResult) => {
-              upsertState(setPresenceCache, selectedUser.email, presenceResult);
-              setPresenceError(null);
-            })
-            .catch((error) => {
-              logDev('Manual presence refresh failed', error);
-              setPresenceError('Presence unavailable');
-            })
-            .finally(() => {
-              setPresenceRefreshing(false);
-            });
-        }}
-      />
-    ),
-    insert: (
-      <InsertTab
-        user={selectedUser}
-        presence={selectedPresence}
-        ooo={selectedOOO}
-        isCompose={officeContext.isCompose}
-        supportsRecipients={officeContext.supportsRecipients}
-        onInsert={handleInsert}
-        onAddRecipient={handleAddRecipient}
-        inserting={inserting}
-        statusMessage={insertStatus}
-        recipientMessage={recipientStatus}
-      />
-    ),
-  } as const;
+  const orderedResults = useMemo(() => {
+    return searchResults.slice().sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }));
+  }, [searchResults]);
+
+  const trimmed = searchQuery.trim();
+  const showEmptyState = !searching && trimmed.length >= MIN_QUERY_LENGTH && searchResults.length === 0 && !searchError;
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        {config.orgLogoUrl ? (
-          <img src={config.orgLogoUrl} alt={`${config.orgName} logo`} />
-        ) : (
-          <div className="avatar" aria-hidden>
-            {(config.orgName ?? 'PP').slice(0, 2).toUpperCase()}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-3 mb-4">
+            {config.orgLogoUrl ? (
+              <img src={config.orgLogoUrl} alt={`${config.orgName} logo`} className="w-10 h-10 rounded-full shadow-md ring-2 ring-white/30" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center shadow-md ring-2 ring-white/30">
+                <Building2 className="w-5 h-5 text-white" />
+              </div>
+            )}
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-white">{config.appName}</h1>
+              <p className="text-sm text-blue-100">{config.orgName}</p>
+            </div>
           </div>
-        )}
-        <div>
-          <h1>{config.appName}</h1>
-          <span>{headerSubtitle}</span>
+          <SearchBar value={searchQuery} onChange={setSearchQuery} isSearching={searching} />
         </div>
       </header>
 
-      <nav className="tablist" role="tablist" aria-label="People Picker tabs">
-        {(['search', 'details', 'insert'] as TabKey[]).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            role="tab"
-            id={`tab-${tab}`}
-            className="tab-button"
-            aria-selected={activeTab === tab}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab === 'search' ? 'Search' : tab === 'details' ? 'Details' : 'Insert'}
-          </button>
-        ))}
-      </nav>
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 py-6">
+        {/* Helper text */}
+        {trimmed.length < MIN_QUERY_LENGTH && !searching && (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
+              <SearchIcon className="w-8 h-8 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-800 mb-2">Find People Instantly</h2>
+            <p className="text-slate-600">
+              Start typing a name, email, or job title to search your directory
+            </p>
+            <p className="text-sm text-slate-500 mt-2">
+              Minimum {MIN_QUERY_LENGTH} characters required
+            </p>
+          </div>
+        )}
 
-      <main style={{ flex: 1 }}>
-        {tabPanels[activeTab]}
+        {/* Loading */}
+        {searching && <SearchSkeleton />}
+
+        {/* Error */}
+        {searchError && (
+          <div className="text-center py-8">
+            <div className="inline-block bg-red-50 text-red-800 px-6 py-4 rounded-xl border border-red-200">
+              {searchError}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {showEmptyState && (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+              <SearchIcon className="w-8 h-8 text-slate-400" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-800 mb-2">No Results Found</h2>
+            <p className="text-slate-600">Try a different search term</p>
+          </div>
+        )}
+
+        {/* Results */}
+        {!searching && orderedResults.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600 font-medium">
+              {orderedResults.length} {orderedResults.length === 1 ? 'person' : 'people'} found
+            </p>
+            {orderedResults.map((user) => (
+              <ResultCard
+                key={user.id}
+                user={user}
+                isSelected={selectedUser?.email === user.email}
+                onClick={() => handleSelectUser(user)}
+                onHover={() => {
+                  prefetchPhoto(user.email);
+                  prefetchPresence(user.email);
+                }}
+              />
+            ))}
+          </div>
+        )}
       </main>
+
+      {/* Detail Panel */}
+      {showDetailPanel && selectedUser && (
+        <DetailPanel
+          user={selectedUser}
+          photo={selectedPhoto}
+          presence={selectedPresence}
+          presenceRefreshing={presenceRefreshing}
+          ooo={selectedOOO}
+          isCompose={officeContext.isCompose}
+          supportsRecipients={officeContext.supportsRecipients}
+          onClose={() => setShowDetailPanel(false)}
+          onRefreshPresence={handleRefreshPresence}
+          onInsert={handleInsert}
+          onAddRecipient={handleAddRecipient}
+          inserting={inserting}
+        />
+      )}
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

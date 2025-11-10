@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { prisma } from '@/lib/prisma';
 
@@ -17,7 +16,7 @@ const commitSha =
 
 async function runBootstrap() {
   try {
-    await prisma.$queryRaw(Prisma.sql`SELECT 1`);
+    await prisma.$queryRaw`SELECT 1`;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'database connectivity check failed';

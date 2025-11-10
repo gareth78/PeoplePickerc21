@@ -4,6 +4,13 @@ import { verifyAdminAuth } from '@/lib/admin/middleware';
 import { createAuditLog } from '@/lib/admin/audit';
 import prisma from '@/lib/prisma';
 
+interface TenancyRecord {
+  clientSecret?: string | null;
+  [key: string]: unknown;
+}
+
+type SanitizedTenancy = Omit<TenancyRecord, 'clientSecret'>;
+
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -22,7 +29,7 @@ export async function GET(request: NextRequest) {
       adminEmail: admin.email,
     });
 
-    const tenancies = await prisma.officeTenancy.findMany({
+    const tenancies: TenancyRecord[] = await prisma.officeTenancy.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
         domains: true,
@@ -30,10 +37,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Sanitize response - never expose clientSecret
-    const sanitizedTenancies = tenancies.map((tenancy) => ({
-      ...tenancy,
-      clientSecret: undefined,
-    }));
+    const sanitizedTenancies: SanitizedTenancy[] = tenancies.map(
+      ({ clientSecret: _clientSecret, ...rest }) => rest as SanitizedTenancy,
+    );
 
     return NextResponse.json({ tenancies: sanitizedTenancies });
   } catch (error) {

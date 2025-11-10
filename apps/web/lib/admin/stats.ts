@@ -1,6 +1,10 @@
 // lib/admin/stats.ts
 import prisma from '@/lib/prisma';
-import { getRecentAuditLogs } from '@/lib/admin/audit';
+import {
+  getRecentAuditLogs,
+  type AuditAction,
+  type AuditLogWithParsedMetadata,
+} from '@/lib/admin/audit';
 
 export interface DashboardStats {
   searches: {
@@ -40,6 +44,14 @@ export interface SystemHealth {
     message: string;
   };
   overall: 'healthy' | 'degraded' | 'down';
+}
+
+export interface RecentActivityItem {
+  id: string;
+  action: AuditAction;
+  user: string;
+  timestamp: Date;
+  metadata: Record<string, unknown> | null;
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -231,11 +243,11 @@ export async function checkSystemHealth(): Promise<SystemHealth> {
   return health;
 }
 
-export async function getRecentActivity(limit: number = 10) {
+export async function getRecentActivity(limit: number = 10): Promise<RecentActivityItem[]> {
   try {
     const activities = await getRecentAuditLogs(limit);
 
-    return activities.map(activity => ({
+    return activities.map((activity: AuditLogWithParsedMetadata) => ({
       id: activity.id,
       action: activity.action,
       user: activity.adminEmail || 'System',

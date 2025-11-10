@@ -24,11 +24,22 @@ export type AuditAction =
   | 'VIEW_DOMAINS'
   | 'REORDER_SMTP_DOMAINS';
 
+interface AuditLogRecord {
+  id: string;
+  action: AuditAction;
+  adminEmail: string;
+  targetEmail: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  metadata: string | null;
+  createdAt: Date;
+}
+
 interface AuditLogParams {
   action: AuditAction;
   adminEmail: string;
   targetEmail?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -67,7 +78,7 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
 /**
  * Parse metadata string to object
  */
-function parseMetadata(metadata: string | null): Record<string, any> | null {
+function parseMetadata(metadata: string | null): Record<string, unknown> | null {
   if (!metadata) return null;
   try {
     return JSON.parse(metadata);
@@ -77,51 +88,59 @@ function parseMetadata(metadata: string | null): Record<string, any> | null {
   }
 }
 
+export type AuditLogWithParsedMetadata = Omit<AuditLogRecord, 'metadata'> & {
+  metadata: Record<string, unknown> | null;
+};
+
+const withParsedMetadata = (log: AuditLogRecord): AuditLogWithParsedMetadata => ({
+  ...log,
+  metadata: parseMetadata(log.metadata),
+});
+
 /**
  * Get recent audit logs
  */
-export async function getRecentAuditLogs(limit: number = 100) {
-  const logs = await prisma.auditLog.findMany({
+export async function getRecentAuditLogs(
+  limit: number = 100,
+): Promise<AuditLogWithParsedMetadata[]> {
+  const logs: AuditLogRecord[] = await prisma.auditLog.findMany({
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
 
-  return logs.map(log => ({
-    ...log,
-    metadata: parseMetadata(log.metadata),
-  }));
+  return logs.map(withParsedMetadata);
 }
 
 /**
  * Get audit logs for a specific admin
  */
-export async function getAdminAuditLogs(adminEmail: string, limit: number = 50) {
-  const logs = await prisma.auditLog.findMany({
+export async function getAdminAuditLogs(
+  adminEmail: string,
+  limit: number = 50,
+): Promise<AuditLogWithParsedMetadata[]> {
+  const logs: AuditLogRecord[] = await prisma.auditLog.findMany({
     where: { adminEmail: adminEmail.toLowerCase() },
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
 
-  return logs.map(log => ({
-    ...log,
-    metadata: parseMetadata(log.metadata),
-  }));
+  return logs.map(withParsedMetadata);
 }
 
 /**
  * Get audit logs by action type
  */
-export async function getAuditLogsByAction(action: AuditAction, limit: number = 50) {
-  const logs = await prisma.auditLog.findMany({
+export async function getAuditLogsByAction(
+  action: AuditAction,
+  limit: number = 50,
+): Promise<AuditLogWithParsedMetadata[]> {
+  const logs: AuditLogRecord[] = await prisma.auditLog.findMany({
     where: { action },
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
 
-  return logs.map(log => ({
-    ...log,
-    metadata: parseMetadata(log.metadata),
-  }));
+  return logs.map(withParsedMetadata);
 }
 
 /**

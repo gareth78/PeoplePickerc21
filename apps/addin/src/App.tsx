@@ -252,6 +252,7 @@ export default function App() {
   const oooCacheRef = useRef<Record<string, OOOResult | null>>({});
   const [oooCache, setOooCache] = useState<Record<string, OOOResult | null>>({});
   const prefillRef = useRef<string | null>(null);
+  const selectedUserRef = useRef<EnhancedUser | null>(null);
 
   useEffect(() => {
     photoCacheRef.current = photoCache;
@@ -264,6 +265,10 @@ export default function App() {
   useEffect(() => {
     oooCacheRef.current = oooCache;
   }, [oooCache]);
+
+  useEffect(() => {
+    selectedUserRef.current = selectedUser;
+  }, [selectedUser]);
 
   // Toast utility
   const showToast = (type: ToastMessage['type'], message: string) => {
@@ -368,8 +373,8 @@ export default function App() {
             setSelectedUser(match);
             prefillRef.current = null;
           }
-        } else if (selectedUser) {
-          const stillPresent = enhanced.find((user) => user.email === selectedUser.email);
+        } else if (selectedUserRef.current) {
+          const stillPresent = enhanced.find((user) => user.email === selectedUserRef.current?.email);
           if (stillPresent) {
             setSelectedUser({ ...stillPresent });
           }

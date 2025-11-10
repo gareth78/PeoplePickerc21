@@ -1,56 +1,105 @@
 import type { PresenceResult } from '@people-picker/sdk';
+import { Circle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface PresenceBadgeProps {
   presence: PresenceResult | null | undefined;
   refreshing?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  showLabel?: boolean;
 }
 
-const AVAILABILITY_COLORS: Record<string, string> = {
-  available: '#22c55e',
-  busy: '#ef4444',
-  do_not_disturb: '#ef4444',
-  away: '#f97316',
-  be_right_back: '#f97316',
-  offline: '#94a3b8',
-  unknown: '#64748b',
+const AVAILABILITY_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
+  available: { 
+    bg: 'bg-emerald-50', 
+    text: 'text-emerald-700', 
+    dot: 'fill-emerald-500 text-emerald-500' 
+  },
+  busy: { 
+    bg: 'bg-red-50', 
+    text: 'text-red-700', 
+    dot: 'fill-red-500 text-red-500' 
+  },
+  do_not_disturb: { 
+    bg: 'bg-red-50', 
+    text: 'text-red-700', 
+    dot: 'fill-red-500 text-red-500' 
+  },
+  away: { 
+    bg: 'bg-amber-50', 
+    text: 'text-amber-700', 
+    dot: 'fill-amber-500 text-amber-500' 
+  },
+  be_right_back: { 
+    bg: 'bg-amber-50', 
+    text: 'text-amber-700', 
+    dot: 'fill-amber-500 text-amber-500' 
+  },
+  offline: { 
+    bg: 'bg-slate-50', 
+    text: 'text-slate-600', 
+    dot: 'fill-slate-400 text-slate-400' 
+  },
+  unknown: { 
+    bg: 'bg-slate-50', 
+    text: 'text-slate-600', 
+    dot: 'fill-slate-400 text-slate-400' 
+  },
 };
 
 const normalize = (value: string | null | undefined): string => {
-  if (!value) {
-    return 'unknown';
-  }
+  if (!value) return 'unknown';
   return value.toLowerCase().replace(/\s+/g, '_');
 };
 
-export function PresenceBadge({ presence, refreshing = false }: PresenceBadgeProps) {
+const SIZE_CLASSES = {
+  sm: 'text-xs px-2 py-1',
+  md: 'text-sm px-3 py-1.5',
+  lg: 'text-base px-4 py-2',
+};
+
+export function PresenceBadge({ 
+  presence, 
+  refreshing = false, 
+  size = 'md',
+  showLabel = true 
+}: PresenceBadgeProps) {
   if (presence === undefined) {
-    return <span className="muted">Presence pending…</span>;
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full ${SIZE_CLASSES[size]} bg-slate-50 text-slate-600`}>
+        {showLabel && <span>Checking presence...</span>}
+      </span>
+    );
   }
 
   if (presence === null) {
-    return <span className="muted">Presence unavailable</span>;
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full ${SIZE_CLASSES[size]} bg-slate-50 text-slate-600`}>
+        {showLabel && <span>Presence unavailable</span>}
+      </span>
+    );
   }
 
   const availabilityKey = normalize(presence.availability);
-  const badgeColor = AVAILABILITY_COLORS[availabilityKey] ?? AVAILABILITY_COLORS.unknown;
+  const colors = AVAILABILITY_COLORS[availabilityKey] ?? AVAILABILITY_COLORS.unknown;
   const label = presence.availability ?? 'Unknown';
   const activity = presence.activity ? ` · ${presence.activity}` : '';
 
   return (
-    <span
-      className="presence-badge"
-      style={{
-        color: badgeColor,
-        backgroundColor: `${badgeColor}1a`,
-      }}
+    <motion.span
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`inline-flex items-center gap-1.5 rounded-full ${SIZE_CLASSES[size]} ${colors.bg} ${colors.text} font-medium`}
     >
-      <span
-        className="presence-dot"
-        style={{
-          backgroundColor: badgeColor,
-        }}
+      <Circle 
+        size={size === 'sm' ? 8 : size === 'md' ? 10 : 12} 
+        className={`${colors.dot} ${availabilityKey === 'available' ? 'presence-dot-animated' : ''}`} 
       />
-      {refreshing ? 'Refreshing…' : `${label}${activity}`}
-    </span>
+      {showLabel && (
+        <span>
+          {refreshing ? 'Refreshing...' : `${label}${activity}`}
+        </span>
+      )}
+    </motion.span>
   );
 }

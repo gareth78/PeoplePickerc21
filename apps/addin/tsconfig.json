@@ -7,9 +7,7 @@
     "moduleResolution": "bundler",
     "allowJs": false,
     "noEmit": false,
-    "incremental": true,
-    "composite": true,
-    "tsBuildInfoFile": "tsconfig.tsbuildinfo",
+    "incremental": false,
     "baseUrl": ".",
     "paths": {
       "@people-picker/sdk": [
@@ -33,10 +31,5 @@
   "exclude": [
     "dist",
     "node_modules"
-  ],
-  "references": [
-    {
-      "path": "../../packages/sdk"
-    }
   ]
 }

@@ -11,6 +11,12 @@
 import prisma from './prisma';
 import { createAuditLog } from './admin/audit';
 
+interface ConfigurationRecord {
+  key: string;
+  value: string;
+  encrypted: boolean;
+}
+
 // Simple encryption/decryption using base64 + XOR
 // For production, consider using a proper encryption library
 const ENCRYPTION_KEY = process.env.CONFIG_ENCRYPTION_KEY || 'default-encryption-key-change-me';
@@ -55,7 +61,7 @@ export interface OktaConfig {
 export async function getOktaConfig(): Promise<OktaConfig> {
   try {
     // Try to get from database first
-    const configs = await prisma.configuration.findMany({
+    const configs: ConfigurationRecord[] = await prisma.configuration.findMany({
       where: {
         category: 'okta',
         enabled: true,
@@ -63,8 +69,12 @@ export async function getOktaConfig(): Promise<OktaConfig> {
     });
 
     if (configs.length > 0) {
-      const orgUrlConfig = configs.find(c => c.key === 'okta_org_url');
-      const apiTokenConfig = configs.find(c => c.key === 'okta_api_token');
+      const orgUrlConfig = configs.find(
+        (configRecord) => configRecord.key === 'okta_org_url',
+      );
+      const apiTokenConfig = configs.find(
+        (configRecord) => configRecord.key === 'okta_api_token',
+      );
 
       if (orgUrlConfig && apiTokenConfig) {
         return {

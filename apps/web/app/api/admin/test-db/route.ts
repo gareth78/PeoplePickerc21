@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+interface AdminSummary {
+  id: string;
+  username: string | null;
+  email: string;
+  createdAt: Date | null;
+  createdBy: string | null;
+}
+
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -18,7 +26,7 @@ export async function GET() {
     console.log('[TEST-DB] Attempting to query admins table...');
 
     // Query all admins from the database
-    const admins = await prisma.admin.findMany({
+    const admins: AdminSummary[] = await prisma.admin.findMany({
       select: {
         id: true,
         username: true,
@@ -31,7 +39,7 @@ export async function GET() {
     console.log('[TEST-DB] Query successful');
     console.log('[TEST-DB] Query result:', {
       count: admins.length,
-      adminUsernames: admins.map(a => a.username),
+      adminUsernames: admins.map((admin) => admin.username),
     });
 
     // Return success response

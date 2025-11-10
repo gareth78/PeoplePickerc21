@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from 'react';
 import { sdk, PeoplePickerError, type OOOResult, type PresenceResult, type UsersResult } from '@people-picker/sdk';
 import { Settings } from 'lucide-react';
 import { useDebounce } from './hooks/useDebounce';
@@ -36,7 +43,10 @@ const defaultConfig: PublicConfig = {
   orgName: 'Plan International',
 };
 
-const safeFetch = async <T,>(input: RequestInfo, init?: RequestInit): Promise<T> => {
+type FetchInput = Parameters<typeof fetch>[0];
+type FetchInit = Parameters<typeof fetch>[1];
+
+const safeFetch = async <T,>(input: FetchInput, init?: FetchInit): Promise<T> => {
   const response = await fetch(input, init);
   if (!response.ok) {
     throw new Error(`Request failed with status ${response.status}`);
@@ -75,7 +85,7 @@ const getInitialOfficeContext = (): OfficeContextState => {
   };
 };
 
-const upsertState = <T,>(setter: React.Dispatch<React.SetStateAction<Record<string, T>>>, key: string, value: T) => {
+const upsertState = <T,>(setter: Dispatch<SetStateAction<Record<string, T>>>, key: string, value: T) => {
   setter((prev) => {
     if (prev[key] === value) {
       return prev;
@@ -84,7 +94,7 @@ const upsertState = <T,>(setter: React.Dispatch<React.SetStateAction<Record<stri
   });
 };
 
-const hasCacheValue = <T,>(map: React.MutableRefObject<Record<string, T>>, key: string) =>
+const hasCacheValue = <T,>(map: MutableRefObject<Record<string, T>>, key: string) =>
   Object.prototype.hasOwnProperty.call(map.current, key);
 
 const htmlEscape = (value: string) =>

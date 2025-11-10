@@ -1,4 +1,4 @@
-import { X, Mail, Building2, MapPin, User, RefreshCw, FileText, UserPlus } from 'lucide-react';
+import { X, Mail, Building2, User, RefreshCw, FileText, UserPlus } from 'lucide-react';
 import { clsx } from 'clsx';
 import { PresenceBadge } from './PresenceBadge';
 import type { EnhancedUser } from '../types';

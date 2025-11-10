@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {
   Mail,
   Plus,
-  Edit,
+  Pencil,
   Trash2,
   Loader2,
   CheckCircle,
@@ -347,15 +347,18 @@ export default function SmtpDomainManager() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="w-8"></th>
+                  <th className="w-20 px-3 py-3"></th> {/* Drag + Priority */}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Domain
+                    DOMAIN
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                    Priority
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ASSIGNED TENANT
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                    Actions
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    FEATURE FLAGS
+                  </th>
+                  <th className="w-24 px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ACTIONS
                   </th>
                 </tr>
               </thead>
@@ -364,36 +367,45 @@ export default function SmtpDomainManager() {
                   <tr
                     key={domain.id}
                     onDragOver={(e) => handleDragOver(e, index)}
-                    className={`hover:bg-gray-50 ${
-                      draggedIndex === index ? 'opacity-50' : ''
-                    }`}
+                    className={`${draggedIndex === index ? 'opacity-50' : ''}`}
                   >
-                    {/* Column 1: Drag handle (spans all 3 visual rows) */}
-                    <td className="px-3 py-4 align-top">
-                      <div
-                        draggable
-                        onDragStart={() => handleDragStart(index)}
-                        onDragEnd={handleDragEnd}
-                        className="cursor-grab active:cursor-grabbing"
-                      >
-                        <GripVertical className="w-5 h-5 text-gray-400" />
+                    {/* Column 1: Drag Handle + Priority */}
+                    <td className="px-3 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <div
+                          draggable
+                          onDragStart={() => handleDragStart(index)}
+                          onDragEnd={handleDragEnd}
+                          className="cursor-grab active:cursor-grabbing"
+                        >
+                          <GripVertical className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {index + 1}
+                        </span>
                       </div>
                     </td>
 
-                    {/* Column 2: Domain info (contains all 3 lines) */}
+                    {/* Column 2: Domain Name + Tenant ID */}
                     <td className="px-6 py-4">
-                      {/* Line 1: Domain name */}
-                      <div className="flex items-center mb-2">
+                      <div className="flex items-center mb-1">
                         <Mail className="w-4 h-4 text-gray-400 mr-2" />
                         <span className="font-medium text-gray-900">{domain.domain}</span>
                       </div>
-                      
-                      {/* Line 2: Tenancy name + UUID */}
-                      <div className="text-sm text-gray-500 mb-2">
-                        {domain.tenancy.name} ({domain.tenancy.tenantId})
+                      <div className="text-xs text-gray-500 ml-6">
+                        ({domain.tenancy.tenantId})
                       </div>
-                      
-                      {/* Line 3: Feature flags */}
+                    </td>
+
+                    {/* Column 3: Assigned Tenant (Friendly Name) */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="font-medium text-gray-900">
+                        {domain.tenancy.name}
+                      </span>
+                    </td>
+
+                    {/* Column 4: Feature Flags */}
+                    <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-2">
                         <FeatureFlagBadge 
                           label="Presence"
@@ -428,36 +440,25 @@ export default function SmtpDomainManager() {
                       </div>
                     </td>
 
-                    {/* Column 3: Priority badge (centered, spans full height) */}
-                    <td className="text-center align-top pt-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {index + 1}
-                      </span>
-                    </td>
-
-                    {/* Column 4: Actions (aligned top) */}
-                    <td className="px-6 text-right align-top pt-4">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={() => handleEdit(domain)}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(domain)}
-                          disabled={deletingId === domain.id}
-                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 disabled:opacity-50"
-                          title="Delete"
-                        >
-                          {deletingId === domain.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
+                    {/* Column 5: Actions */}
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <button
+                        onClick={() => handleEdit(domain)}
+                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(domain)}
+                        disabled={deletingId === domain.id}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        {deletingId === domain.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
                     </td>
                   </tr>
                 ))}

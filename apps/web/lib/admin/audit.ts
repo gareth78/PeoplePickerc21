@@ -21,7 +21,8 @@ export type AuditAction =
   | 'CREATE_DOMAIN'
   | 'UPDATE_DOMAIN'
   | 'DELETE_DOMAIN'
-  | 'VIEW_DOMAINS';
+  | 'VIEW_DOMAINS'
+  | 'REORDER_SMTP_DOMAINS';
 
 interface AuditLogParams {
   action: AuditAction;

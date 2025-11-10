@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminAuth } from '@/lib/admin/middleware';
+import { withAdminAuth } from '@/lib/admin/middleware';
 import { ClientSecretCredential } from '@azure/identity';
 import { Client } from '@microsoft/microsoft-graph-client';
 import 'isomorphic-fetch';
@@ -95,14 +95,8 @@ async function testGraphConnection(
 }
 
 // POST - Test Office 365 tenant configuration
-export async function POST(request: NextRequest) {
+export const POST = withAdminAuth(async (request: NextRequest, session) => {
   try {
-    // Verify admin authentication
-    const authResult = await verifyAdminAuth(request);
-    if (!authResult.authenticated || !authResult.session) {
-      return authResult.response!;
-    }
-
     // Parse request body
     const body = await request.json();
     const { tenantId, clientId, clientSecret } = body;
@@ -166,4 +160,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

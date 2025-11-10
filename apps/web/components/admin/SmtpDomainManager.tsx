@@ -19,6 +19,11 @@ interface OfficeTenancy {
   name: string;
   tenantId: string;
   enabled: boolean;
+  enablePresence: boolean;
+  enablePhotos: boolean;
+  enableOutOfOffice: boolean;
+  enableLocalGroups: boolean;
+  enableGlobalGroups: boolean;
 }
 
 interface SmtpDomain {
@@ -27,6 +32,11 @@ interface SmtpDomain {
   tenancyId: string;
   priority: number;
   createdAt: string;
+  enablePresence?: boolean | null;
+  enablePhotos?: boolean | null;
+  enableOutOfOffice?: boolean | null;
+  enableLocalGroups?: boolean | null;
+  enableGlobalGroups?: boolean | null;
   tenancy: OfficeTenancy;
 }
 

@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { sdk, PeoplePickerError, type OOOResult, type PresenceResult, type UsersResult } from '@people-picker/sdk';
 import { useDebounce } from './hooks/useDebounce';
-import { UnifiedSearch } from './components/UnifiedSearch';
-import { DetailsPanel } from './components/DetailsPanel';
-import { ActionButtons } from './components/ActionButtons';
-import { SettingsDropdown } from './components/SettingsDropdown';
-import { ToastContainer } from './components/Toast';
+import { SearchTab } from './components/SearchTab';
+import { DetailsTab } from './components/DetailsTab';
+import { InsertTab } from './components/InsertTab';
 import type { EnhancedUser, PublicConfig } from './types';
+
+type TabKey = 'search' | 'details' | 'insert';
 
 interface OfficeContextState {
   isCompose: boolean;
@@ -18,10 +17,9 @@ interface OfficeContextState {
   };
 }
 
-interface Toast {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info';
+interface StatusMessage {
+  tone: 'success' | 'error' | 'info';
+  text: string;
 }
 
 const MIN_QUERY_LENGTH = 2;
@@ -237,20 +235,21 @@ const requestOOO = async (email: string, token?: string | null): Promise<OOOResu
 export default function App() {
   const [config, setConfig] = useState<PublicConfig>(defaultConfig);
   const [configError, setConfigError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
   const [searchResults, setSearchResults] = useState<EnhancedUser[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<EnhancedUser | null>(null);
-  const [showDetailsPanel, setShowDetailsPanel] = useState(false);
   const [officeContext, setOfficeContext] = useState<OfficeContextState>(getInitialOfficeContext);
   const [presenceError, setPresenceError] = useState<string | null>(null);
   const [presenceRefreshing, setPresenceRefreshing] = useState(false);
   const [oooError, setOooError] = useState<string | null>(null);
+  const [insertStatus, setInsertStatus] = useState<StatusMessage | null>(null);
+  const [recipientStatus, setRecipientStatus] = useState<StatusMessage | null>(null);
   const [inserting, setInserting] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [toasts, setToasts] = useState<Toast[]>([]);
 
   const photoCacheRef = useRef<Record<string, string | null>>({});
   const [photoCache, setPhotoCache] = useState<Record<string, string | null>>({});
@@ -259,15 +258,6 @@ export default function App() {
   const oooCacheRef = useRef<Record<string, OOOResult | null>>({});
   const [oooCache, setOooCache] = useState<Record<string, OOOResult | null>>({});
   const prefillRef = useRef<string | null>(null);
-
-  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    const id = Math.random().toString(36).substring(7);
-    setToasts((prev) => [...prev, { id, message, type }]);
-  };
-
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
 
   useEffect(() => {
     photoCacheRef.current = photoCache;
@@ -373,7 +363,7 @@ export default function App() {
           );
           if (match) {
             setSelectedUser(match);
-            setShowDetailsPanel(true);
+            setActiveTab('details');
             prefillRef.current = null;
           }
         } else if (selectedUser) {
@@ -397,11 +387,11 @@ export default function App() {
     return () => {
       controller.abort();
     };
-  }, [debouncedQuery, accessToken, selectedUser]);
+  }, [debouncedQuery, accessToken]);
 
   useEffect(() => {
     const email = selectedUser?.email;
-    if (!email || !showDetailsPanel) {
+    if (!email || activeTab !== 'details') {
       return;
     }
 
@@ -435,52 +425,52 @@ export default function App() {
       }
     };
 
-    hydratePresence().catch((error) => logDev('Presence hydrate error', error));
+      hydratePresence().catch((error) => logDev('Presence hydrate error', error));
 
-    let timer: number | undefined;
+      let timer: number | undefined;
 
-    const schedule = () => {
-      if (cancelled) {
-        return;
-      }
-      if (document.visibilityState !== 'visible') {
-        return;
-      }
-      timer = window.setTimeout(() => {
-        hydratePresence()
-          .then(() => schedule())
-          .catch((error) => logDev('Presence poll error', error));
-      }, PRESENCE_TTL_SECONDS * 1000);
-    };
+      const schedule = () => {
+        if (cancelled) {
+          return;
+        }
+        if (document.visibilityState !== 'visible') {
+          return;
+        }
+        timer = window.setTimeout(() => {
+          hydratePresence()
+            .then(() => schedule())
+            .catch((error) => logDev('Presence poll error', error));
+        }, PRESENCE_TTL_SECONDS * 1000);
+      };
 
-    schedule();
+      schedule();
 
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        hydratePresence()
-          .then(() => schedule())
-          .catch((error) => logDev('Visibility refresh error', error));
-      } else if (timer !== undefined) {
-        window.clearTimeout(timer);
-        timer = undefined;
-      }
-    };
+      const handleVisibility = () => {
+        if (document.visibilityState === 'visible') {
+          hydratePresence()
+            .then(() => schedule())
+            .catch((error) => logDev('Visibility refresh error', error));
+        } else if (timer !== undefined) {
+          window.clearTimeout(timer);
+          timer = undefined;
+        }
+      };
 
-    document.addEventListener('visibilitychange', handleVisibility);
+      document.addEventListener('visibilitychange', handleVisibility);
 
-    return () => {
-      cancelled = true;
-      controller.abort();
-      if (timer !== undefined) {
-        window.clearTimeout(timer);
-      }
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, [showDetailsPanel, selectedUser?.email, accessToken]);
+      return () => {
+        cancelled = true;
+        controller.abort();
+        if (timer !== undefined) {
+          window.clearTimeout(timer);
+        }
+        document.removeEventListener('visibilitychange', handleVisibility);
+      };
+  }, [activeTab, selectedUser?.email, accessToken]);
 
   useEffect(() => {
     const email = selectedUser?.email;
-    if (!email || !showDetailsPanel) {
+    if (!email || activeTab !== 'details') {
       return;
     }
 
@@ -507,7 +497,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [showDetailsPanel, selectedUser?.email, accessToken]);
+  }, [activeTab, selectedUser?.email, accessToken]);
 
   const selectedPresence = selectedUser ? presenceCache[selectedUser.email] : undefined;
   const selectedPhoto = selectedUser ? photoCache[selectedUser.email] ?? selectedUser.photo ?? null : null;
@@ -515,9 +505,9 @@ export default function App() {
 
   const handleSelectUser = (user: EnhancedUser) => {
     setSelectedUser(user);
-    setShowDetailsPanel(true);
     prefetchPhoto(user.email);
     prefetchPresence(user.email);
+    setActiveTab('details');
   };
 
   const prefetchPhoto = (email: string) => {
@@ -544,27 +534,30 @@ export default function App() {
 
   const handleInsert = async () => {
     if (!selectedUser) {
-      addToast('Select a person first.', 'error');
+      setInsertStatus({ tone: 'error', text: 'Select a person first.' });
       return;
     }
     if (!officeContext.isCompose) {
-      addToast('Insert is only available when composing a message.', 'error');
+      setInsertStatus({
+        tone: 'error',
+        text: 'Insert is only available when composing a message.',
+      });
       return;
     }
 
     setInserting(true);
-    addToast('Inserting details…', 'info');
+    setInsertStatus({ tone: 'info', text: 'Inserting details…' });
 
     try {
       const markup = buildInsertMarkup(selectedUser, selectedPresence, selectedOOO);
       await insertHtmlAsync(markup);
-      addToast('People Picker details inserted successfully.', 'success');
+      setInsertStatus({ tone: 'success', text: 'People Picker details inserted.' });
     } catch (error) {
       logDev('Insert failed', error);
-      addToast(
-        error instanceof Error ? error.message : 'Unable to insert details.',
-        'error',
-      );
+      setInsertStatus({
+        tone: 'error',
+        text: error instanceof Error ? error.message : 'Unable to insert details.',
+      });
     } finally {
       setInserting(false);
     }
@@ -572,125 +565,136 @@ export default function App() {
 
   const handleAddRecipient = async (kind: 'to' | 'cc' | 'bcc') => {
     if (!selectedUser) {
-      addToast('Select a person first.', 'error');
+      setRecipientStatus({ tone: 'error', text: 'Select a person first.' });
       return;
     }
     if (!officeContext.supportsRecipients) {
-      addToast('Recipients can only be updated while composing.', 'error');
+      setRecipientStatus({
+        tone: 'error',
+        text: 'Recipients can only be updated while composing.',
+      });
       return;
     }
 
     try {
       await addRecipientAsync(kind, selectedUser);
-      addToast(`${selectedUser.displayName} added to ${kind.toUpperCase()}.`, 'success');
+      setRecipientStatus({
+        tone: 'success',
+        text: `${selectedUser.displayName} added to ${kind.toUpperCase()}.`,
+      });
     } catch (error) {
       logDev('Add recipient failed', error);
-      addToast(
-        error instanceof Error ? error.message : 'Unable to add recipient.',
-        'error',
-      );
-    }
-  };
-
-  const handleRefreshPresence = () => {
-    if (!selectedUser) {
-      return;
-    }
-    setPresenceRefreshing(true);
-    requestPresence(selectedUser.email, { noCache: true, ttl: PRESENCE_TTL_SECONDS, token: accessToken })
-      .then((presenceResult) => {
-        upsertState(setPresenceCache, selectedUser.email, presenceResult);
-        setPresenceError(null);
-      })
-      .catch((error) => {
-        logDev('Manual presence refresh failed', error);
-        setPresenceError('Presence unavailable');
-      })
-      .finally(() => {
-        setPresenceRefreshing(false);
+      setRecipientStatus({
+        tone: 'error',
+        text: error instanceof Error ? error.message : 'Unable to add recipient.',
       });
+    }
   };
 
-  return (
-    <div className="app-container h-full flex flex-col bg-white">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-primary-600 to-primary-700">
-        <div className="flex items-center gap-3">
-          {config.orgLogoUrl ? (
-            <img
-              src={config.orgLogoUrl}
-              alt={`${config.orgName} logo`}
-              className="w-10 h-10 rounded-lg object-cover border-2 border-white/20"
-            />
-          ) : (
-            <div className="avatar w-10 h-10 text-sm bg-white/20 border-2 border-white/30">
-              {(config.orgName ?? 'PP').slice(0, 2).toUpperCase()}
-            </div>
-          )}
-          <div>
-            <h1 className="text-lg font-bold text-white">{config.appName}</h1>
-            <p className="text-xs text-white/80">
-              {configError || config.orgName}
-            </p>
-          </div>
-        </div>
-        <SettingsDropdown config={config} />
-      </header>
+  const headerSubtitle = useMemo(() => {
+    if (configError) {
+      return configError;
+    }
+    return config.orgName;
+  }, [config.orgName, configError]);
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-hidden flex flex-col p-6">
-        <UnifiedSearch
-          query={searchQuery}
-          onQueryChange={setSearchQuery}
-          results={searchResults}
-          isSearching={searching}
-          error={searchError}
-          selectedEmail={selectedUser?.email ?? null}
-          minQueryLength={MIN_QUERY_LENGTH}
-          onSelect={handleSelectUser}
-          onHover={(email) => {
-            prefetchPhoto(email);
-            prefetchPresence(email);
-          }}
-        />
-      </main>
-
-      {/* Details Panel */}
-      {showDetailsPanel && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
-            onClick={() => setShowDetailsPanel(false)}
-          />
-          <DetailsPanel
-            user={selectedUser}
-            photo={selectedPhoto}
-            presence={selectedPresence}
-            presenceError={presenceError}
-            presenceRefreshing={presenceRefreshing}
-            ooo={selectedOOO}
-            oooError={oooError}
-            onClose={() => setShowDetailsPanel(false)}
-            onRefreshPresence={handleRefreshPresence}
-          />
-        </>
-      )}
-
-      {/* Action Buttons */}
-      <ActionButtons
+  const tabPanels = {
+    search: (
+      <SearchTab
+        query={searchQuery}
+        onQueryChange={setSearchQuery}
+        results={searchResults}
+        isSearching={searching}
+        error={searchError}
+        selectedEmail={selectedUser?.email ?? null}
+        minQueryLength={MIN_QUERY_LENGTH}
+        onSelect={handleSelectUser}
+        onHover={(email) => {
+          prefetchPhoto(email);
+          prefetchPresence(email);
+        }}
+      />
+    ),
+    details: (
+      <DetailsTab
         user={selectedUser}
+        photo={selectedPhoto}
+        presence={selectedPresence}
+        presenceError={presenceError}
+        presenceRefreshing={presenceRefreshing}
+        ooo={selectedOOO}
+        oooError={oooError}
+        onRefreshPresence={() => {
+          if (!selectedUser) {
+            return;
+          }
+          setPresenceRefreshing(true);
+          requestPresence(selectedUser.email, { noCache: true, ttl: PRESENCE_TTL_SECONDS, token: accessToken })
+            .then((presenceResult) => {
+              upsertState(setPresenceCache, selectedUser.email, presenceResult);
+              setPresenceError(null);
+            })
+            .catch((error) => {
+              logDev('Manual presence refresh failed', error);
+              setPresenceError('Presence unavailable');
+            })
+            .finally(() => {
+              setPresenceRefreshing(false);
+            });
+        }}
+      />
+    ),
+    insert: (
+      <InsertTab
+        user={selectedUser}
+        presence={selectedPresence}
+        ooo={selectedOOO}
         isCompose={officeContext.isCompose}
         supportsRecipients={officeContext.supportsRecipients}
         onInsert={handleInsert}
         onAddRecipient={handleAddRecipient}
         inserting={inserting}
+        statusMessage={insertStatus}
+        recipientMessage={recipientStatus}
       />
+    ),
+  } as const;
 
-      {/* Toast Notifications */}
-      <ToastContainer toasts={toasts} onClose={removeToast} />
+  return (
+    <div className="app-container">
+      <header className="app-header">
+        {config.orgLogoUrl ? (
+          <img src={config.orgLogoUrl} alt={`${config.orgName} logo`} />
+        ) : (
+          <div className="avatar" aria-hidden>
+            {(config.orgName ?? 'PP').slice(0, 2).toUpperCase()}
+          </div>
+        )}
+        <div>
+          <h1>{config.appName}</h1>
+          <span>{headerSubtitle}</span>
+        </div>
+      </header>
+
+      <nav className="tablist" role="tablist" aria-label="People Picker tabs">
+        {(['search', 'details', 'insert'] as TabKey[]).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            role="tab"
+            id={`tab-${tab}`}
+            className="tab-button"
+            aria-selected={activeTab === tab}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab === 'search' ? 'Search' : tab === 'details' ? 'Details' : 'Insert'}
+          </button>
+        ))}
+      </nav>
+
+      <main style={{ flex: 1 }}>
+        {tabPanels[activeTab]}
+      </main>
     </div>
   );
 }

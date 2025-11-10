@@ -8,6 +8,7 @@
     "allowJs": false,
     "noEmit": false,
     "incremental": true,
+    "composite": true,
     "tsBuildInfoFile": "tsconfig.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
@@ -33,4 +34,9 @@
     "dist",
     "node_modules"
   ],
+  "references": [
+    {
+      "path": "../../packages/sdk"
+    }
+  ]
 }

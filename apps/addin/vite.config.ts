@@ -9,6 +9,11 @@ const httpsOption: HttpsServerOptions = {};
 
 export default defineConfig({
   publicDir: 'public',
+  define: {
+    'process.env.NEXT_PUBLIC_PEOPLEPICKER_BASE_URL': JSON.stringify(
+      process.env.NEXT_PUBLIC_PEOPLEPICKER_BASE_URL || ''
+    ),
+  },
   plugins: [
     basicSsl(),
     react(),

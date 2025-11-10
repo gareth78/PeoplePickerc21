@@ -40,6 +40,99 @@ interface SmtpDomain {
   tenancy: OfficeTenancy;
 }
 
+// Component to display feature flags with color-coded inheritance indicators
+interface FeatureFlagsDisplayProps {
+  domain: SmtpDomain;
+}
+
+function FeatureFlagsDisplay({ domain }: FeatureFlagsDisplayProps) {
+  const features = [
+    {
+      key: 'Presence',
+      abbr: 'PR',
+      domainValue: domain.enablePresence,
+      tenancyValue: domain.tenancy.enablePresence,
+      title: 'Presence Lookup',
+    },
+    {
+      key: 'Photos',
+      abbr: 'PH',
+      domainValue: domain.enablePhotos,
+      tenancyValue: domain.tenancy.enablePhotos,
+      title: 'Profile Photos',
+    },
+    {
+      key: 'OutOfOffice',
+      abbr: 'OOO',
+      domainValue: domain.enableOutOfOffice,
+      tenancyValue: domain.tenancy.enableOutOfOffice,
+      title: 'Out of Office Status',
+    },
+    {
+      key: 'LocalGroups',
+      abbr: 'LG',
+      domainValue: domain.enableLocalGroups,
+      tenancyValue: domain.tenancy.enableLocalGroups,
+      title: 'Local Groups',
+    },
+    {
+      key: 'GlobalGroups',
+      abbr: 'GG',
+      domainValue: domain.enableGlobalGroups,
+      tenancyValue: domain.tenancy.enableGlobalGroups,
+      title: 'Global Groups',
+    },
+  ];
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {features.map((feature) => {
+        const isInherited = feature.domainValue === null;
+        const effectiveValue = feature.domainValue ?? feature.tenancyValue;
+        
+        // Determine badge color based on inheritance and value
+        let badgeClass = '';
+        let statusIcon = '';
+        
+        if (isInherited) {
+          // Inherited from tenant (purple/blue)
+          if (effectiveValue) {
+            badgeClass = 'bg-purple-100 text-purple-700 border border-purple-200';
+            statusIcon = '↑✓';
+          } else {
+            badgeClass = 'bg-gray-100 text-gray-600 border border-gray-200';
+            statusIcon = '↑✗';
+          }
+        } else {
+          // Explicitly set
+          if (feature.domainValue === true) {
+            badgeClass = 'bg-green-100 text-green-700 border border-green-300';
+            statusIcon = '✓';
+          } else {
+            badgeClass = 'bg-red-100 text-red-700 border border-red-300';
+            statusIcon = '✗';
+          }
+        }
+
+        const tooltipText = isInherited
+          ? `${feature.title}: ${effectiveValue ? 'Enabled' : 'Disabled'} (inherited from tenant)`
+          : `${feature.title}: ${feature.domainValue ? 'Enabled' : 'Disabled'} (domain override)`;
+
+        return (
+          <span
+            key={feature.key}
+            className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${badgeClass}`}
+            title={tooltipText}
+          >
+            <span className="font-semibold">{feature.abbr}</span>
+            <span className="ml-0.5 text-[10px]">{statusIcon}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function SmtpDomainManager() {
   const [domains, setDomains] = useState<SmtpDomain[]>([]);
   const [orderedDomains, setOrderedDomains] = useState<SmtpDomain[]>([]);
@@ -297,7 +390,7 @@ export default function SmtpDomainManager() {
                     Assigned Tenant
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tenant Status
+                    Feature Flags
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Priority
@@ -334,19 +427,11 @@ export default function SmtpDomainManager() {
                         {domain.tenancy.tenantId}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          domain.tenancy.enabled
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {domain.tenancy.enabled ? 'Enabled' : 'Disabled'}
-                      </span>
+                    <td className="px-6 py-4">
+                      <FeatureFlagsDisplay domain={domain} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {index + 1}
                       </span>
                     </td>

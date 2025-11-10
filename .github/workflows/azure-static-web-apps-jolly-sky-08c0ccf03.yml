@@ -30,6 +30,8 @@ jobs:
         run: npm run build --workspace=packages/sdk
       
       - name: Build add-in
+        env:
+          NEXT_PUBLIC_PEOPLEPICKER_BASE_URL: https://peoplepickerc21-env.whitefield-a5342468.westeurope.azurecontainerapps.io
         run: npm run build --workspace=apps/addin
       
       - name: Verify staticwebapp.config.json

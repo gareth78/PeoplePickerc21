@@ -18,22 +18,22 @@ export function SearchInput({
 }: SearchInputProps) {
   return (
     <div className="relative">
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
         {isSearching ? (
-          <Loader2 className="text-primary-500 animate-spin" size={20} />
+          <Loader2 className="text-primary-500 animate-spin" size={16} />
         ) : (
-          <Search className="text-slate-400" size={20} />
+          <Search className="text-slate-400" size={16} />
         )}
       </div>
 
       <input
-        type="search"
+        type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        className="w-full pl-12 pr-12 py-4 text-base bg-white border-2 border-slate-200 rounded-2xl
-                   focus:border-primary-500 focus:ring-4 focus:ring-primary-100 
+        className="w-full pl-10 pr-10 py-2.5 text-sm bg-white border border-slate-200 rounded-lg
+                   focus:border-primary-400 focus:ring-2 focus:ring-primary-100
                    transition-all duration-200 outline-none
                    placeholder:text-slate-400
                    shadow-sm hover:shadow-md"
@@ -45,11 +45,11 @@ export function SearchInput({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           onClick={() => onChange('')}
-          className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full
-                     hover:bg-slate-100 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full
+                     hover:bg-slate-100 transition-colors flex items-center justify-center"
           aria-label="Clear search"
         >
-          <X className="text-slate-400" size={18} />
+          <X className="text-slate-400 hover:text-slate-600" size={14} />
         </motion.button>
       )}
     </div>

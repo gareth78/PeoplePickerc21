@@ -2,9 +2,13 @@ type QueryValue = string | number | boolean | null | undefined;
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 
+// Hardcoded base URL for production add-in deployment
+// This overrides environment variable approach which wasn't working with Vite build
+const PRODUCTION_BASE_URL = 'https://peoplepickerc21-env.whitefield-a5342468.westeurope.azurecontainerapps.io';
+
 const baseUrlFromEnv =
   (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_PEOPLEPICKER_BASE_URL) ||
-  '';
+  PRODUCTION_BASE_URL;
 
 const trimTrailingSlash = (value: string) =>
   value.endsWith('/') ? value.slice(0, -1) : value;

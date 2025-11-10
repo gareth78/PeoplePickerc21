@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import type { PresenceResult } from '@people-picker/sdk';
 
 interface PresenceBadgeProps {
@@ -5,14 +6,35 @@ interface PresenceBadgeProps {
   refreshing?: boolean;
 }
 
-const AVAILABILITY_COLORS: Record<string, string> = {
-  available: '#22c55e',
-  busy: '#ef4444',
-  do_not_disturb: '#ef4444',
-  away: '#f97316',
-  be_right_back: '#f97316',
-  offline: '#94a3b8',
-  unknown: '#64748b',
+const AVAILABILITY_CONFIG: Record<string, { color: string; bgColor: string; pulse?: boolean }> = {
+  available: {
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-100',
+  },
+  busy: {
+    color: 'text-red-700',
+    bgColor: 'bg-red-100',
+  },
+  do_not_disturb: {
+    color: 'text-red-700',
+    bgColor: 'bg-red-100',
+  },
+  away: {
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100',
+  },
+  be_right_back: {
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100',
+  },
+  offline: {
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-100',
+  },
+  unknown: {
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-100',
+  },
 };
 
 const normalize = (value: string | null | undefined): string => {
@@ -24,30 +46,43 @@ const normalize = (value: string | null | undefined): string => {
 
 export function PresenceBadge({ presence, refreshing = false }: PresenceBadgeProps) {
   if (presence === undefined) {
-    return <span className="muted">Presence pending…</span>;
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+        <span className="w-2 h-2 rounded-full bg-slate-400 animate-pulse" />
+        Pending…
+      </span>
+    );
   }
 
   if (presence === null) {
-    return <span className="muted">Presence unavailable</span>;
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+        <span className="w-2 h-2 rounded-full bg-slate-400" />
+        Unavailable
+      </span>
+    );
   }
 
   const availabilityKey = normalize(presence.availability);
-  const badgeColor = AVAILABILITY_COLORS[availabilityKey] ?? AVAILABILITY_COLORS.unknown;
+  const config = AVAILABILITY_CONFIG[availabilityKey] ?? AVAILABILITY_CONFIG.unknown;
   const label = presence.availability ?? 'Unknown';
   const activity = presence.activity ? ` · ${presence.activity}` : '';
 
   return (
     <span
-      className="presence-badge"
-      style={{
-        color: badgeColor,
-        backgroundColor: `${badgeColor}1a`,
-      }}
+      className={clsx(
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
+        config.color,
+        config.bgColor
+      )}
     >
       <span
-        className="presence-dot"
+        className={clsx(
+          'w-2 h-2 rounded-full',
+          refreshing && 'animate-pulse'
+        )}
         style={{
-          backgroundColor: badgeColor,
+          backgroundColor: 'currentColor',
         }}
       />
       {refreshing ? 'Refreshing…' : `${label}${activity}`}

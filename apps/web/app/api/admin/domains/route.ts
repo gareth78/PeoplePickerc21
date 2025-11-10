@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { withAdminAuth } from '@/lib/admin/middleware';
+import { verifyAdminAuth } from '@/lib/admin/middleware';
 import { createAuditLog } from '@/lib/admin/audit';
 import prisma from '@/lib/prisma';
 
@@ -8,11 +8,18 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 // GET all SMTP domains with tenant info
-export const GET = withAdminAuth(async (request: NextRequest, session) => {
+export async function GET(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.authenticated || !authResult.session) {
+      return authResult.response!;
+    }
+    const admin = authResult.session;
+
     await createAuditLog({
       action: 'VIEW_DOMAINS',
-      adminEmail: session.email,
+      adminEmail: admin.email,
     });
 
     const domains = await prisma.smtpDomain.findMany({
@@ -37,11 +44,18 @@ export const GET = withAdminAuth(async (request: NextRequest, session) => {
       { status: 500 }
     );
   }
-});
+}
 
 // POST - Create new domain
-export const POST = withAdminAuth(async (request: NextRequest, session) => {
+export async function POST(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.authenticated || !authResult.session) {
+      return authResult.response!;
+    }
+    const admin = authResult.session;
+
     const body = await request.json();
     const { domain, tenancyId, priority = 0 } = body;
 
@@ -116,7 +130,7 @@ export const POST = withAdminAuth(async (request: NextRequest, session) => {
 
     await createAuditLog({
       action: 'CREATE_DOMAIN',
-      adminEmail: session.email,
+      adminEmail: admin.email,
       metadata: {
         domainId: newDomain.id,
         domain: newDomain.domain,
@@ -133,4 +147,4 @@ export const POST = withAdminAuth(async (request: NextRequest, session) => {
       { status: 500 }
     );
   }
-});
+}

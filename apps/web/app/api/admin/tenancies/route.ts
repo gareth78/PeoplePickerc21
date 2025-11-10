@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { withAdminAuth } from '@/lib/admin/middleware';
+import { verifyAdminAuth } from '@/lib/admin/middleware';
 import { createAuditLog } from '@/lib/admin/audit';
 import prisma from '@/lib/prisma';
 
@@ -8,11 +8,18 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 // GET all tenancies
-export const GET = withAdminAuth(async (request: NextRequest, session) => {
+export async function GET(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.authenticated || !authResult.session) {
+      return authResult.response!;
+    }
+    const admin = authResult.session;
+
     await createAuditLog({
       action: 'VIEW_TENANCIES',
-      adminEmail: session.email,
+      adminEmail: admin.email,
     });
 
     const tenancies = await prisma.officeTenancy.findMany({
@@ -36,11 +43,18 @@ export const GET = withAdminAuth(async (request: NextRequest, session) => {
       { status: 500 }
     );
   }
-});
+}
 
 // POST - Create new tenancy
-export const POST = withAdminAuth(async (request: NextRequest, session) => {
+export async function POST(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.authenticated || !authResult.session) {
+      return authResult.response!;
+    }
+    const admin = authResult.session;
+
     const body = await request.json();
     const {
       name,
@@ -107,13 +121,13 @@ export const POST = withAdminAuth(async (request: NextRequest, session) => {
         enableOutOfOffice,
         enableLocalGroups,
         enableGlobalGroups,
-        createdBy: session.email,
+        createdBy: admin.email,
       },
     });
 
     await createAuditLog({
       action: 'CREATE_TENANCY',
-      adminEmail: session.email,
+      adminEmail: admin.email,
       metadata: {
         tenancyId: newTenancy.id,
         name: newTenancy.name,
@@ -138,4 +152,4 @@ export const POST = withAdminAuth(async (request: NextRequest, session) => {
       { status: 500 }
     );
   }
-});
+}

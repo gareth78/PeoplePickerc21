@@ -76,6 +76,8 @@ model OfficeTenancy {
   enableLocalGroups   Boolean  @default(false) @map("enable_local_groups")   // Query local tenant groups
   enableGlobalGroups  Boolean  @default(false) @map("enable_global_groups")  // Show Groups tab in UI
   
+  is_default            Boolean  @default(false) @db.Bit
+
   domains      SmtpDomain[]
   
   createdAt    DateTime @default(now()) @map("created_at") @db.DateTime2

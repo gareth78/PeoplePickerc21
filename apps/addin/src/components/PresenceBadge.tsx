@@ -1,4 +1,5 @@
 import type { PresenceResult } from '@people-picker/sdk';
+import { motion } from 'framer-motion';
 
 interface PresenceBadgeProps {
   presence: PresenceResult | null | undefined;
@@ -16,19 +17,27 @@ const AVAILABILITY_COLORS: Record<string, string> = {
 };
 
 const normalize = (value: string | null | undefined): string => {
-  if (!value) {
-    return 'unknown';
-  }
+  if (!value) return 'unknown';
   return value.toLowerCase().replace(/\s+/g, '_');
 };
 
 export function PresenceBadge({ presence, refreshing = false }: PresenceBadgeProps) {
   if (presence === undefined) {
-    return <span className="muted">Presence pending…</span>;
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="w-2 h-2 rounded-full bg-slate-300 animate-pulse" />
+        <span>Checking presence…</span>
+      </span>
+    );
   }
 
   if (presence === null) {
-    return <span className="muted">Presence unavailable</span>;
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="w-2 h-2 rounded-full bg-slate-300" />
+        <span>Presence unavailable</span>
+      </span>
+    );
   }
 
   const availabilityKey = normalize(presence.availability);
@@ -37,20 +46,22 @@ export function PresenceBadge({ presence, refreshing = false }: PresenceBadgePro
   const activity = presence.activity ? ` · ${presence.activity}` : '';
 
   return (
-    <span
-      className="presence-badge"
+    <motion.span
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium"
       style={{
         color: badgeColor,
-        backgroundColor: `${badgeColor}1a`,
+        backgroundColor: `${badgeColor}15`,
       }}
     >
-      <span
-        className="presence-dot"
-        style={{
-          backgroundColor: badgeColor,
-        }}
+      <motion.div
+        className="w-2 h-2 rounded-full flex-shrink-0"
+        style={{ backgroundColor: badgeColor }}
+        animate={refreshing ? { scale: [1, 1.2, 1] } : {}}
+        transition={{ duration: 1, repeat: refreshing ? Infinity : 0 }}
       />
-      {refreshing ? 'Refreshing…' : `${label}${activity}`}
-    </span>
+      <span>{refreshing ? 'Refreshing…' : `${label}${activity}`}</span>
+    </motion.span>
   );
 }

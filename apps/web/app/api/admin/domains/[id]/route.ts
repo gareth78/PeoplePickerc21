@@ -33,6 +33,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
             name: true,
             tenantId: true,
             enabled: true,
+            enablePresence: true,
+            enablePhotos: true,
+            enableOutOfOffice: true,
+            enableLocalGroups: true,
+            enableGlobalGroups: true,
           },
         },
       },
@@ -68,7 +73,16 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     const body = await request.json();
-    const { domain, tenancyId, priority } = body;
+    const {
+      domain,
+      tenancyId,
+      priority,
+      enablePresence,
+      enablePhotos,
+      enableOutOfOffice,
+      enableLocalGroups,
+      enableGlobalGroups,
+    } = body;
 
     // Find existing domain
     const existingDomain = await prisma.smtpDomain.findUnique({
@@ -134,6 +148,23 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       updateData.priority = priority;
     }
 
+    // Update feature flags if provided
+    if (enablePresence !== undefined) {
+      updateData.enablePresence = enablePresence;
+    }
+    if (enablePhotos !== undefined) {
+      updateData.enablePhotos = enablePhotos;
+    }
+    if (enableOutOfOffice !== undefined) {
+      updateData.enableOutOfOffice = enableOutOfOffice;
+    }
+    if (enableLocalGroups !== undefined) {
+      updateData.enableLocalGroups = enableLocalGroups;
+    }
+    if (enableGlobalGroups !== undefined) {
+      updateData.enableGlobalGroups = enableGlobalGroups;
+    }
+
     // Update domain
     const updatedDomain = await prisma.smtpDomain.update({
       where: { id },
@@ -145,6 +176,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
             name: true,
             tenantId: true,
             enabled: true,
+            enablePresence: true,
+            enablePhotos: true,
+            enableOutOfOffice: true,
+            enableLocalGroups: true,
+            enableGlobalGroups: true,
           },
         },
       },
@@ -157,7 +193,15 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         domainId: updatedDomain.id,
         domain: updatedDomain.domain,
         tenancyId: updatedDomain.tenancyId,
+        tenancyName: updatedDomain.tenancy.name,
         changes: Object.keys(updateData),
+        featureFlags: {
+          enablePresence: updatedDomain.enablePresence,
+          enablePhotos: updatedDomain.enablePhotos,
+          enableOutOfOffice: updatedDomain.enableOutOfOffice,
+          enableLocalGroups: updatedDomain.enableLocalGroups,
+          enableGlobalGroups: updatedDomain.enableGlobalGroups,
+        },
       },
     });
 

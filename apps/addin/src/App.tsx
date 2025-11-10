@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import { sdk, PeoplePickerError, type OOOResult, type PresenceResult, type UsersResult } from '@people-picker/sdk';
 import { useDebounce } from './hooks/useDebounce';
-import { SearchTab } from './components/SearchTab';
-import { DetailsTab } from './components/DetailsTab';
-import { InsertTab } from './components/InsertTab';
 import type { EnhancedUser, PublicConfig } from './types';
 
-type TabKey = 'search' | 'details' | 'insert';
+// Components
+import { SearchInput } from './components/SearchInput';
+import { UserCard } from './components/UserCard';
+import { DetailPanel } from './components/DetailPanel';
+import { ActionButtons } from './components/ActionButtons';
+import { EmptyState } from './components/EmptyState';
+import { SkeletonUserCard } from './components/SkeletonLoader';
+import { Toast } from './components/Toast';
 
 interface OfficeContextState {
   isCompose: boolean;
@@ -17,9 +23,10 @@ interface OfficeContextState {
   };
 }
 
-interface StatusMessage {
-  tone: 'success' | 'error' | 'info';
-  text: string;
+interface ToastMessage {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  message: string;
 }
 
 const MIN_QUERY_LENGTH = 2;
@@ -49,10 +56,7 @@ const getInitialOfficeContext = (): OfficeContextState => {
     return {
       isCompose: false,
       supportsRecipients: false,
-      mailboxUser: {
-        displayName: null,
-        email: null,
-      },
+      mailboxUser: { displayName: null, email: null },
     };
   }
 
@@ -77,9 +81,7 @@ const getInitialOfficeContext = (): OfficeContextState => {
 
 const upsertState = <T,>(setter: React.Dispatch<React.SetStateAction<Record<string, T>>>, key: string, value: T) => {
   setter((prev) => {
-    if (prev[key] === value) {
-      return prev;
-    }
+    if (prev[key] === value) return prev;
     return { ...prev, [key]: value };
   });
 };
@@ -111,12 +113,12 @@ const buildInsertMarkup = (user: EnhancedUser, presence: PresenceResult | null |
       ? `Out of office: ${ooo.message ? htmlEscape(ooo.message) : 'Enabled'}`
       : null;
 
-  return `<div style="font-family: 'Segoe UI', sans-serif; line-height: 1.5; padding: 8px 0;">
-    <div>${lines.join('<br />')}</div>
-    <div style="margin-top: 6px; color: #555;">${presenceLine}</div>
+  return `<div style="font-family: 'Inter', 'SF Pro Display', sans-serif; line-height: 1.6; padding: 12px 0;">
+    <div style="margin-bottom: 8px;">${lines.join('<br />')}</div>
+    <div style="color: #64748b; font-size: 14px;">${presenceLine}</div>
     ${
       oooLine
-        ? `<div style="margin-top: 6px; padding: 8px; background-color: #f1f5f9; border-radius: 6px;">${oooLine}</div>`
+        ? `<div style="margin-top: 8px; padding: 12px; background-color: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 8px; color: #92400e;">${oooLine}</div>`
         : ''
     }
   </div>`;
@@ -133,12 +135,7 @@ const addRecipientAsync = (kind: 'to' | 'cc' | 'bcc', user: EnhancedUser) =>
       }
 
       targetCollection.addAsync(
-        [
-          {
-            displayName: user.displayName,
-            emailAddress: user.email,
-          },
-        ],
+        [{ displayName: user.displayName, emailAddress: user.email }],
         (result) => {
           if (result.status === Office.AsyncResultStatus.Succeeded) {
             resolve();
@@ -234,8 +231,6 @@ const requestOOO = async (email: string, token?: string | null): Promise<OOOResu
 
 export default function App() {
   const [config, setConfig] = useState<PublicConfig>(defaultConfig);
-  const [configError, setConfigError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabKey>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
   const [searchResults, setSearchResults] = useState<EnhancedUser[]>([]);
@@ -246,10 +241,9 @@ export default function App() {
   const [presenceError, setPresenceError] = useState<string | null>(null);
   const [presenceRefreshing, setPresenceRefreshing] = useState(false);
   const [oooError, setOooError] = useState<string | null>(null);
-  const [insertStatus, setInsertStatus] = useState<StatusMessage | null>(null);
-  const [recipientStatus, setRecipientStatus] = useState<StatusMessage | null>(null);
   const [inserting, setInserting] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const photoCacheRef = useRef<Record<string, string | null>>({});
   const [photoCache, setPhotoCache] = useState<Record<string, string | null>>({});
@@ -271,13 +265,23 @@ export default function App() {
     oooCacheRef.current = oooCache;
   }, [oooCache]);
 
+  // Toast utility
+  const showToast = (type: ToastMessage['type'], message: string) => {
+    const id = Math.random().toString(36).substring(7);
+    setToasts((prev) => [...prev, { id, type, message }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  // Bootstrap
   useEffect(() => {
     const bootstrap = async () => {
       try {
         const publicConfig = await resolvePublicConfig();
         setConfig(publicConfig);
       } catch (error) {
-        setConfigError('Unable to load organization details.');
         logDev('Public config failed', error);
       }
     };
@@ -285,6 +289,7 @@ export default function App() {
     bootstrap().catch((error) => logDev('Bootstrap error', error));
   }, []);
 
+  // SSO Token
   useEffect(() => {
     const getToken = async () => {
       if (typeof Office === 'undefined' || !Office.context?.mailbox) {
@@ -312,6 +317,7 @@ export default function App() {
     getToken().catch((error) => logDev('SSO error', error));
   }, []);
 
+  // Office context and prefill
   useEffect(() => {
     const ctx = getInitialOfficeContext();
     setOfficeContext(ctx);
@@ -324,11 +330,7 @@ export default function App() {
     const messageRead = item as Office.MessageRead & {
       organizer?: Office.EmailAddressDetails;
     };
-    const sender =
-      messageRead.from ??
-      messageRead.sender ??
-      messageRead.organizer ??
-      null;
+    const sender = messageRead.from ?? messageRead.sender ?? messageRead.organizer ?? null;
 
     if (sender?.emailAddress) {
       prefillRef.current = sender.emailAddress;
@@ -339,6 +341,7 @@ export default function App() {
     }
   }, []);
 
+  // Search
   useEffect(() => {
     if (debouncedQuery.trim().length < MIN_QUERY_LENGTH) {
       setSearchResults([]);
@@ -363,7 +366,6 @@ export default function App() {
           );
           if (match) {
             setSelectedUser(match);
-            setActiveTab('details');
             prefillRef.current = null;
           }
         } else if (selectedUser) {
@@ -374,9 +376,7 @@ export default function App() {
         }
       })
       .catch((error) => {
-        if (controller.signal.aborted) {
-          return;
-        }
+        if (controller.signal.aborted) return;
         logDev('Search failed', error);
         setSearchError(error instanceof PeoplePickerError ? error.message : 'Search failed.');
       })
@@ -389,11 +389,10 @@ export default function App() {
     };
   }, [debouncedQuery, accessToken]);
 
+  // Presence polling for selected user
   useEffect(() => {
     const email = selectedUser?.email;
-    if (!email || activeTab !== 'details') {
-      return;
-    }
+    if (!email) return;
 
     let cancelled = false;
     const controller = new AbortController();
@@ -411,9 +410,7 @@ export default function App() {
           upsertState(setPresenceCache, email, result);
         }
       } catch (error) {
-        if (controller.signal.aborted) {
-          return;
-        }
+        if (controller.signal.aborted) return;
         logDev('Presence refresh failed', error);
         if (!cancelled) {
           setPresenceError('Presence unavailable');
@@ -425,58 +422,50 @@ export default function App() {
       }
     };
 
-      hydratePresence().catch((error) => logDev('Presence hydrate error', error));
+    hydratePresence().catch((error) => logDev('Presence hydrate error', error));
 
-      let timer: number | undefined;
+    let timer: number | undefined;
 
-      const schedule = () => {
-        if (cancelled) {
-          return;
-        }
-        if (document.visibilityState !== 'visible') {
-          return;
-        }
-        timer = window.setTimeout(() => {
-          hydratePresence()
-            .then(() => schedule())
-            .catch((error) => logDev('Presence poll error', error));
-        }, PRESENCE_TTL_SECONDS * 1000);
-      };
+    const schedule = () => {
+      if (cancelled) return;
+      if (document.visibilityState !== 'visible') return;
+      timer = window.setTimeout(() => {
+        hydratePresence()
+          .then(() => schedule())
+          .catch((error) => logDev('Presence poll error', error));
+      }, PRESENCE_TTL_SECONDS * 1000);
+    };
 
-      schedule();
+    schedule();
 
-      const handleVisibility = () => {
-        if (document.visibilityState === 'visible') {
-          hydratePresence()
-            .then(() => schedule())
-            .catch((error) => logDev('Visibility refresh error', error));
-        } else if (timer !== undefined) {
-          window.clearTimeout(timer);
-          timer = undefined;
-        }
-      };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        hydratePresence()
+          .then(() => schedule())
+          .catch((error) => logDev('Visibility refresh error', error));
+      } else if (timer !== undefined) {
+        window.clearTimeout(timer);
+        timer = undefined;
+      }
+    };
 
-      document.addEventListener('visibilitychange', handleVisibility);
+    document.addEventListener('visibilitychange', handleVisibility);
 
-      return () => {
-        cancelled = true;
-        controller.abort();
-        if (timer !== undefined) {
-          window.clearTimeout(timer);
-        }
-        document.removeEventListener('visibilitychange', handleVisibility);
-      };
-  }, [activeTab, selectedUser?.email, accessToken]);
+    return () => {
+      cancelled = true;
+      controller.abort();
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [selectedUser?.email, accessToken]);
 
+  // OOO for selected user
   useEffect(() => {
     const email = selectedUser?.email;
-    if (!email || activeTab !== 'details') {
-      return;
-    }
-
-    if (hasCacheValue(oooCacheRef, email)) {
-      return;
-    }
+    if (!email) return;
+    if (hasCacheValue(oooCacheRef, email)) return;
 
     let cancelled = false;
 
@@ -497,7 +486,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, selectedUser?.email, accessToken]);
+  }, [selectedUser?.email, accessToken]);
 
   const selectedPresence = selectedUser ? presenceCache[selectedUser.email] : undefined;
   const selectedPhoto = selectedUser ? photoCache[selectedUser.email] ?? selectedUser.photo ?? null : null;
@@ -507,13 +496,10 @@ export default function App() {
     setSelectedUser(user);
     prefetchPhoto(user.email);
     prefetchPresence(user.email);
-    setActiveTab('details');
   };
 
   const prefetchPhoto = (email: string) => {
-    if (hasCacheValue(photoCacheRef, email)) {
-      return;
-    }
+    if (hasCacheValue(photoCacheRef, email)) return;
     requestPhoto(email, accessToken)
       .then((photo) => {
         upsertState(setPhotoCache, email, photo);
@@ -522,9 +508,7 @@ export default function App() {
   };
 
   const prefetchPresence = (email: string) => {
-    if (hasCacheValue(presenceCacheRef, email)) {
-      return;
-    }
+    if (hasCacheValue(presenceCacheRef, email)) return;
     requestPresence(email, { token: accessToken })
       .then((presenceResult) => {
         upsertState(setPresenceCache, email, presenceResult);
@@ -534,30 +518,24 @@ export default function App() {
 
   const handleInsert = async () => {
     if (!selectedUser) {
-      setInsertStatus({ tone: 'error', text: 'Select a person first.' });
+      showToast('error', 'Select a person first.');
       return;
     }
     if (!officeContext.isCompose) {
-      setInsertStatus({
-        tone: 'error',
-        text: 'Insert is only available when composing a message.',
-      });
+      showToast('error', 'Insert is only available when composing a message.');
       return;
     }
 
     setInserting(true);
-    setInsertStatus({ tone: 'info', text: 'Inserting details…' });
+    showToast('info', 'Inserting details...');
 
     try {
       const markup = buildInsertMarkup(selectedUser, selectedPresence, selectedOOO);
       await insertHtmlAsync(markup);
-      setInsertStatus({ tone: 'success', text: 'People Picker details inserted.' });
+      showToast('success', 'Details inserted successfully!');
     } catch (error) {
       logDev('Insert failed', error);
-      setInsertStatus({
-        tone: 'error',
-        text: error instanceof Error ? error.message : 'Unable to insert details.',
-      });
+      showToast('error', error instanceof Error ? error.message : 'Unable to insert details.');
     } finally {
       setInserting(false);
     }
@@ -565,136 +543,212 @@ export default function App() {
 
   const handleAddRecipient = async (kind: 'to' | 'cc' | 'bcc') => {
     if (!selectedUser) {
-      setRecipientStatus({ tone: 'error', text: 'Select a person first.' });
+      showToast('error', 'Select a person first.');
       return;
     }
     if (!officeContext.supportsRecipients) {
-      setRecipientStatus({
-        tone: 'error',
-        text: 'Recipients can only be updated while composing.',
-      });
+      showToast('error', 'Recipients can only be updated while composing.');
       return;
     }
 
     try {
       await addRecipientAsync(kind, selectedUser);
-      setRecipientStatus({
-        tone: 'success',
-        text: `${selectedUser.displayName} added to ${kind.toUpperCase()}.`,
-      });
+      showToast('success', `${selectedUser.displayName} added to ${kind.toUpperCase()}.`);
     } catch (error) {
       logDev('Add recipient failed', error);
-      setRecipientStatus({
-        tone: 'error',
-        text: error instanceof Error ? error.message : 'Unable to add recipient.',
-      });
+      showToast('error', error instanceof Error ? error.message : 'Unable to add recipient.');
     }
   };
 
-  const headerSubtitle = useMemo(() => {
-    if (configError) {
-      return configError;
-    }
-    return config.orgName;
-  }, [config.orgName, configError]);
+  const orderedResults = useMemo(() => {
+    return searchResults.slice().sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }));
+  }, [searchResults]);
 
-  const tabPanels = {
-    search: (
-      <SearchTab
-        query={searchQuery}
-        onQueryChange={setSearchQuery}
-        results={searchResults}
-        isSearching={searching}
-        error={searchError}
-        selectedEmail={selectedUser?.email ?? null}
-        minQueryLength={MIN_QUERY_LENGTH}
-        onSelect={handleSelectUser}
-        onHover={(email) => {
-          prefetchPhoto(email);
-          prefetchPresence(email);
-        }}
-      />
-    ),
-    details: (
-      <DetailsTab
-        user={selectedUser}
-        photo={selectedPhoto}
-        presence={selectedPresence}
-        presenceError={presenceError}
-        presenceRefreshing={presenceRefreshing}
-        ooo={selectedOOO}
-        oooError={oooError}
-        onRefreshPresence={() => {
-          if (!selectedUser) {
-            return;
-          }
-          setPresenceRefreshing(true);
-          requestPresence(selectedUser.email, { noCache: true, ttl: PRESENCE_TTL_SECONDS, token: accessToken })
-            .then((presenceResult) => {
-              upsertState(setPresenceCache, selectedUser.email, presenceResult);
-              setPresenceError(null);
-            })
-            .catch((error) => {
-              logDev('Manual presence refresh failed', error);
-              setPresenceError('Presence unavailable');
-            })
-            .finally(() => {
-              setPresenceRefreshing(false);
-            });
-        }}
-      />
-    ),
-    insert: (
-      <InsertTab
-        user={selectedUser}
-        presence={selectedPresence}
-        ooo={selectedOOO}
-        isCompose={officeContext.isCompose}
-        supportsRecipients={officeContext.supportsRecipients}
-        onInsert={handleInsert}
-        onAddRecipient={handleAddRecipient}
-        inserting={inserting}
-        statusMessage={insertStatus}
-        recipientMessage={recipientStatus}
-      />
-    ),
-  } as const;
+  const trimmed = searchQuery.trim();
+  const showEmptyState = !searching && trimmed.length >= MIN_QUERY_LENGTH && searchResults.length === 0 && !searchError;
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        {config.orgLogoUrl ? (
-          <img src={config.orgLogoUrl} alt={`${config.orgName} logo`} />
-        ) : (
-          <div className="avatar" aria-hidden>
-            {(config.orgName ?? 'PP').slice(0, 2).toUpperCase()}
+    <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
+      {/* Toast Notifications */}
+      <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+        <AnimatePresence>
+          {toasts.map((toast) => (
+            <div key={toast.id} className="pointer-events-auto">
+              <Toast
+                message={toast.message}
+                type={toast.type}
+                onClose={() => removeToast(toast.id)}
+              />
+            </div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Main Container */}
+      <div className="max-w-2xl mx-auto min-h-full flex flex-col">
+        {/* Header */}
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 px-6 py-8 shadow-lg"
+        >
+          <div className="flex items-center gap-4">
+            {config.orgLogoUrl ? (
+              <img
+                src={config.orgLogoUrl}
+                alt={`${config.orgName} logo`}
+                className="w-12 h-12 rounded-full object-cover ring-4 ring-white/30 shadow-lg"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg ring-4 ring-white/30 shadow-lg">
+                {(config.orgName ?? 'PP').slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-white">{config.appName}</h1>
+                <Sparkles size={20} className="text-primary-200" />
+              </div>
+              <p className="text-primary-100 text-sm font-medium">{config.orgName}</p>
+            </div>
           </div>
-        )}
-        <div>
-          <h1>{config.appName}</h1>
-          <span>{headerSubtitle}</span>
-        </div>
-      </header>
+        </motion.header>
 
-      <nav className="tablist" role="tablist" aria-label="People Picker tabs">
-        {(['search', 'details', 'insert'] as TabKey[]).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            role="tab"
-            id={`tab-${tab}`}
-            className="tab-button"
-            aria-selected={activeTab === tab}
-            onClick={() => setActiveTab(tab)}
+        {/* Content */}
+        <main className="flex-1 p-6 space-y-6 custom-scrollbar overflow-y-auto">
+          {/* Back Button (when user is selected) */}
+          {selectedUser && (
+            <motion.button
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              onClick={() => setSelectedUser(null)}
+              className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-primary-600 transition-colors"
+            >
+              <ArrowLeft size={16} />
+              <span>Back to search results</span>
+            </motion.button>
+          )}
+
+          {/* Search Input */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
           >
-            {tab === 'search' ? 'Search' : tab === 'details' ? 'Details' : 'Insert'}
-          </button>
-        ))}
-      </nav>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              isSearching={searching}
+              placeholder="Search by name, title, or email..."
+              autoFocus
+            />
+          </motion.div>
 
-      <main style={{ flex: 1 }}>
-        {tabPanels[activeTab]}
-      </main>
+          {/* Search Error */}
+          {searchError && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700"
+            >
+              {searchError}
+            </motion.div>
+          )}
+
+          {/* Content Area */}
+          <AnimatePresence mode="wait">
+            {selectedUser ? (
+              /* Detail View */
+              <motion.div
+                key="detail-view"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <DetailPanel
+                  user={selectedUser}
+                  photo={selectedPhoto}
+                  presence={selectedPresence}
+                  presenceRefreshing={presenceRefreshing}
+                  presenceError={presenceError}
+                  ooo={selectedOOO}
+                  oooError={oooError}
+                  onRefreshPresence={() => {
+                    if (!selectedUser) return;
+                    setPresenceRefreshing(true);
+                    requestPresence(selectedUser.email, { noCache: true, ttl: PRESENCE_TTL_SECONDS, token: accessToken })
+                      .then((presenceResult) => {
+                        upsertState(setPresenceCache, selectedUser.email, presenceResult);
+                        setPresenceError(null);
+                      })
+                      .catch((error) => {
+                        logDev('Manual presence refresh failed', error);
+                        setPresenceError('Presence unavailable');
+                      })
+                      .finally(() => {
+                        setPresenceRefreshing(false);
+                      });
+                  }}
+                />
+
+                <ActionButtons
+                  onInsert={handleInsert}
+                  onAddTo={() => handleAddRecipient('to')}
+                  onAddCc={() => handleAddRecipient('cc')}
+                  onAddBcc={() => handleAddRecipient('bcc')}
+                  isCompose={officeContext.isCompose}
+                  supportsRecipients={officeContext.supportsRecipients}
+                  inserting={inserting}
+                />
+              </motion.div>
+            ) : searching ? (
+              /* Loading Skeletons */
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-3"
+              >
+                {[...Array(3)].map((_, i) => (
+                  <SkeletonUserCard key={i} />
+                ))}
+              </motion.div>
+            ) : trimmed.length < MIN_QUERY_LENGTH ? (
+              /* Initial Empty State */
+              <EmptyState type="initial" minQueryLength={MIN_QUERY_LENGTH} />
+            ) : showEmptyState ? (
+              /* No Results */
+              <EmptyState type="no-results" query={trimmed} />
+            ) : orderedResults.length > 0 ? (
+              /* Search Results */
+              <motion.div
+                key="results"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-3"
+              >
+                {orderedResults.map((user, index) => (
+                  <UserCard
+                    key={user.id}
+                    user={user}
+                    isSelected={false}
+                    onClick={() => handleSelectUser(user)}
+                    onHover={() => {
+                      prefetchPhoto(user.email);
+                      prefetchPresence(user.email);
+                    }}
+                    index={index}
+                  />
+                ))}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </main>
+      </div>
     </div>
   );
 }

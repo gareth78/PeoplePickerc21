@@ -31,6 +31,7 @@ interface Props {
 }
 
 export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
+  console.log('🚀 OfficeTenancyModal mounted/rendered', { tenancy });
   const isEditing = !!tenancy;
 
   const [formData, setFormData] = useState({
@@ -106,10 +107,13 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
   };
 
   const handleTestConnection = async () => {
+    console.log('🔍 handleTestConnection called');
+    console.log('Form data:', { tenantId: formData.tenantId, clientId: formData.clientId, hasSecret: !!formData.clientSecret });
     setTesting(true);
     setTestResult(null);
 
     try {
+      console.log('🌐 Making test connection request to /api/admin/tenancies/test');
       const response = await fetch('/api/admin/tenancies/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,8 +125,10 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
       });
 
       const result = await response.json();
+      console.log('✅ Test connection response:', result);
       setTestResult(result);
     } catch (error) {
+      console.error('❌ Test connection error:', error);
       setTestResult({
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -133,10 +139,16 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
   };
 
   const handleSave = async () => {
+    console.log('💾 handleSave called');
+    console.log('Is editing:', isEditing);
+    console.log('Form data:', formData);
+    
     if (!validateForm()) {
+      console.log('❌ Validation failed');
       return;
     }
 
+    console.log('✅ Validation passed, proceeding with save');
     setSaving(true);
 
     try {
@@ -168,19 +180,24 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
         }
       }
 
+      console.log('🌐 Making save request:', { url, method, body });
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      console.log('📥 Save response status:', response.status);
 
       if (response.ok) {
+        console.log('✅ Save successful');
         onClose(true);
       } else {
         const data = await response.json();
+        console.error('❌ Save failed:', data);
         setErrors({ submit: data.error || 'Failed to save tenancy' });
       }
     } catch (error) {
+      console.error('❌ Save error:', error);
       setErrors({ submit: 'Error saving tenancy' });
       console.error(error);
     } finally {
@@ -320,9 +337,28 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
 
           {/* Test Connection Button */}
           <div>
+            {(() => {
+              const isDisabled = testing ||
+                !formData.tenantId ||
+                !formData.clientId ||
+                !formData.clientSecret ||
+                formData.clientSecret.includes('••••');
+              console.log('🔘 Test Connection button state:', { 
+                isDisabled, 
+                testing, 
+                hasTenantId: !!formData.tenantId,
+                hasClientId: !!formData.clientId,
+                hasClientSecret: !!formData.clientSecret,
+                secretIncludesMask: formData.clientSecret.includes('••••')
+              });
+              return null;
+            })()}
             <button
               type="button"
-              onClick={handleTestConnection}
+              onClick={(e) => {
+                console.log('🖱️ Test Connection button clicked', e);
+                handleTestConnection();
+              }}
               disabled={
                 testing ||
                 !formData.tenantId ||
@@ -523,7 +559,10 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
             Cancel
           </button>
           <button
-            onClick={handleSave}
+            onClick={(e) => {
+              console.log('🖱️ Save button clicked', e);
+              handleSave();
+            }}
             disabled={saving}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >

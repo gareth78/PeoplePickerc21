@@ -9,6 +9,8 @@ import {
   Loader2,
   CheckCircle,
   XCircle,
+  GripVertical,
+  Save,
 } from 'lucide-react';
 import SmtpDomainModal from './SmtpDomainModal';
 
@@ -30,16 +32,27 @@ interface SmtpDomain {
 
 export default function SmtpDomainManager() {
   const [domains, setDomains] = useState<SmtpDomain[]>([]);
+  const [orderedDomains, setOrderedDomains] = useState<SmtpDomain[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState<SmtpDomain | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     loadDomains();
   }, []);
+
+  useEffect(() => {
+    // Sort domains by priority (highest priority = lowest number = top of list)
+    const sorted = [...domains].sort((a, b) => a.priority - b.priority);
+    setOrderedDomains(sorted);
+    setHasUnsavedChanges(false);
+  }, [domains]);
 
   const loadDomains = async () => {
     setLoading(true);
@@ -56,6 +69,69 @@ export default function SmtpDomainManager() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === index) {
+      return;
+    }
+
+    const newOrdered = [...orderedDomains];
+    const draggedItem = newOrdered[draggedIndex];
+    
+    // Remove from old position
+    newOrdered.splice(draggedIndex, 1);
+    
+    // Insert at new position
+    newOrdered.splice(index, 0, draggedItem);
+    
+    setOrderedDomains(newOrdered);
+    setDraggedIndex(index);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  const handleSaveOrder = async () => {
+    setSavingOrder(true);
+    setError(null);
+
+    try {
+      // Update priorities based on array order
+      // Index 0 = priority 1 (highest), Index 1 = priority 2, etc.
+      const updates = orderedDomains.map((domain, index) => ({
+        id: domain.id,
+        priority: index + 1,
+      }));
+
+      const response = await fetch('/api/admin/domains/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domains: updates }),
+      });
+
+      if (response.ok) {
+        setSuccess('Domain priority order saved successfully');
+        await loadDomains();
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to save domain order');
+      }
+    } catch (err) {
+      setError('Error saving domain order');
+      console.error(err);
+    } finally {
+      setSavingOrder(false);
     }
   };
 
@@ -119,16 +195,34 @@ export default function SmtpDomainManager() {
             <Mail className="w-6 h-6 text-purple-600" />
             <div>
               <h2 className="text-lg font-semibold text-gray-900">SMTP Domain Routing</h2>
-              <p className="text-sm text-gray-600">Configure email domain to tenant routing</p>
+              <p className="text-sm text-gray-600">
+                Drag to reorder domains by priority (top = highest priority)
+              </p>
             </div>
           </div>
-          <button
-            onClick={handleAdd}
-            className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Domain</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            {hasUnsavedChanges && (
+              <button
+                onClick={handleSaveOrder}
+                disabled={savingOrder}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                {savingOrder ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                <span>Apply Order</span>
+              </button>
+            )}
+            <button
+              onClick={handleAdd}
+              className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Domain</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -180,11 +274,12 @@ export default function SmtpDomainManager() {
             </button>
           </div>
         ) : (
-          /* Table */
+          /* Draggable Table */
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="w-12 px-3 py-3"></th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Domain
                   </th>
@@ -203,8 +298,20 @@ export default function SmtpDomainManager() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {domains.map((domain) => (
-                  <tr key={domain.id} className="hover:bg-gray-50">
+                {orderedDomains.map((domain, index) => (
+                  <tr
+                    key={domain.id}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                    className={`hover:bg-gray-50 cursor-move ${
+                      draggedIndex === index ? 'opacity-50' : ''
+                    }`}
+                  >
+                    <td className="px-3 py-4 whitespace-nowrap">
+                      <GripVertical className="w-5 h-5 text-gray-400" />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Mail className="w-4 h-4 text-gray-400 mr-2" />
@@ -213,7 +320,9 @@ export default function SmtpDomainManager() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{domain.tenancy.name}</div>
-                      <div className="text-xs text-gray-500 font-mono">{domain.tenancy.tenantId}</div>
+                      <div className="text-xs text-gray-500 font-mono truncate max-w-xs">
+                        {domain.tenancy.tenantId}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -226,8 +335,10 @@ export default function SmtpDomainManager() {
                         {domain.tenancy.enabled ? 'Enabled' : 'Disabled'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {domain.priority}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {index + 1}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">

@@ -1,3 +1,20 @@
+/**
+ * JWT Authentication Middleware
+ *
+ * This middleware implements JWT-based authentication for API routes.
+ *
+ * DESIGN DECISION: AuthResult Pattern vs Request Extension
+ * ------------------------------------------------------
+ * We use an AuthResult pattern that returns user data in the result object
+ * rather than extending NextRequest with a user property. This approach:
+ *
+ * 1. Avoids TypeScript complications with module augmentation
+ * 2. Makes the auth check explicit in each route handler
+ * 3. Provides clear return types for better IDE support
+ * 4. Allows flexible error handling per route
+ *
+ * See types/next.d.ts for the alternative NextRequest extension pattern.
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { validateJWT, extractJWT, JWTPayload } from './jwt';
 

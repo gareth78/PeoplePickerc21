@@ -6,6 +6,7 @@ import { generateJWT } from '@/lib/auth/jwt';
 import { searchUserByEmail } from '@/lib/okta';
 import { createAuditLog } from '@/lib/admin/audit';
 import prisma from '@/lib/prisma';
+import { getPublicBaseUrl } from '@/lib/auth/url-helper';
 
 /**
  * GET /api/auth/oauth/callback
@@ -51,8 +52,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get redirect URI (must match the one used in the authorization request)
-    // Use the request origin to ensure it works in both dev and production
-    const origin = new URL(request.url).origin;
+    // Use getPublicBaseUrl to handle proxy/load balancer scenarios
+    const origin = getPublicBaseUrl(request);
     const redirectUri = `${origin}/api/auth/oauth/callback`;
 
     // Exchange code for tokens

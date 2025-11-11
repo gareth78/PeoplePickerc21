@@ -235,7 +235,7 @@ export async function getRecentActivity(limit: number = 10) {
   try {
     const activities = await getRecentAuditLogs(limit);
 
-    return activities.map(activity => ({
+    return activities.map((activity: typeof activities[0]) => ({
       id: activity.id,
       action: activity.action,
       user: activity.adminEmail || 'System',

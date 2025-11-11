@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
 
   // Require JWT authentication
   const authResult = await requireAuth(request);
-  if (!authResult.authorized) {
-    return authResult.response;
+  if (!authResult.authorized || !authResult.user) {
+    return authResult.response!;
   }
   const user = authResult.user;
 

@@ -31,7 +31,7 @@ export async function GET() {
     console.log('[TEST-DB] Query successful');
     console.log('[TEST-DB] Query result:', {
       count: admins.length,
-      adminUsernames: admins.map(a => a.username),
+      adminUsernames: admins.map((a: typeof admins[0]) => a.username),
     });
 
     // Return success response

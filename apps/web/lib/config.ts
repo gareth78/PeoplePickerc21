@@ -63,8 +63,8 @@ export async function getOktaConfig(): Promise<OktaConfig> {
     });
 
     if (configs.length > 0) {
-      const orgUrlConfig = configs.find(c => c.key === 'okta_org_url');
-      const apiTokenConfig = configs.find(c => c.key === 'okta_api_token');
+      const orgUrlConfig = configs.find((c: typeof configs[0]) => c.key === 'okta_org_url');
+      const apiTokenConfig = configs.find((c: typeof configs[0]) => c.key === 'okta_api_token');
 
       if (orgUrlConfig && apiTokenConfig) {
         return {
@@ -257,9 +257,9 @@ export async function getAuthConfig(): Promise<AuthConfig> {
       },
     });
 
-    const clientIdConfig = configs.find(c => c.key === 'auth.microsoft.client_id');
-    const clientSecretConfig = configs.find(c => c.key === 'auth.microsoft.client_secret');
-    const tenantIdConfig = configs.find(c => c.key === 'auth.microsoft.tenant_id');
+    const clientIdConfig = configs.find((c: typeof configs[0]) => c.key === 'auth.microsoft.client_id');
+    const clientSecretConfig = configs.find((c: typeof configs[0]) => c.key === 'auth.microsoft.client_secret');
+    const tenantIdConfig = configs.find((c: typeof configs[0]) => c.key === 'auth.microsoft.tenant_id');
 
     const clientId = clientIdConfig?.value || '';
     const clientSecret = clientSecretConfig

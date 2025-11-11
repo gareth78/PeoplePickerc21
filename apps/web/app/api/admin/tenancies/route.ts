@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Sanitize response - never expose clientSecret
-    const sanitizedTenancies = tenancies.map((tenancy) => ({
+    const sanitizedTenancies = tenancies.map((tenancy: typeof tenancies[0]) => ({
       ...tenancy,
       clientSecret: undefined,
     }));

@@ -293,7 +293,7 @@ export default function App() {
     bootstrap().catch((error) => logDev('Bootstrap error', error));
   }, []);
 
-  // SSO Token
+  // SSO Token - Exchange Office token for our JWT
   useEffect(() => {
     const getToken = async () => {
       if (typeof Office === 'undefined' || !Office.context?.mailbox) {
@@ -303,18 +303,39 @@ export default function App() {
 
       try {
         if (typeof Office.auth?.getAccessToken === 'function') {
-          const token = await Office.auth.getAccessToken({
+          // Get Office SSO token
+          const officeToken = await Office.auth.getAccessToken({
             allowSignInPrompt: true,
             allowConsentPrompt: true,
-            forMSGraphAccess: true,
+            forMSGraphAccess: false,
           });
-          setAccessToken(token);
-          logDev('SSO token obtained successfully');
+
+          logDev('Office token obtained, exchanging for JWT...');
+
+          // Exchange Office token for our JWT
+          const base = sdk.baseUrl || '';
+          const response = await fetch(`${base}/api/auth/exchange-office-token`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ officeToken }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Authentication failed');
+          }
+
+          const { jwt } = await response.json();
+          setAccessToken(jwt);
+          logDev('JWT authentication successful');
         } else {
           logDev('Office.auth.getAccessToken not available');
         }
       } catch (error) {
-        logDev('Failed to get SSO token', error);
+        logDev('Failed to authenticate', error);
+        showToast('error', 'Authentication failed. Please reload the add-in.');
       }
     };
 

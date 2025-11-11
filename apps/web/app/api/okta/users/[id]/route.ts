@@ -1,12 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getUserById } from '@/lib/okta';
 import { cacheGet, cacheSet, TTL } from '@/lib/redis';
 import type { User } from '@/lib/types';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Require JWT authentication
+  const authResult = await requireAuth(request);
+  if (!authResult.authorized) {
+    return authResult.response;
+  }
+  const user = authResult.user;
   try {
     const cacheKey = `user:${params.id}`;
 

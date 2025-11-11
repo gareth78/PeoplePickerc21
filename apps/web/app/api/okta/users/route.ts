@@ -1,11 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { searchUsers } from '@/lib/okta';
 import { cacheGet, cacheSet, TTL } from '@/lib/redis';
 import type { SearchResult } from '@/lib/types';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export const runtime = 'nodejs';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  // Require JWT authentication
+  const authResult = await requireAuth(request);
+  if (!authResult.authorized) {
+    return authResult.response;
+  }
+  const user = authResult.user;
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');

@@ -62,8 +62,8 @@ export default function AuthenticationConfig() {
       console.error('Error loading auth config:', error);
       setTestResult({
         success: false,
-        text: 'Failed to load authentication configuration'
-      } as any);
+        message: 'Failed to load authentication configuration'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -98,14 +98,19 @@ export default function AuthenticationConfig() {
   }
 
   async function handleSave() {
+    if (config.clientSecret.startsWith('****')) {
+      setTestResult({
+        success: false,
+        message: 'Please enter the full client secret before saving.'
+      });
+      return;
+    }
+
     setIsSaving(true);
     setTestResult(null);
 
     try {
-      // Don't send masked secret - only send if changed
-      const secretToSend = config.clientSecret.startsWith('****')
-        ? originalConfig.clientSecret
-        : config.clientSecret;
+      const secretToSend = config.clientSecret;
 
       const response = await fetch('/api/admin/config/auth', {
         method: 'PUT',

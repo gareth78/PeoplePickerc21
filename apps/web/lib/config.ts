@@ -291,26 +291,65 @@ export async function updateAuthConfig(
   // Encrypt the client secret
   const encryptedSecret = encrypt(clientSecret);
 
-  // Update client ID
-  await prisma.$executeRaw`
-    UPDATE configurations
-    SET [value] = ${clientId}, updated_at = GETDATE(), created_by = ${updatedBy}
-    WHERE [key] = 'auth.microsoft.client_id'
-  `;
+  // Upsert client ID
+  await prisma.configuration.upsert({
+    where: { key: 'auth.microsoft.client_id' },
+    update: {
+      value: clientId,
+      category: 'auth',
+      encrypted: false,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+    create: {
+      key: 'auth.microsoft.client_id',
+      value: clientId,
+      category: 'auth',
+      encrypted: false,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+  });
 
-  // Update client secret (encrypted)
-  await prisma.$executeRaw`
-    UPDATE configurations
-    SET [value] = ${encryptedSecret}, updated_at = GETDATE(), created_by = ${updatedBy}
-    WHERE [key] = 'auth.microsoft.client_secret'
-  `;
+  // Upsert client secret (encrypted)
+  await prisma.configuration.upsert({
+    where: { key: 'auth.microsoft.client_secret' },
+    update: {
+      value: encryptedSecret,
+      category: 'auth',
+      encrypted: true,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+    create: {
+      key: 'auth.microsoft.client_secret',
+      value: encryptedSecret,
+      category: 'auth',
+      encrypted: true,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+  });
 
-  // Update tenant ID
-  await prisma.$executeRaw`
-    UPDATE configurations
-    SET [value] = ${tenantId}, updated_at = GETDATE(), created_by = ${updatedBy}
-    WHERE [key] = 'auth.microsoft.tenant_id'
-  `;
+  // Upsert tenant ID
+  await prisma.configuration.upsert({
+    where: { key: 'auth.microsoft.tenant_id' },
+    update: {
+      value: tenantId,
+      category: 'auth',
+      encrypted: false,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+    create: {
+      key: 'auth.microsoft.tenant_id',
+      value: tenantId,
+      category: 'auth',
+      encrypted: false,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+  });
 
   console.log('[CONFIG] Authentication configuration updated by', updatedBy);
 }

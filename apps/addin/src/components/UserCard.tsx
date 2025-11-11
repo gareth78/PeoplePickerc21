@@ -82,10 +82,10 @@ export function UserCard({ user, isSelected, onClick, onHover, index }: UserCard
             </p>
           )}
 
-          {/* Line 4: Location/Organization */}
-          {user.officeLocation && (
+          {/* Line 4: Company/Organization */}
+          {user.organization && (
             <p className="text-xs text-slate-500 truncate">
-              {user.officeLocation}
+              {user.organization}
             </p>
           )}
         </div>

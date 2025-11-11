@@ -70,6 +70,7 @@ export interface User {
   mobilePhone: string | null;
   avatarUrl: string | null;
   managerEmail: string | null;
+  organization: string | null;
 }
 
 export interface UsersResult {

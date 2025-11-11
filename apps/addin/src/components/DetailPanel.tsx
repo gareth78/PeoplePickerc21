@@ -169,68 +169,81 @@ export function DetailPanel({
         </div>
       )}
 
-      {/* Contact Details - Consolidated List */}
-      <div className="bg-white px-4 py-3 border-b border-slate-200">
-        <div className="space-y-2">
-          {/* Email */}
-          <div className="flex items-center gap-2 text-xs">
-            <Mail size={14} className="text-slate-400 flex-shrink-0" />
-            <span className="text-slate-600 font-medium">Email:</span>
-            <span className="text-slate-900 truncate">{user.email}</span>
-          </div>
-
-          {/* Title */}
-          {user.title && (
-            <div className="flex items-center gap-2 text-xs">
-              <Briefcase size={14} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-600 font-medium">Title:</span>
-              <span className="text-slate-900 truncate">{user.title}</span>
+      {/* Contact Details - Multi-line with Alternating Backgrounds */}
+      <div className="bg-white border-b border-slate-200">
+        {/* Build array of contact details that exist */}
+        {[
+          user.email && {
+            icon: <Mail size={14} className="text-slate-400 flex-shrink-0" />,
+            label: 'Email:',
+            value: user.email,
+          },
+          user.mobilePhone && {
+            icon: <Phone size={14} className="text-slate-400 flex-shrink-0" />,
+            label: 'Phone:',
+            value: user.mobilePhone,
+          },
+          user.title && {
+            icon: <Briefcase size={14} className="text-slate-400 flex-shrink-0" />,
+            label: 'Title:',
+            value: user.title,
+          },
+          user.department && {
+            icon: <Building2 size={14} className="text-slate-400 flex-shrink-0" />,
+            label: 'Department:',
+            value: user.department,
+          },
+          user.officeLocation && {
+            icon: <MapPin size={14} className="text-slate-400 flex-shrink-0" />,
+            label: 'Location:',
+            value: user.officeLocation,
+          },
+          user.managerEmail && {
+            icon: <User size={14} className="text-slate-400 flex-shrink-0" />,
+            label: 'Manager:',
+            value: user.managerEmail,
+          },
+          user.organization && {
+            icon: <Building2 size={14} className="text-slate-400 flex-shrink-0" />,
+            label: 'Company:',
+            value: user.organization,
+          },
+        ]
+          .filter((item): item is { icon: JSX.Element; label: string; value: string } => Boolean(item))
+          .map((detail, index) => (
+            <div
+              key={index}
+              className={`px-4 py-2.5 ${
+                index % 2 === 0 ? 'bg-slate-50' : 'bg-white'
+              }`}
+            >
+              {/* Line 1: Icon + Label */}
+              <div className="flex items-center gap-2 mb-1">
+                {detail.icon}
+                <span className="text-xs text-slate-600 font-medium">{detail.label}</span>
+              </div>
+              {/* Line 2: Full value with NO truncation */}
+              <div className="text-xs text-slate-900 break-words pl-6">
+                {detail.value}
+              </div>
             </div>
-          )}
-
-          {/* Department */}
-          {user.department && (
-            <div className="flex items-center gap-2 text-xs">
-              <Building2 size={14} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-600 font-medium">Department:</span>
-              <span className="text-slate-900 truncate">{user.department}</span>
-            </div>
-          )}
-
-          {/* Location */}
-          {user.officeLocation && (
-            <div className="flex items-center gap-2 text-xs">
-              <MapPin size={14} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-600 font-medium">Location:</span>
-              <span className="text-slate-900 truncate">{user.officeLocation}</span>
-            </div>
-          )}
-
-          {/* Manager */}
-          {user.managerEmail && (
-            <div className="flex items-center gap-2 text-xs">
-              <User size={14} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-600 font-medium">Manager:</span>
-              <span className="text-slate-900 truncate">{user.managerEmail}</span>
-            </div>
-          )}
-        </div>
+          ))}
       </div>
 
       {/* Out of Office */}
       <div className="bg-white px-4 py-3 border-b border-slate-200">
-        <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+        <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2 text-center">
           Out of Office
         </h4>
 
         {oooError ? (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-700">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-700 text-center">
             {oooError}
           </div>
         ) : ooo === undefined ? (
-          <div className="text-xs text-slate-500">Checking...</div>
+          <div className="text-xs text-slate-500 text-center">Checking...</div>
         ) : ooo === null || !ooo.isOOO ? (
-          <div className="text-xs text-slate-600">No automatic replies enabled</div>
+          <div className="text-xs text-slate-600 text-center">No automatic replies enabled</div>
         ) : (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}

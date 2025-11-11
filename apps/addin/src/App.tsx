@@ -364,6 +364,17 @@ export default function App() {
         const enhanced = enhanceUsers(result, photoCacheRef.current, presenceCacheRef.current);
         setSearchResults(enhanced);
 
+        // Prefetch photos for all search results
+        enhanced.forEach((user) => {
+          if (!hasCacheValue(photoCacheRef, user.email)) {
+            requestPhoto(user.email, accessToken)
+              .then((photo) => {
+                upsertState(setPhotoCache, user.email, photo);
+              })
+              .catch((error) => logDev('Photo prefetch failed', error));
+          }
+        });
+
         if (prefillRef.current) {
           const match = enhanced.find(
             (user) => user.email.toLowerCase() === prefillRef.current?.toLowerCase(),

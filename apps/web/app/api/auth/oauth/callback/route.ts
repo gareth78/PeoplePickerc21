@@ -49,9 +49,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Get redirect URI (must match the one used in the authorization request)
-    const protocol = request.headers.get('x-forwarded-proto') || 'http';
-    const host = request.headers.get('host') || 'localhost:3000';
-    const redirectUri = `${protocol}://${host}/api/auth/oauth/callback`;
+    // Use the request origin to ensure it works in both dev and production
+    const origin = new URL(request.url).origin;
+    const redirectUri = `${origin}/api/auth/oauth/callback`;
 
     // Exchange code for tokens
     let email: string;

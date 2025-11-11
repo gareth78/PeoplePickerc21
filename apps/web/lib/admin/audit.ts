@@ -93,7 +93,7 @@ export async function getRecentAuditLogs(limit: number = 100) {
     take: limit,
   });
 
-  return logs.map(log => ({
+  return logs.map((log: typeof logs[0]) => ({
     ...log,
     metadata: parseMetadata(log.metadata),
   }));
@@ -109,7 +109,7 @@ export async function getAdminAuditLogs(adminEmail: string, limit: number = 50) 
     take: limit,
   });
 
-  return logs.map(log => ({
+  return logs.map((log: typeof logs[0]) => ({
     ...log,
     metadata: parseMetadata(log.metadata),
   }));
@@ -125,7 +125,7 @@ export async function getAuditLogsByAction(action: AuditAction, limit: number = 
     take: limit,
   });
 
-  return logs.map(log => ({
+  return logs.map((log: typeof logs[0]) => ({
     ...log,
     metadata: parseMetadata(log.metadata),
   }));

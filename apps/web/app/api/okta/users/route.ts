@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { searchUsers } from '@/lib/okta';
 import { cacheGet, cacheSet, TTL } from '@/lib/redis';

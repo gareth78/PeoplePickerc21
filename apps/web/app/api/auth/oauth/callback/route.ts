@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { exchangeOAuthCode } from '@/lib/auth/microsoft';
 import { generateJWT } from '@/lib/auth/jwt';

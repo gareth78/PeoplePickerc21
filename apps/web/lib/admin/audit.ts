@@ -22,7 +22,10 @@ export type AuditAction =
   | 'UPDATE_DOMAIN'
   | 'DELETE_DOMAIN'
   | 'VIEW_DOMAINS'
-  | 'REORDER_SMTP_DOMAINS';
+  | 'REORDER_SMTP_DOMAINS'
+  | 'VIEW_AUTH_CONFIG'
+  | 'UPDATE_AUTH_CONFIG'
+  | 'TEST_AUTH_CONFIG';
 
 interface AuditLogParams {
   action: AuditAction;

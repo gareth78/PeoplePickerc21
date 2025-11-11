@@ -13,6 +13,7 @@ import {
   X
 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
+import AuthenticationConfig from '@/components/admin/AuthenticationConfig';
 import OfficeTenancyManager from '@/components/admin/OfficeTenancyManager';
 import SmtpDomainManager from '@/components/admin/SmtpDomainManager';
 
@@ -305,8 +306,24 @@ export default function ConfigurationPage() {
           </div>
         </div>
 
+        {/* Authentication Configuration - NEW */}
+        <AuthenticationConfig />
+
+        {/* Visual Separator */}
+        <div className="border-t-4 border-gray-300 my-8"></div>
+
         {/* Office 365 Tenancies - ACTIVE */}
-        <OfficeTenancyManager />
+        <div>
+          <h2 className="text-xl font-semibold mb-2 text-gray-900">Office 365 Tenancies (Graph API)</h2>
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-900">
+              These are tenant-specific app registrations used for Graph API calls
+              (presence, photos, out-of-office status). They are selected automatically
+              via domain routing after user authentication.
+            </p>
+          </div>
+          <OfficeTenancyManager />
+        </div>
 
         {/* SMTP Domain Routing - ACTIVE */}
         <SmtpDomainManager />

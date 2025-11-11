@@ -230,3 +230,126 @@ export async function setConfigValue(
     },
   });
 }
+
+// ============================================================================
+// Authentication Configuration (Multi-Tenant Azure App Registration)
+// ============================================================================
+
+export interface AuthConfig {
+  clientId: string;
+  clientSecret: string;
+  tenantId: string;
+}
+
+/**
+ * Get authentication configuration from database
+ * This is the universal multi-tenant Azure App Registration used for login flows
+ * (separate from tenant-specific Graph API configurations in office_tenancies)
+ */
+export async function getAuthConfig(): Promise<AuthConfig> {
+  try {
+    const configs = await prisma.configuration.findMany({
+      where: {
+        key: {
+          in: ['auth.microsoft.client_id', 'auth.microsoft.client_secret', 'auth.microsoft.tenant_id']
+        },
+        enabled: true,
+      },
+    });
+
+    const clientIdConfig = configs.find(c => c.key === 'auth.microsoft.client_id');
+    const clientSecretConfig = configs.find(c => c.key === 'auth.microsoft.client_secret');
+    const tenantIdConfig = configs.find(c => c.key === 'auth.microsoft.tenant_id');
+
+    const clientId = clientIdConfig?.value || '';
+    const clientSecret = clientSecretConfig
+      ? (clientSecretConfig.encrypted ? decrypt(clientSecretConfig.value) : clientSecretConfig.value)
+      : '';
+    const tenantId = tenantIdConfig?.value || 'common';
+
+    return { clientId, clientSecret, tenantId };
+  } catch (error) {
+    console.error('[CONFIG] Failed to read auth config from database:', error);
+    // Return empty config instead of throwing
+    return {
+      clientId: '',
+      clientSecret: '',
+      tenantId: 'common',
+    };
+  }
+}
+
+/**
+ * Update authentication configuration in database
+ */
+export async function updateAuthConfig(
+  clientId: string,
+  clientSecret: string,
+  tenantId: string,
+  updatedBy: string
+): Promise<void> {
+  // Encrypt the client secret
+  const encryptedSecret = encrypt(clientSecret);
+
+  // Upsert client ID
+  await prisma.configuration.upsert({
+    where: { key: 'auth.microsoft.client_id' },
+    update: {
+      value: clientId,
+      category: 'auth',
+      encrypted: false,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+    create: {
+      key: 'auth.microsoft.client_id',
+      value: clientId,
+      category: 'auth',
+      encrypted: false,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+  });
+
+  // Upsert client secret (encrypted)
+  await prisma.configuration.upsert({
+    where: { key: 'auth.microsoft.client_secret' },
+    update: {
+      value: encryptedSecret,
+      category: 'auth',
+      encrypted: true,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+    create: {
+      key: 'auth.microsoft.client_secret',
+      value: encryptedSecret,
+      category: 'auth',
+      encrypted: true,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+  });
+
+  // Upsert tenant ID
+  await prisma.configuration.upsert({
+    where: { key: 'auth.microsoft.tenant_id' },
+    update: {
+      value: tenantId,
+      category: 'auth',
+      encrypted: false,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+    create: {
+      key: 'auth.microsoft.tenant_id',
+      value: tenantId,
+      category: 'auth',
+      encrypted: false,
+      enabled: true,
+      createdBy: updatedBy,
+    },
+  });
+
+  console.log('[CONFIG] Authentication configuration updated by', updatedBy);
+}

@@ -13,6 +13,7 @@ import prisma from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
+    const origin = new URL(request.url).origin;
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     const error = searchParams.get('error');
@@ -49,9 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get redirect URI (must match the one used in the authorization request)
-    const protocol = request.headers.get('x-forwarded-proto') || 'http';
-    const host = request.headers.get('host') || 'localhost:3000';
-    const redirectUri = `${protocol}://${host}/api/auth/oauth/callback`;
+    const redirectUri = `${origin}/api/auth/oauth/callback`;
 
     // Exchange code for tokens
     let email: string;
@@ -135,9 +134,6 @@ export async function GET(request: NextRequest) {
         isAdmin,
       },
     });
-
-    // Get the origin from the request (works in both dev and production)
-    const origin = new URL(request.url).origin;
 
     // Set JWT cookie and redirect to the app
     const response = NextResponse.redirect(`${origin}${returnTo}`);

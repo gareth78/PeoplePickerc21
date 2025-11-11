@@ -11,7 +11,8 @@ import { buildAuthUrl } from '@/lib/auth/microsoft';
 export async function GET(request: NextRequest) {
   try {
     // Get the base URL for the redirect URI
-    const baseUrl = new URL(request.url).origin;
+    // Use explicit APP_URL if set (for production), otherwise derive from request
+    const baseUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || new URL(request.url).origin;
     const redirectUri = `${baseUrl}/api/auth/oauth/callback`;
 
     // Get the original URL to redirect back to after authentication

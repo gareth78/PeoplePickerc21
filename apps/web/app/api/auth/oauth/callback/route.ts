@@ -51,8 +51,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get redirect URI (must match the one used in the authorization request)
-    // Use the request origin to ensure it works in both dev and production
-    const origin = new URL(request.url).origin;
+    // Use explicit APP_URL if set (for production), otherwise derive from request
+    const origin = process.env.APP_URL || process.env.NEXTAUTH_URL || new URL(request.url).origin;
     const redirectUri = `${origin}/api/auth/oauth/callback`;
 
     // Exchange code for tokens

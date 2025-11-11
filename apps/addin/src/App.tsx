@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { sdk, PeoplePickerError, type OOOResult, type PresenceResult, type UsersResult } from '@people-picker/sdk';
 import { useDebounce } from './hooks/useDebounce';
+import { useAuth } from './hooks/useAuth';
 import type { EnhancedUser, PublicConfig } from './types';
 
 // Components
@@ -229,6 +230,9 @@ const requestOOO = async (email: string, token?: string | null): Promise<OOOResu
 };
 
 export default function App() {
+  // Authentication - must be first to block rendering until auth completes
+  const { jwt: accessToken, loading: authLoading, error: authError, userEmail } = useAuth();
+
   const [config, setConfig] = useState<PublicConfig>(defaultConfig);
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
@@ -241,7 +245,6 @@ export default function App() {
   const [presenceRefreshing, setPresenceRefreshing] = useState(false);
   const [oooError, setOooError] = useState<string | null>(null);
   const [inserting, setInserting] = useState(false);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const photoCacheRef = useRef<Record<string, string | null>>({});
@@ -293,54 +296,6 @@ export default function App() {
     bootstrap().catch((error) => logDev('Bootstrap error', error));
   }, []);
 
-  // SSO Token - Exchange Office token for our JWT
-  useEffect(() => {
-    const getToken = async () => {
-      if (typeof Office === 'undefined' || !Office.context?.mailbox) {
-        logDev('Office.js not available, skipping SSO');
-        return;
-      }
-
-      try {
-        if (typeof Office.auth?.getAccessToken === 'function') {
-          // Get Office SSO token
-          const officeToken = await Office.auth.getAccessToken({
-            allowSignInPrompt: true,
-            allowConsentPrompt: true,
-            forMSGraphAccess: false,
-          });
-
-          logDev('Office token obtained, exchanging for JWT...');
-
-          // Exchange Office token for our JWT
-          const base = sdk.baseUrl || '';
-          const response = await fetch(`${base}/api/auth/exchange-office-token`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ officeToken }),
-          });
-
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Authentication failed');
-          }
-
-          const { jwt } = await response.json();
-          setAccessToken(jwt);
-          logDev('JWT authentication successful');
-        } else {
-          logDev('Office.auth.getAccessToken not available');
-        }
-      } catch (error) {
-        logDev('Failed to authenticate', error);
-        showToast('error', 'Authentication failed. Please reload the add-in.');
-      }
-    };
-
-    getToken().catch((error) => logDev('SSO error', error));
-  }, []);
 
   // Office context and prefill
   useEffect(() => {
@@ -602,6 +557,64 @@ export default function App() {
 
   const trimmed = searchQuery.trim();
   const showEmptyState = !searching && trimmed.length >= MIN_QUERY_LENGTH && searchResults.length === 0 && !searchError;
+
+  // Show loading state while authenticating
+  if (authLoading) {
+    return (
+      <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="absolute inset-0 border-4 border-primary-200 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-primary-600 rounded-full border-t-transparent animate-spin"></div>
+          </div>
+          <p className="text-slate-600 font-medium">Authenticating...</p>
+          <p className="text-slate-500 text-sm mt-2">Signing in with Office 365</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if authentication failed
+  if (authError || !accessToken) {
+    return (
+      <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-red-100">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-6 h-6 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold text-slate-900 text-center mb-2">
+              Authentication Failed
+            </h2>
+            <p className="text-sm text-slate-600 text-center mb-4">
+              {authError || 'Unable to authenticate with Office 365'}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
+            >
+              Retry
+            </button>
+            <p className="text-xs text-slate-500 text-center mt-4">
+              If this issue persists, please contact your administrator or try restarting Outlook.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">

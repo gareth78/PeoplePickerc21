@@ -5,6 +5,12 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
+  // Temporary escape hatch to aid Easy Auth decommissioning.
+  // Supplying ?legacy=1 runs the legacy handler instead of JWT auth.
+  if (request.nextUrl.searchParams.get('legacy') === '1') {
+    return handleLegacyAuth(request);
+  }
+
   // Require JWT authentication
   const authResult = await requireAuth(request);
   if (!authResult.authorized) {
@@ -21,7 +27,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Legacy Easy Auth endpoint (for backwards compatibility during migration)
-export async function GET_LEGACY(request: Request) {
+async function handleLegacyAuth(request: NextRequest): Promise<NextResponse> {
   try {
     console.log('=== /api/me Debug ===');
     

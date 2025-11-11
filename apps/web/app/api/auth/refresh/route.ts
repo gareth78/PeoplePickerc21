@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { refreshJWT, extractJWT } from '@/lib/auth/jwt';
 import { createAuditLog } from '@/lib/admin/audit';

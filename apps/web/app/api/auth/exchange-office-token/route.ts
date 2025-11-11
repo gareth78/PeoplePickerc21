@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { validateOfficeToken } from '@/lib/auth/microsoft';
 import { generateJWT } from '@/lib/auth/jwt';

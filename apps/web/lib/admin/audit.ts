@@ -25,7 +25,11 @@ export type AuditAction =
   | 'REORDER_SMTP_DOMAINS'
   | 'VIEW_AUTH_CONFIG'
   | 'UPDATE_AUTH_CONFIG'
-  | 'TEST_AUTH_CONFIG';
+  | 'TEST_AUTH_CONFIG'
+  | 'AUTH_LOGIN'
+  | 'AUTH_LOGOUT'
+  | 'AUTH_TOKEN_REFRESH'
+  | 'AUTH_FAILED';
 
 interface AuditLogParams {
   action: AuditAction;

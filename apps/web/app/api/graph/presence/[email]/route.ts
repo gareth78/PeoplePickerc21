@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getGraphClient } from '@/lib/graph';
 import { getRedisClient, TTL } from '@/lib/redis';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -44,9 +45,15 @@ const isCacheEntryFresh = (entry: PresenceCacheEntry, ttlSeconds: number): boole
 };
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { email: string } }
 ) {
+  // Require JWT authentication
+  const authResult = await requireAuth(request);
+  if (!authResult.authorized) {
+    return authResult.response;
+  }
+  const user = authResult.user;
   try {
     const rawEmail = decodeURIComponent(params.email);
     const normalizedEmail = rawEmail.toLowerCase().trim();

@@ -1,9 +1,33 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  // Temporary escape hatch to aid Easy Auth decommissioning.
+  // Supplying ?legacy=1 runs the legacy handler instead of JWT auth.
+  if (request.nextUrl.searchParams.get('legacy') === '1') {
+    return handleLegacyAuth(request);
+  }
+
+  // Require JWT authentication
+  const authResult = await requireAuth(request);
+  if (!authResult.authorized) {
+    return authResult.response;
+  }
+  const user = authResult.user;
+
+  // Return user info from JWT
+  return NextResponse.json({
+    authenticated: true,
+    email: user.email,
+    isAdmin: user.isAdmin,
+  });
+}
+
+// Legacy Easy Auth endpoint (for backwards compatibility during migration)
+async function handleLegacyAuth(request: NextRequest): Promise<NextResponse> {
   try {
     console.log('=== /api/me Debug ===');
     

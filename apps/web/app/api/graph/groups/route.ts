@@ -1,12 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { searchGroups, getGroupPhoto, getGroupMemberCount } from '@/lib/graph';
 import { cacheGet, cacheSet, TTL } from '@/lib/redis';
 import type { Group, GroupSearchResult } from '@/lib/types';
+import { requireAuth } from '@/lib/auth/middleware';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  // Require JWT authentication
+  const authResult = await requireAuth(request);
+  if (!authResult.authorized) {
+    return authResult.response;
+  }
+  const user = authResult.user;
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');

@@ -5,6 +5,7 @@ import { exchangeOAuthCode } from '@/lib/auth/microsoft';
 import { generateJWT } from '@/lib/auth/jwt';
 import { searchUserByEmail } from '@/lib/okta';
 import { createAuditLog } from '@/lib/admin/audit';
+import { getBaseUrl } from '@/lib/auth/utils';
 import prisma from '@/lib/prisma';
 
 /**
@@ -51,8 +52,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get redirect URI (must match the one used in the authorization request)
-    // Use the request origin to ensure it works in both dev and production
-    const origin = new URL(request.url).origin;
+    // Use getBaseUrl to properly handle proxies and environment variables
+    const origin = getBaseUrl(request);
     const redirectUri = `${origin}/api/auth/oauth/callback`;
 
     // Exchange code for tokens

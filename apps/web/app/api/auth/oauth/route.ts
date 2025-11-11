@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { buildAuthUrl } from '@/lib/auth/microsoft';
+import { getBaseUrl } from '@/lib/auth/utils';
 
 /**
  * GET /api/auth/oauth
@@ -11,7 +12,7 @@ import { buildAuthUrl } from '@/lib/auth/microsoft';
 export async function GET(request: NextRequest) {
   try {
     // Get the base URL for the redirect URI
-    const baseUrl = new URL(request.url).origin;
+    const baseUrl = getBaseUrl(request);
     const redirectUri = `${baseUrl}/api/auth/oauth/callback`;
 
     // Get the original URL to redirect back to after authentication

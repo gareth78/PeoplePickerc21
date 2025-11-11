@@ -8,12 +8,10 @@ import { buildAuthUrl } from '@/lib/auth/microsoft';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get the base URL for the redirect URI
-    const protocol = request.headers.get('x-forwarded-proto') || 'http';
-    const host = request.headers.get('host') || 'localhost:3000';
-    const baseUrl = `${protocol}://${host}`;
-
-    const redirectUri = `${baseUrl}/api/auth/oauth/callback`;
+    // Get the base URL for the redirect URI from request origin
+    // This ensures the redirect URI matches the actual request environment
+    const origin = new URL(request.url).origin;
+    const redirectUri = `${origin}/api/auth/oauth/callback`;
 
     // Get the original URL to redirect back to after authentication
     const returnTo = request.nextUrl.searchParams.get('returnTo') || '/';

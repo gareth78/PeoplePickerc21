@@ -136,9 +136,6 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get the origin from the request (works in both dev and production)
-    const origin = new URL(request.url).origin;
-
     // Set JWT cookie and redirect to the app
     const response = NextResponse.redirect(`${origin}${returnTo}`);
 

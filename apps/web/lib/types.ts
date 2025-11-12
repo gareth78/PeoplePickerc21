@@ -162,7 +162,6 @@ export interface GroupSearchResult {
 // Group send permission check types
 export interface CheckSendPermissionRequest {
   groupId: string;
-  userEmail: string;
 }
 
 export interface CheckSendPermissionResponse {

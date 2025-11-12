@@ -38,6 +38,24 @@ export async function getGraphClient(): Promise<Client> {
   return graphClient;
 }
 
+/**
+ * Create a Graph client using delegated permissions with a user's access token
+ * This is used when we need to call Graph API on behalf of the user
+ * @param userAccessToken - The user's Microsoft access token
+ * @returns Graph client configured for delegated permissions
+ */
+export function getGraphClientWithUserToken(userAccessToken: string): Client {
+  const authProvider = {
+    getAccessToken: async () => {
+      return userAccessToken;
+    }
+  };
+
+  return Client.initWithMiddleware({
+    authProvider
+  });
+}
+
 export async function getUserPhoto(email: string): Promise<string | null> {
   try {
     const client = await getGraphClient();
@@ -216,10 +234,29 @@ export async function getGroupOwners(groupId: string): Promise<any[]> {
 export async function checkGroupSendPermission(
   groupId: string,
   userEmail: string,
+  userAccessToken?: string,
 ): Promise<GroupPermissionCheckResult> {
-  try {
-    const client = await getGraphClient();
+  const isAuthenticationError = (error: any) => {
+    const statusCode = error?.statusCode ?? error?.status;
+    if (statusCode === 401) {
+      return true;
+    }
 
+    const errorCode = error?.code ?? error?.body?.error?.code;
+    if (typeof errorCode === 'string') {
+      return [
+        'InvalidAuthenticationToken',
+        'AuthenticationFailure',
+        'ExpiredAuthenticationToken',
+        'TokenNotFound',
+      ].includes(errorCode);
+    }
+
+    const message = error?.message ?? '';
+    return typeof message === 'string' && /access token/i.test(message) && /expir/i.test(message);
+  };
+
+  const performPermissionCheck = async (client: Client): Promise<GroupPermissionCheckResult> => {
     // Get group details including send permission fields
     const group = await client
       .api(`/groups/${groupId}`)
@@ -309,8 +346,30 @@ export async function checkGroupSendPermission(
       groupName,
       groupDetails,
     };
+  };
+
+  if (userAccessToken) {
+    try {
+      const delegatedClient = getGraphClientWithUserToken(userAccessToken);
+      return await performPermissionCheck(delegatedClient);
+    } catch (error: any) {
+      if (!isAuthenticationError(error)) {
+        console.error(`Failed to check send permission for group ${groupId}:`, error.message ?? error);
+        throw error;
+      }
+
+      console.warn(
+        `Delegated token failed for group ${groupId}, falling back to app credentials:`,
+        error.message ?? error,
+      );
+    }
+  }
+
+  try {
+    const client = await getGraphClient();
+    return await performPermissionCheck(client);
   } catch (error: any) {
-    console.error(`Failed to check send permission for group ${groupId}:`, error.message);
+    console.error(`Failed to check send permission for group ${groupId}:`, error.message ?? error);
     throw error;
   }
 }

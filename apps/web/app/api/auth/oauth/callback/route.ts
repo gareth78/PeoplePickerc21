@@ -58,9 +58,11 @@ export async function GET(request: NextRequest) {
 
     // Exchange code for tokens
     let email: string;
+    let microsoftAccessToken: string | undefined;
     try {
       const tokenData = await exchangeOAuthCode(code, redirectUri);
       email = tokenData.email;
+      microsoftAccessToken = tokenData.accessToken;
     } catch (error) {
       console.error('OAuth code exchange failed:', error);
 
@@ -126,8 +128,8 @@ export async function GET(request: NextRequest) {
       // Continue with isAdmin = false
     }
 
-    // Generate JWT
-    const jwt = await generateJWT(email, isAdmin);
+    // Generate JWT with Microsoft access token
+    const jwt = await generateJWT(email, isAdmin, microsoftAccessToken);
 
     // Create audit log
     await createAuditLog({

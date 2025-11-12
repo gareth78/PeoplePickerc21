@@ -9,6 +9,7 @@ const TOKEN_EXPIRY = process.env.JWT_EXPIRY || '4h';
 export interface JWTPayload {
   email: string;
   isAdmin: boolean;
+  microsoftAccessToken?: string;
   iat?: number;
   exp?: number;
 }
@@ -17,11 +18,21 @@ export interface JWTPayload {
  * Generate a JWT token for authenticated users
  * @param email - User's email address
  * @param isAdmin - Whether the user has admin privileges
+ * @param microsoftAccessToken - Optional Microsoft access token for delegated permissions
  * @returns JWT token string
  */
-export async function generateJWT(email: string, isAdmin: boolean): Promise<string> {
+export async function generateJWT(
+  email: string,
+  isAdmin: boolean,
+  microsoftAccessToken?: string
+): Promise<string> {
   try {
-    const token = await new SignJWT({ email, isAdmin })
+    const payload: any = { email, isAdmin };
+    if (microsoftAccessToken) {
+      payload.microsoftAccessToken = microsoftAccessToken;
+    }
+
+    const token = await new SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime(TOKEN_EXPIRY)
@@ -47,6 +58,7 @@ export async function validateJWT(token: string): Promise<JWTPayload> {
     return {
       email: payload.email as string,
       isAdmin: payload.isAdmin as boolean,
+      microsoftAccessToken: payload.microsoftAccessToken as string | undefined,
       iat: payload.iat as number,
       exp: payload.exp as number,
     };
@@ -74,6 +86,7 @@ export async function refreshJWT(token: string): Promise<string> {
 
     const email = payload.email as string;
     const isAdmin = payload.isAdmin as boolean;
+    const microsoftAccessToken = payload.microsoftAccessToken as string | undefined;
     const iat = payload.iat as number;
 
     // Security check: don't refresh tokens older than 7 days
@@ -85,8 +98,8 @@ export async function refreshJWT(token: string): Promise<string> {
       throw new Error('Token too old to refresh');
     }
 
-    // Issue new token
-    return generateJWT(email, isAdmin);
+    // Issue new token with preserved Microsoft access token
+    return generateJWT(email, isAdmin, microsoftAccessToken);
   } catch (error) {
     console.error('JWT refresh failed:', error);
     throw new Error('Token refresh failed');

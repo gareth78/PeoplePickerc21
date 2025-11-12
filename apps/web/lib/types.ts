@@ -175,6 +175,8 @@ export interface CheckSendPermissionResponse {
     visibility?: string;
     allowExternalSenders?: boolean;
     requireSenderAuthenticationEnabled?: boolean;
+    mailEnabled?: boolean;
+    mail?: string | null;
   };
 }
 
@@ -187,5 +189,7 @@ export interface GroupPermissionCheckResult {
     visibility?: string;
     allowExternalSenders?: boolean;
     requireSenderAuthenticationEnabled?: boolean;
+    mailEnabled?: boolean;
+    mail?: string | null;
   };
 }

@@ -46,6 +46,11 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
   const [permissionCheckError, setPermissionCheckError] = useState<string | null>(null);
 
   useEffect(() => {
+    setPermissionCheckResult(null);
+    setPermissionCheckError(null);
+  }, [groupId]);
+
+  useEffect(() => {
     const fetchGroupDetail = async () => {
       setLoading(true);
       setError(null);
@@ -92,6 +97,63 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
       }
     }
   }, [groupId, group]);
+
+  const renderPermissionDetails = (result: CheckSendPermissionResponse | null) => {
+    const details = result?.groupDetails;
+    if (!details) return null;
+
+    const rows: { label: string; value: string }[] = [];
+
+    if (details.visibility) {
+      const value = `${details.visibility.charAt(0).toUpperCase()}${details.visibility.slice(1)}`;
+      rows.push({ label: 'Visibility', value });
+    }
+
+    if (typeof details.mailEnabled === 'boolean') {
+      rows.push({ label: 'Mail-enabled', value: details.mailEnabled ? 'Yes' : 'No' });
+    }
+
+    if (typeof details.allowExternalSenders === 'boolean') {
+      rows.push({
+        label: 'External senders',
+        value: details.allowExternalSenders ? 'Allowed' : 'Restricted',
+      });
+    }
+
+    if (typeof details.requireSenderAuthenticationEnabled === 'boolean') {
+      rows.push({
+        label: 'Sender authentication',
+        value: details.requireSenderAuthenticationEnabled ? 'Required' : 'Not required',
+      });
+    }
+
+    if (!rows.length) {
+      return null;
+    }
+
+    return (
+      <dl className="mt-3 space-y-1 text-xs text-gray-600">
+        {rows.map(row => (
+          <div key={row.label} className="flex justify-between">
+            <dt className="font-medium text-gray-500">{row.label}:</dt>
+            <dd className="text-gray-700">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    );
+  };
+
+  const renderMembershipDisclaimer = (result: CheckSendPermissionResponse | null) => {
+    if (!result?.available || result.membershipChecked !== false) {
+      return null;
+    }
+
+    return (
+      <p className="mt-3 text-xs text-gray-500">
+        We couldn't automatically verify your membership. Results are based on the group's sending settings.
+      </p>
+    );
+  };
 
   const checkSendPermission = async () => {
     if (!group?.mail) return;
@@ -145,6 +207,7 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
   };
 
   const retryPermissionCheck = () => {
+    if (permissionCheckLoading) return;
     // Clear cache and retry
     const cacheKey = `group-permission-${groupId}`;
     sessionStorage.removeItem(cacheKey);
@@ -317,6 +380,15 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
                 <div className="flex-1">
                   <p className="font-semibold text-green-900 mb-1">You can send to this group</p>
                   <p className="text-sm text-green-700">{permissionCheckResult.reason}</p>
+                  {renderPermissionDetails(permissionCheckResult)}
+                  {renderMembershipDisclaimer(permissionCheckResult)}
+                  <button
+                    onClick={retryPermissionCheck}
+                    disabled={permissionCheckLoading}
+                    className="mt-3 inline-flex items-center text-xs font-medium text-green-800 underline hover:no-underline disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Check again
+                  </button>
                 </div>
               </div>
             </div>
@@ -333,6 +405,15 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
                   <p className="font-semibold text-red-900 mb-1">You cannot send to this group</p>
                   <p className="text-sm text-red-700 mb-2">{permissionCheckResult.reason}</p>
                   <p className="text-xs text-gray-600">Contact IT if you need access</p>
+                  {renderPermissionDetails(permissionCheckResult)}
+                  {renderMembershipDisclaimer(permissionCheckResult)}
+                  <button
+                    onClick={retryPermissionCheck}
+                    disabled={permissionCheckLoading}
+                    className="mt-3 inline-flex items-center text-xs font-medium text-red-800 underline hover:no-underline disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Check again
+                  </button>
                 </div>
               </div>
             </div>
@@ -348,6 +429,14 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
                 <div className="flex-1">
                   <p className="font-semibold text-gray-900 mb-1">Permission check not available</p>
                   <p className="text-sm text-gray-600">{permissionCheckResult.reason}</p>
+                  {renderPermissionDetails(permissionCheckResult)}
+                  <button
+                    onClick={retryPermissionCheck}
+                    disabled={permissionCheckLoading}
+                    className="mt-3 inline-flex items-center text-xs font-medium text-gray-800 underline hover:no-underline disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Try again
+                  </button>
                 </div>
               </div>
             </div>

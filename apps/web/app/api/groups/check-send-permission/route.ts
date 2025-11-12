@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
           featureEnabled: false,
           domain: emailDomain,
           tenancyId: domain.tenancy.id,
+          tenancyName: domain.tenancy.name,
         },
       });
 
@@ -128,6 +129,8 @@ export async function POST(request: NextRequest) {
           groupName: result.groupName,
           canSend: result.canSend,
           reason: result.reason,
+          membershipChecked: result.membershipChecked,
+          groupDetails: result.groupDetails,
           domain: emailDomain,
           tenancyId: domain.tenancy.id,
           tenancyName: domain.tenancy.name,
@@ -158,6 +161,7 @@ export async function POST(request: NextRequest) {
           error: graphError.message || 'Unknown Graph API error',
           domain: emailDomain,
           tenancyId: domain.tenancy.id,
+          tenancyName: domain.tenancy.name,
         },
       });
 

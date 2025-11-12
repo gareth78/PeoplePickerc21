@@ -409,34 +409,40 @@ export default function SmtpDomainManager() {
                     {/* Column 4: Feature Flags */}
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-2">
-                        <FeatureFlagBadge 
+                        <FeatureFlagBadge
                           label="Presence"
                           domainValue={domain.enablePresence ?? null}
                           tenancyValue={domain.tenancy.enablePresence}
                           tenancyName={domain.tenancy.name}
                         />
-                        <FeatureFlagBadge 
+                        <FeatureFlagBadge
                           label="Photos"
                           domainValue={domain.enablePhotos ?? null}
                           tenancyValue={domain.tenancy.enablePhotos}
                           tenancyName={domain.tenancy.name}
                         />
-                        <FeatureFlagBadge 
+                        <FeatureFlagBadge
                           label="OOO"
                           domainValue={domain.enableOutOfOffice ?? null}
                           tenancyValue={domain.tenancy.enableOutOfOffice}
                           tenancyName={domain.tenancy.name}
                         />
-                        <FeatureFlagBadge 
+                        <FeatureFlagBadge
                           label="Local Groups"
                           domainValue={domain.enableLocalGroups ?? null}
                           tenancyValue={domain.tenancy.enableLocalGroups}
                           tenancyName={domain.tenancy.name}
                         />
-                        <FeatureFlagBadge 
+                        <FeatureFlagBadge
                           label="Global Groups"
                           domainValue={domain.enableGlobalGroups ?? null}
                           tenancyValue={domain.tenancy.enableGlobalGroups}
+                          tenancyName={domain.tenancy.name}
+                        />
+                        <FeatureFlagBadge
+                          label="Group Send"
+                          domainValue={domain.enableGroupSendCheck ?? null}
+                          tenancyValue={domain.tenancy.enableGroupSendCheck}
                           tenancyName={domain.tenancy.name}
                         />
                       </div>

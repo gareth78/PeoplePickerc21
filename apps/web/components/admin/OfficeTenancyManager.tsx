@@ -256,6 +256,7 @@ export default function OfficeTenancyManager() {
                         <FeatureBadge enabled={tenancy.enableOutOfOffice} label="OOO" />
                         <FeatureBadge enabled={tenancy.enableLocalGroups} label="Local Groups" />
                         <FeatureBadge enabled={tenancy.enableGlobalGroups} label="Global Groups" />
+                        <FeatureBadge enabled={tenancy.enableGroupSendCheck} label="Group Send" />
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

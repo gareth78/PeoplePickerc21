@@ -8,12 +8,6 @@ interface AuthState {
   userEmail: string | null;
 }
 
-const logDev = (...args: unknown[]) => {
-  if (import.meta.env.DEV) {
-    console.log('[AUTH]', ...args);
-  }
-};
-
 export function useAuth(): AuthState {
   const [jwt, setJwt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,30 +17,41 @@ export function useAuth(): AuthState {
   useEffect(() => {
     async function authenticate() {
       try {
-        logDev('Starting Office SSO authentication...');
+        console.log('[AUTH] Starting authentication...');
+
+        // CRITICAL: Wait for Office to be fully initialized
+        console.log('[AUTH] Waiting for Office.onReady()...');
+        await Office.onReady();
+        console.log('[AUTH] Office.onReady() complete');
 
         // Check if Office context is available
         if (typeof Office === 'undefined' || !Office.context?.mailbox) {
+          console.error('[AUTH] Office context not available after onReady');
           throw new Error('Office context not available');
         }
 
+        console.log('[AUTH] Office context confirmed');
+
         // Check if SSO is available
         if (typeof Office.auth?.getAccessToken !== 'function') {
+          console.error('[AUTH] Office SSO not available');
           throw new Error('Office SSO not available');
         }
 
         // Step 1: Get Office access token
-        logDev('Requesting Office access token...');
+        console.log('[AUTH] Requesting Office access token...');
         const officeToken = await Office.auth.getAccessToken({
           allowSignInPrompt: true,
           allowConsentPrompt: true,
           forMSGraphAccess: false
         });
 
-        logDev('Office token obtained, exchanging for JWT...');
+        console.log('[AUTH] Office token obtained, length:', officeToken.length);
 
         // Step 2: Exchange for JWT
         const base = sdk.baseUrl || '';
+        console.log('[AUTH] Exchanging token at:', `${base}/api/auth/exchange-office-token`);
+
         const response = await fetch(`${base}/api/auth/exchange-office-token`, {
           method: 'POST',
           headers: {
@@ -55,31 +60,34 @@ export function useAuth(): AuthState {
           body: JSON.stringify({ officeToken })
         });
 
+        console.log('[AUTH] Exchange response status:', response.status);
+
         if (!response.ok) {
           let errorMessage = `Authentication failed: ${response.status}`;
           try {
             const errorData = await response.json();
             errorMessage = errorData.error || errorMessage;
+            console.error('[AUTH] Error data:', errorData);
           } catch {
-            // If JSON parsing fails, use the default error message
+            console.error('[AUTH] Could not parse error response');
           }
-          logDev('Token exchange failed:', response.status, errorMessage);
           throw new Error(errorMessage);
         }
 
         const data = await response.json();
-        logDev('JWT obtained successfully');
+        console.log('[AUTH] JWT obtained successfully, user:', data.email);
 
         setJwt(data.jwt);
         setUserEmail(data.email || null);
         setError(null);
       } catch (err: unknown) {
-        logDev('Authentication error:', err);
+        console.error('[AUTH] Authentication error:', err);
         const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
         setError(errorMessage);
         setJwt(null);
       } finally {
         setLoading(false);
+        console.log('[AUTH] Authentication complete');
       }
     }
 

@@ -236,12 +236,27 @@ export async function checkGroupSendPermission(
   userEmail: string,
   userAccessToken?: string,
 ): Promise<GroupPermissionCheckResult> {
-  try {
-    // Use delegated permissions (user token) if available, otherwise fall back to app permissions
-    const client = userAccessToken
-      ? getGraphClientWithUserToken(userAccessToken)
-      : await getGraphClient();
+  const isAuthenticationError = (error: any) => {
+    const statusCode = error?.statusCode ?? error?.status;
+    if (statusCode === 401) {
+      return true;
+    }
 
+    const errorCode = error?.code ?? error?.body?.error?.code;
+    if (typeof errorCode === 'string') {
+      return [
+        'InvalidAuthenticationToken',
+        'AuthenticationFailure',
+        'ExpiredAuthenticationToken',
+        'TokenNotFound',
+      ].includes(errorCode);
+    }
+
+    const message = error?.message ?? '';
+    return typeof message === 'string' && /access token/i.test(message) && /expir/i.test(message);
+  };
+
+  const performPermissionCheck = async (client: Client): Promise<GroupPermissionCheckResult> => {
     // Get group details including send permission fields
     const group = await client
       .api(`/groups/${groupId}`)
@@ -331,8 +346,30 @@ export async function checkGroupSendPermission(
       groupName,
       groupDetails,
     };
+  };
+
+  if (userAccessToken) {
+    try {
+      const delegatedClient = getGraphClientWithUserToken(userAccessToken);
+      return await performPermissionCheck(delegatedClient);
+    } catch (error: any) {
+      if (!isAuthenticationError(error)) {
+        console.error(`Failed to check send permission for group ${groupId}:`, error.message ?? error);
+        throw error;
+      }
+
+      console.warn(
+        `Delegated token failed for group ${groupId}, falling back to app credentials:`,
+        error.message ?? error,
+      );
+    }
+  }
+
+  try {
+    const client = await getGraphClient();
+    return await performPermissionCheck(client);
   } catch (error: any) {
-    console.error(`Failed to check send permission for group ${groupId}:`, error.message);
+    console.error(`Failed to check send permission for group ${groupId}:`, error.message ?? error);
     throw error;
   }
 }

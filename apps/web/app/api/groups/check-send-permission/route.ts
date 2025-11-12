@@ -19,6 +19,9 @@ export async function POST(request: NextRequest) {
     // Extract user email from JWT
     const userEmail = user!.email;
 
+    // Extract domain for audit metadata (no database lookup)
+    const emailDomain = userEmail.split('@')[1]?.toLowerCase() || 'unknown';
+
     // Parse request body
     const body: CheckSendPermissionRequest = await request.json();
     const { groupId } = body;
@@ -62,6 +65,7 @@ export async function POST(request: NextRequest) {
           reason: result.reason,
           membershipChecked: result.membershipChecked,
           groupDetails: result.groupDetails,
+          domain: emailDomain,
         },
       });
 
@@ -86,6 +90,7 @@ export async function POST(request: NextRequest) {
         targetEmail: userEmail,
         metadata: {
           groupId,
+          domain: emailDomain,
           error: graphError.message || 'Unknown Graph API error',
         },
       });

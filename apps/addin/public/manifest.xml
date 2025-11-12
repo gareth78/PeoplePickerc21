@@ -19,7 +19,7 @@
   <AppDomains>
     <AppDomain>https://jolly-sky-08c0ccf03.3.azurestaticapps.net</AppDomain>
   </AppDomains>
-  
+
   <Hosts>
     <Host Name="Mailbox" />
   </Hosts>

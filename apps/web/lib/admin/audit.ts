@@ -29,7 +29,8 @@ export type AuditAction =
   | 'AUTH_LOGIN'
   | 'AUTH_LOGOUT'
   | 'AUTH_TOKEN_REFRESH'
-  | 'AUTH_FAILED';
+  | 'AUTH_FAILED'
+  | 'CHECK_GROUP_SEND_PERMISSION';
 
 interface AuditLogParams {
   action: AuditAction;

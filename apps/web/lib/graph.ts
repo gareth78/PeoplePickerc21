@@ -210,3 +210,94 @@ export async function getGroupOwners(groupId: string): Promise<any[]> {
     throw error;
   }
 }
+
+// Check if user can send to a group
+export async function checkGroupSendPermission(groupId: string, userEmail: string): Promise<{
+  canSend: boolean;
+  reason: string;
+  membershipChecked: boolean;
+  groupName: string;
+  groupDetails?: {
+    visibility?: string;
+    allowExternalSenders?: boolean;
+    requireSenderAuthenticationEnabled?: boolean;
+  };
+}> {
+  try {
+    const client = await getGraphClient();
+
+    // Get group details including send permission fields
+    const group = await client
+      .api(`/groups/${groupId}`)
+      .select('id,displayName,mail,visibility,mailEnabled,securityEnabled,allowExternalSenders,requireSenderAuthenticationEnabled')
+      .get();
+
+    const groupName = group.displayName || 'Unknown Group';
+    const groupDetails = {
+      visibility: group.visibility,
+      allowExternalSenders: group.allowExternalSenders,
+      requireSenderAuthenticationEnabled: group.requireSenderAuthenticationEnabled,
+    };
+
+    // Check if user is a member of the group
+    let isMember = false;
+    try {
+      const members = await client
+        .api(`/groups/${groupId}/members`)
+        .select('id,mail,userPrincipalName')
+        .filter(`mail eq '${userEmail}' or userPrincipalName eq '${userEmail}'`)
+        .top(1)
+        .get();
+
+      isMember = members.value && members.value.length > 0;
+    } catch (memberError: any) {
+      console.error('Error checking group membership:', memberError.message);
+      // If we can't check membership, proceed with other checks
+    }
+
+    // Determine if user can send based on group settings
+    if (isMember) {
+      return {
+        canSend: true,
+        reason: 'You are a member of this group',
+        membershipChecked: true,
+        groupName,
+        groupDetails,
+      };
+    }
+
+    // Check if group allows external senders
+    if (group.allowExternalSenders === true) {
+      return {
+        canSend: true,
+        reason: 'Group allows external senders',
+        membershipChecked: true,
+        groupName,
+        groupDetails,
+      };
+    }
+
+    // Check if sender authentication is not required
+    if (group.requireSenderAuthenticationEnabled === false) {
+      return {
+        canSend: true,
+        reason: 'Group does not require sender authentication',
+        membershipChecked: true,
+        groupName,
+        groupDetails,
+      };
+    }
+
+    // Default: user cannot send
+    return {
+      canSend: false,
+      reason: 'You are not a member and the group restricts external senders',
+      membershipChecked: true,
+      groupName,
+      groupDetails,
+    };
+  } catch (error: any) {
+    console.error(`Failed to check send permission for group ${groupId}:`, error.message);
+    throw error;
+  }
+}

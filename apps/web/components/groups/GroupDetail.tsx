@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Users, Mail, ShieldCheck, Shield, Zap } from 'lucide-react';
 import { getGroupBadgeClasses, getGroupBadgeMeta, type GroupBadgeVariant } from '@/lib/group-utils';
-import type { GroupDetail as GroupDetailType, GroupMember } from '@/lib/types';
+import type { GroupDetail as GroupDetailType, GroupMember, CheckSendPermissionResponse } from '@/lib/types';
 
 interface GroupDetailProps {
   groupId: string;
@@ -40,6 +40,11 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
   const [loadingAllMembers, setLoadingAllMembers] = useState(false);
   const [allMembers, setAllMembers] = useState<GroupMember[]>([]);
 
+  // Permission check state
+  const [permissionCheckLoading, setPermissionCheckLoading] = useState(false);
+  const [permissionCheckResult, setPermissionCheckResult] = useState<CheckSendPermissionResponse | null>(null);
+  const [permissionCheckError, setPermissionCheckError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchGroupDetail = async () => {
       setLoading(true);
@@ -65,6 +70,88 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
 
     void fetchGroupDetail();
   }, [groupId]);
+
+  // Load cached permission check result
+  useEffect(() => {
+    if (group?.mail) {
+      const cacheKey = `group-permission-${groupId}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const parsedCache = JSON.parse(cached);
+          const cacheAge = Date.now() - parsedCache.timestamp;
+          // Cache valid for 5 minutes
+          if (cacheAge < 5 * 60 * 1000) {
+            setPermissionCheckResult(parsedCache.result);
+          } else {
+            sessionStorage.removeItem(cacheKey);
+          }
+        } catch (err) {
+          console.error('Failed to parse permission cache:', err);
+        }
+      }
+    }
+  }, [groupId, group]);
+
+  const checkSendPermission = async () => {
+    if (!group?.mail) return;
+
+    setPermissionCheckLoading(true);
+    setPermissionCheckError(null);
+
+    try {
+      // Get user email from JWT token or session
+      // For now, we'll get it from the /api/auth/me endpoint
+      const meResponse = await fetch('/api/auth/me');
+      const meData = await meResponse.json();
+
+      if (!meData.user?.email) {
+        setPermissionCheckError('Unable to determine your email address');
+        return;
+      }
+
+      const userEmail = meData.user.email;
+
+      // Make the permission check request
+      const response = await fetch('/api/groups/check-send-permission', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          groupId,
+          userEmail,
+        }),
+      });
+
+      const result: CheckSendPermissionResponse = await response.json();
+      setPermissionCheckResult(result);
+
+      // Cache the result
+      const cacheKey = `group-permission-${groupId}`;
+      sessionStorage.setItem(
+        cacheKey,
+        JSON.stringify({
+          result,
+          timestamp: Date.now(),
+        })
+      );
+    } catch (err) {
+      console.error('Permission check error:', err);
+      setPermissionCheckError('An unexpected error occurred');
+    } finally {
+      setPermissionCheckLoading(false);
+    }
+  };
+
+  const retryPermissionCheck = () => {
+    // Clear cache and retry
+    const cacheKey = `group-permission-${groupId}`;
+    sessionStorage.removeItem(cacheKey);
+    setPermissionCheckResult(null);
+    setPermissionCheckError(null);
+    checkSendPermission();
+  };
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -191,6 +278,103 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
           </a>
         )}
       </div>
+
+      {/* Permission Check Section */}
+      {group.mail && (
+        <div className="mb-6">
+          {!permissionCheckResult && !permissionCheckError && (
+            <button
+              onClick={checkSendPermission}
+              disabled={permissionCheckLoading}
+              className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {permissionCheckLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Checking permissions...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Can I send to this group?
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Success - Can Send */}
+          {permissionCheckResult && permissionCheckResult.available && permissionCheckResult.canSend && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="font-semibold text-green-900 mb-1">You can send to this group</p>
+                  <p className="text-sm text-green-700">{permissionCheckResult.reason}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success - Cannot Send */}
+          {permissionCheckResult && permissionCheckResult.available && !permissionCheckResult.canSend && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="font-semibold text-red-900 mb-1">You cannot send to this group</p>
+                  <p className="text-sm text-red-700 mb-2">{permissionCheckResult.reason}</p>
+                  <p className="text-xs text-gray-600">Contact IT if you need access</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Feature Not Available */}
+          {permissionCheckResult && !permissionCheckResult.available && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <svg className="w-6 h-6 text-gray-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900 mb-1">Permission check not available</p>
+                  <p className="text-sm text-gray-600">{permissionCheckResult.reason}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {permissionCheckError && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <svg className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="font-semibold text-yellow-900 mb-1">Unable to check permissions</p>
+                  <p className="text-sm text-yellow-700 mb-3">{permissionCheckError}</p>
+                  <button
+                    onClick={retryPermissionCheck}
+                    className="text-sm text-yellow-800 font-medium underline hover:no-underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Group Metadata Section (for M365 Groups) */}
       {(group.createdDateTime || group.visibility || group.classification || group.mailEnabled !== undefined || group.securityEnabled !== undefined) && (

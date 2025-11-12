@@ -158,3 +158,34 @@ export interface GroupSearchResult {
   nextLink: string | null;
   totalCount: number;
 }
+
+// Group send permission check types
+export interface CheckSendPermissionRequest {
+  groupId: string;
+  userEmail: string;
+}
+
+export interface CheckSendPermissionResponse {
+  available: boolean;
+  canSend?: boolean;
+  reason: string;
+  groupName?: string;
+  membershipChecked?: boolean;
+  groupDetails?: {
+    visibility?: string;
+    allowExternalSenders?: boolean;
+    requireSenderAuthenticationEnabled?: boolean;
+  };
+}
+
+export interface GroupPermissionCheckResult {
+  canSend: boolean;
+  reason: string;
+  membershipChecked: boolean;
+  groupName: string;
+  groupDetails?: {
+    visibility?: string;
+    allowExternalSenders?: boolean;
+    requireSenderAuthenticationEnabled?: boolean;
+  };
+}

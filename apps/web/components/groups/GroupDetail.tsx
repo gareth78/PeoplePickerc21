@@ -167,12 +167,12 @@ export default function GroupDetail({ groupId, onMemberClick, onBack }: GroupDet
       const meResponse = await fetch('/api/auth/me');
       const meData = await meResponse.json();
 
-      if (!meData.user?.email) {
+      if (!meData.email) {
         setPermissionCheckError('Unable to determine your email address');
         return;
       }
 
-      const userEmail = meData.user.email;
+      const userEmail = meData.email;
 
       // Make the permission check request
       const response = await fetch('/api/groups/check-send-permission', {

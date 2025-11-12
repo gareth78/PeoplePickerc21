@@ -21,6 +21,7 @@ import { validateJWT, extractJWT, JWTPayload } from './jwt';
 export interface AuthUser extends JWTPayload {
   email: string;
   isAdmin: boolean;
+  microsoftAccessToken?: string;
 }
 
 export interface AuthResult {
@@ -71,6 +72,7 @@ export async function requireAuth(request: NextRequest): Promise<AuthResult> {
         user: {
           email: payload.email,
           isAdmin: payload.isAdmin,
+          microsoftAccessToken: payload.microsoftAccessToken,
           iat: payload.iat,
           exp: payload.exp,
         },

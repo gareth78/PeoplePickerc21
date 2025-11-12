@@ -26,9 +26,12 @@ export async function POST(request: NextRequest) {
 
     // Validate Office token with Microsoft
     let email: string;
+    let microsoftAccessToken: string | undefined;
     try {
       const tokenData = await validateOfficeToken(officeToken);
       email = tokenData.email;
+      // Store the Office token for delegated Graph API calls
+      microsoftAccessToken = officeToken;
     } catch (error) {
       console.error('Office token validation failed:', error);
 
@@ -97,8 +100,8 @@ export async function POST(request: NextRequest) {
       // Continue with isAdmin = false
     }
 
-    // Generate JWT
-    const jwt = await generateJWT(email, isAdmin);
+    // Generate JWT with Microsoft access token
+    const jwt = await generateJWT(email, isAdmin, microsoftAccessToken);
 
     // Create audit log
     await createAuditLog({

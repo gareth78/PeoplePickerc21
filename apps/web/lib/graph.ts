@@ -38,6 +38,24 @@ export async function getGraphClient(): Promise<Client> {
   return graphClient;
 }
 
+/**
+ * Create a Graph client using delegated permissions with a user's access token
+ * This is used when we need to call Graph API on behalf of the user
+ * @param userAccessToken - The user's Microsoft access token
+ * @returns Graph client configured for delegated permissions
+ */
+export function getGraphClientWithUserToken(userAccessToken: string): Client {
+  const authProvider = {
+    getAccessToken: async () => {
+      return userAccessToken;
+    }
+  };
+
+  return Client.initWithMiddleware({
+    authProvider
+  });
+}
+
 export async function getUserPhoto(email: string): Promise<string | null> {
   try {
     const client = await getGraphClient();
@@ -216,9 +234,13 @@ export async function getGroupOwners(groupId: string): Promise<any[]> {
 export async function checkGroupSendPermission(
   groupId: string,
   userEmail: string,
+  userAccessToken?: string,
 ): Promise<GroupPermissionCheckResult> {
   try {
-    const client = await getGraphClient();
+    // Use delegated permissions (user token) if available, otherwise fall back to app permissions
+    const client = userAccessToken
+      ? getGraphClientWithUserToken(userAccessToken)
+      : await getGraphClient();
 
     // Get group details including send permission fields
     const group = await client

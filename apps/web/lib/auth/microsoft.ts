@@ -5,6 +5,7 @@ interface MicrosoftTokenPayload {
   tenantId: string;
   name?: string;
   upn?: string;
+  accessToken?: string;
 }
 
 interface AuthConfig {
@@ -128,7 +129,7 @@ export async function exchangeOAuthCode(
       code,
       redirect_uri: redirectUri,
       grant_type: 'authorization_code',
-      scope: 'openid profile email User.Read',
+      scope: 'openid profile email User.Read Group.Read.All',
     });
 
     const response = await fetch(tokenEndpoint, {
@@ -170,6 +171,7 @@ export async function exchangeOAuthCode(
       tenantId,
       name: payload.name,
       upn: payload.upn,
+      accessToken: data.access_token, // Store the Microsoft access token
     };
   } catch (error) {
     console.error('OAuth code exchange failed:', error);
@@ -196,7 +198,7 @@ export async function buildAuthUrl(
     response_type: 'code',
     redirect_uri: redirectUri,
     response_mode: 'query',
-    scope: 'openid profile email User.Read',
+    scope: 'openid profile email User.Read Group.Read.All',
   });
 
   if (state) {

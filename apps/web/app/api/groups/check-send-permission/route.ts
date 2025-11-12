@@ -50,8 +50,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Perform the permission check using email from JWT
+    // Extract Microsoft access token for delegated permissions
+    const microsoftAccessToken = user!.microsoftAccessToken;
+
     try {
-      const result = await checkGroupSendPermission(groupId, userEmail);
+      const result = await checkGroupSendPermission(groupId, userEmail, microsoftAccessToken);
 
       // Log the successful check
       await createAuditLog({

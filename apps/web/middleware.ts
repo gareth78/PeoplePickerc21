@@ -28,6 +28,11 @@ const ACCESS_CONTROL_REQUEST_HEADERS = 'Content-Type, Authorization, X-Requested
 const ACCESS_CONTROL_REQUEST_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS';
 
 export function middleware(request: NextRequest) {
+  // Skip CORS checks for admin routes - they use same-origin requests and have their own auth
+  if (request.nextUrl.pathname.startsWith('/api/admin')) {
+    return NextResponse.next();
+  }
+
   const origin = request.headers.get('origin');
 
   if (!origin || !origin.startsWith('http')) {

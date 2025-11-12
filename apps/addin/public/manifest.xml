@@ -61,16 +61,6 @@
       </bt:Sets>
     </Requirements>
 
-    <WebApplicationInfo>
-      <Id>806a3632-99d4-4ee4-8658-994d2056c3a3</Id>
-      <Resource>api://jolly-sky-08c0ccf03.3.azurestaticapps.net/806a3632-99d4-4ee4-8658-994d2056c3a3</Resource>
-      <Scopes>
-        <Scope>openid</Scope>
-        <Scope>profile</Scope>
-        <Scope>email</Scope>
-      </Scopes>
-    </WebApplicationInfo>
-
     <Hosts>
       <Host xsi:type="MailHost">
         <DesktopFormFactor>
@@ -150,6 +140,18 @@
         <bt:String id="CmdPickerDesc" DefaultValue="Open the People Picker task pane." />
       </bt:LongStrings>
     </Resources>
+
+    <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.1" xsi:type="VersionOverridesV1_1">
+      <WebApplicationInfo>
+        <Id>806a3632-99d4-4ee4-8658-994d2056c3a3</Id>
+        <Resource>api://jolly-sky-08c0ccf03.3.azurestaticapps.net/806a3632-99d4-4ee4-8658-994d2056c3a3</Resource>
+        <Scopes>
+          <Scope>openid</Scope>
+          <Scope>profile</Scope>
+          <Scope>email</Scope>
+        </Scopes>
+      </WebApplicationInfo>
+    </VersionOverrides>
 
   </VersionOverrides>
 

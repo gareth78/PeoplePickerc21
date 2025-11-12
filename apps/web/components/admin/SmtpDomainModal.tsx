@@ -13,6 +13,7 @@ interface OfficeTenancy {
   enableOutOfOffice: boolean;
   enableLocalGroups: boolean;
   enableGlobalGroups: boolean;
+  enableGroupSendCheck: boolean;
 }
 
 interface SmtpDomain {
@@ -25,6 +26,7 @@ interface SmtpDomain {
   enableOutOfOffice?: boolean | null;
   enableLocalGroups?: boolean | null;
   enableGlobalGroups?: boolean | null;
+  enableGroupSendCheck?: boolean | null;
   tenancy: OfficeTenancy;
 }
 
@@ -47,6 +49,7 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
     enableOutOfOffice: false as boolean | null,
     enableLocalGroups: false as boolean | null,
     enableGlobalGroups: false as boolean | null,
+    enableGroupSendCheck: false as boolean | null,
   });
 
   const [tenancies, setTenancies] = useState<OfficeTenancy[]>([]);
@@ -74,6 +77,7 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
         enableOutOfOffice: selectedTenancy?.enableOutOfOffice === false ? null : (domain.enableOutOfOffice ?? null),
         enableLocalGroups: selectedTenancy?.enableLocalGroups === false ? null : (domain.enableLocalGroups ?? null),
         enableGlobalGroups: selectedTenancy?.enableGlobalGroups === false ? null : (domain.enableGlobalGroups ?? null),
+        enableGroupSendCheck: selectedTenancy?.enableGroupSendCheck === false ? null : (domain.enableGroupSendCheck ?? null),
       });
     }
   }, [domain, tenancies]);
@@ -145,6 +149,9 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
       if (formData.enableGlobalGroups === true && !selectedTenancy.enableGlobalGroups) {
         newErrors.enableGlobalGroups = `Cannot enable Global Groups - parent tenancy '${selectedTenancy.name}' does not support this feature`;
       }
+      if (formData.enableGroupSendCheck === true && !selectedTenancy.enableGroupSendCheck) {
+        newErrors.enableGroupSendCheck = `Cannot enable Group Send Permission Check - parent tenancy '${selectedTenancy.name}' does not support this feature`;
+      }
     }
 
     setErrors(newErrors);
@@ -205,6 +212,7 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
         enableOutOfOffice: selectedTenancy?.enableOutOfOffice === false ? null : formData.enableOutOfOffice,
         enableLocalGroups: selectedTenancy?.enableLocalGroups === false ? null : formData.enableLocalGroups,
         enableGlobalGroups: selectedTenancy?.enableGlobalGroups === false ? null : formData.enableGlobalGroups,
+        enableGroupSendCheck: selectedTenancy?.enableGroupSendCheck === false ? null : formData.enableGroupSendCheck,
       };
 
       const url = isEditing
@@ -408,6 +416,17 @@ export default function SmtpDomainModal({ domain, onClose }: Props) {
                     disabled={!getSelectedTenancy()?.enableGlobalGroups}
                     error={errors.enableGlobalGroups}
                     onClick={() => toggleFeatureFlag('enableGlobalGroups')}
+                  />
+
+                  {/* Enable Group Send Permission Check */}
+                  <FeatureFlagToggle
+                    label="Group Send Permission Check"
+                    value={formData.enableGroupSendCheck}
+                    tenancyValue={getSelectedTenancy()?.enableGroupSendCheck ?? false}
+                    tenancyName={getSelectedTenancy()?.name ?? ''}
+                    disabled={!getSelectedTenancy()?.enableGroupSendCheck}
+                    error={errors.enableGroupSendCheck}
+                    onClick={() => toggleFeatureFlag('enableGroupSendCheck')}
                   />
                 </div>
               </div>

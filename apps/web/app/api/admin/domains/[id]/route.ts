@@ -38,6 +38,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
             enableOutOfOffice: true,
             enableLocalGroups: true,
             enableGlobalGroups: true,
+            enableGroupSendCheck: true,
           },
         },
       },
@@ -82,6 +83,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       enableOutOfOffice,
       enableLocalGroups,
       enableGlobalGroups,
+      enableGroupSendCheck,
     } = body;
 
     // Find existing domain
@@ -164,6 +166,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (enableGlobalGroups !== undefined) {
       updateData.enableGlobalGroups = enableGlobalGroups;
     }
+    if (enableGroupSendCheck !== undefined) {
+      updateData.enableGroupSendCheck = enableGroupSendCheck;
+    }
 
     // Update domain
     const updatedDomain = await prisma.smtpDomain.update({
@@ -181,6 +186,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
             enableOutOfOffice: true,
             enableLocalGroups: true,
             enableGlobalGroups: true,
+            enableGroupSendCheck: true,
           },
         },
       },
@@ -201,6 +207,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           enableOutOfOffice: updatedDomain.enableOutOfOffice,
           enableLocalGroups: updatedDomain.enableLocalGroups,
           enableGlobalGroups: updatedDomain.enableGlobalGroups,
+          enableGroupSendCheck: updatedDomain.enableGroupSendCheck,
         },
       },
     });

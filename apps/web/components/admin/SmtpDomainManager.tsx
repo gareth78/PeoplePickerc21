@@ -27,6 +27,7 @@ interface OfficeTenancy {
   enableOutOfOffice: boolean;
   enableLocalGroups: boolean;
   enableGlobalGroups: boolean;
+  enableGroupSendCheck: boolean;
 }
 
 interface SmtpDomain {
@@ -40,6 +41,7 @@ interface SmtpDomain {
   enableOutOfOffice?: boolean | null;
   enableLocalGroups?: boolean | null;
   enableGlobalGroups?: boolean | null;
+  enableGroupSendCheck?: boolean | null;
   tenancy: OfficeTenancy;
 }
 

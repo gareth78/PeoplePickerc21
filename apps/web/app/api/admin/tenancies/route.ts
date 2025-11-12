@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       enableOutOfOffice = true,
       enableLocalGroups = false,
       enableGlobalGroups = false,
+      enableGroupSendCheck = false,
     } = body;
 
     // Validation
@@ -121,6 +122,7 @@ export async function POST(request: NextRequest) {
         enableOutOfOffice,
         enableLocalGroups,
         enableGlobalGroups,
+        enableGroupSendCheck,
         createdBy: admin.email,
       },
     });

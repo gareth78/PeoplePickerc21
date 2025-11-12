@@ -24,6 +24,7 @@ interface OfficeTenancy {
   enableOutOfOffice: boolean;
   enableLocalGroups: boolean;
   enableGlobalGroups: boolean;
+  enableGroupSendCheck: boolean;
   createdAt: string;
   createdBy: string | null;
   domains?: any[];

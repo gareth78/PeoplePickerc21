@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
             enableOutOfOffice: true,
             enableLocalGroups: true,
             enableGlobalGroups: true,
+            enableGroupSendCheck: true,
           },
         },
       },
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest) {
       enableOutOfOffice = null,
       enableLocalGroups = null,
       enableGlobalGroups = null,
+      enableGroupSendCheck = null,
     } = body;
 
     // Validation
@@ -134,6 +136,7 @@ export async function POST(request: NextRequest) {
         enableOutOfOffice,
         enableLocalGroups,
         enableGlobalGroups,
+        enableGroupSendCheck,
       },
       include: {
         tenancy: {
@@ -147,6 +150,7 @@ export async function POST(request: NextRequest) {
             enableOutOfOffice: true,
             enableLocalGroups: true,
             enableGlobalGroups: true,
+            enableGroupSendCheck: true,
           },
         },
       },
@@ -166,6 +170,7 @@ export async function POST(request: NextRequest) {
           enableOutOfOffice,
           enableLocalGroups,
           enableGlobalGroups,
+          enableGroupSendCheck,
         },
       },
     });

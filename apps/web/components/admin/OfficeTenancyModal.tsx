@@ -23,6 +23,7 @@ interface OfficeTenancy {
   enableOutOfOffice: boolean;
   enableLocalGroups: boolean;
   enableGlobalGroups: boolean;
+  enableGroupSendCheck: boolean;
 }
 
 interface Props {
@@ -45,6 +46,7 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
     enableOutOfOffice: true,
     enableLocalGroups: false,
     enableGlobalGroups: false,
+    enableGroupSendCheck: false,
   });
 
   const [showSecret, setShowSecret] = useState(false);
@@ -69,6 +71,7 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
         enableOutOfOffice: tenancy.enableOutOfOffice,
         enableLocalGroups: tenancy.enableLocalGroups,
         enableGlobalGroups: tenancy.enableGlobalGroups,
+        enableGroupSendCheck: tenancy.enableGroupSendCheck,
       });
     }
   }, [tenancy]);
@@ -166,6 +169,7 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
         enableOutOfOffice: formData.enableOutOfOffice,
         enableLocalGroups: formData.enableLocalGroups,
         enableGlobalGroups: formData.enableGlobalGroups,
+        enableGroupSendCheck: formData.enableGroupSendCheck,
       };
 
       // Only include these fields when creating or if they've changed
@@ -544,6 +548,25 @@ export default function OfficeTenancyModal({ tenancy, onClose }: Props) {
                   </div>
                 </div>
                 <p className="text-xs text-gray-500"></p>
+              </div>
+
+              {/* Enable Group Send Permission Check */}
+              <div className="flex items-center space-x-3">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.enableGroupSendCheck}
+                    onChange={(e) =>
+                      setFormData({ ...formData, enableGroupSendCheck: e.target.checked })
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                </label>
+                <div>
+                  <span className="text-sm font-medium text-gray-700">Enable Group Send Permission Check</span>
+                  <p className="text-xs text-gray-500">Allow users to check if they can send to distribution groups (requires Group.Read.All permission)</p>
+                </div>
               </div>
             </div>
           </div>

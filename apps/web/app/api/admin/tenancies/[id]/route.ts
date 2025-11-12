@@ -77,6 +77,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       enableOutOfOffice,
       enableLocalGroups,
       enableGlobalGroups,
+      enableGroupSendCheck,
       clientSecret, // Allow updating client secret
     } = body;
 
@@ -98,7 +99,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (enableOutOfOffice !== undefined) updateData.enableOutOfOffice = enableOutOfOffice;
     if (enableLocalGroups !== undefined) updateData.enableLocalGroups = enableLocalGroups;
     if (enableGlobalGroups !== undefined) updateData.enableGlobalGroups = enableGlobalGroups;
-    
+    if (enableGroupSendCheck !== undefined) updateData.enableGroupSendCheck = enableGroupSendCheck;
+
     // Only update clientSecret if a new one is provided and it's not masked
     if (clientSecret && !clientSecret.includes('••••')) {
       updateData.clientSecret = clientSecret;

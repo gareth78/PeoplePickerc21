@@ -40,7 +40,7 @@ export function SearchInput({
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
         {isSearching ? (
           <Loader2 className="text-primary-500 animate-spin" size={16} />
@@ -51,7 +51,9 @@ export function SearchInput({
 
       <input
         ref={inputRef}
-        type="search"
+        type="text"
+        role="searchbox"
+        inputMode="search"
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}

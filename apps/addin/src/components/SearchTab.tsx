@@ -51,7 +51,9 @@ export function SearchTab({
       <input
         id="search"
         className="search-input"
-        type="search"
+        type="text"
+        role="searchbox"
+        inputMode="search"
         placeholder="Search by name, title, or email"
         value={query}
         onChange={(event) => onQueryChange(event.target.value)}

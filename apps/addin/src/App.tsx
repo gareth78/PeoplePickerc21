@@ -255,6 +255,7 @@ export default function App() {
   const [oooCache, setOooCache] = useState<Record<string, OOOResult | null>>({});
   const prefillRef = useRef<string | null>(null);
   const selectedUserRef = useRef<EnhancedUser | null>(null);
+  const searchResultsRef = useRef<EnhancedUser[]>([]);
 
   useEffect(() => {
     photoCacheRef.current = photoCache;
@@ -271,6 +272,10 @@ export default function App() {
   useEffect(() => {
     selectedUserRef.current = selectedUser;
   }, [selectedUser]);
+
+  useEffect(() => {
+    searchResultsRef.current = searchResults;
+  }, [searchResults]);
 
   // Toast utility
   const showToast = (type: ToastMessage['type'], message: string) => {
@@ -379,6 +384,32 @@ export default function App() {
       controller.abort();
     };
   }, [debouncedQuery, accessToken]);
+
+  // Re-enhance search results when photo or presence cache updates
+  useEffect(() => {
+    const currentResults = searchResultsRef.current;
+    if (currentResults.length === 0) return;
+    
+    // Check if any cache values have changed for users in search results
+    const needsUpdate = currentResults.some((user) => {
+      const cachedPhoto = photoCache[user.email];
+      const cachedPresence = presenceCache[user.email];
+      return (
+        (cachedPhoto !== undefined && user.photo !== cachedPhoto) ||
+        (cachedPresence !== undefined && user.presence !== cachedPresence)
+      );
+    });
+
+    if (needsUpdate) {
+      setSearchResults(
+        currentResults.map((user) => ({
+          ...user,
+          photo: photoCache[user.email] !== undefined ? photoCache[user.email] ?? undefined : user.photo,
+          presence: presenceCache[user.email] !== undefined ? presenceCache[user.email] ?? undefined : user.presence,
+        }))
+      );
+    }
+  }, [photoCache, presenceCache]);
 
   // Presence polling for selected user
   useEffect(() => {

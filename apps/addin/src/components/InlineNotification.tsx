@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -47,16 +47,15 @@ export function InlineNotification({
 
   const Icon = icons[type];
 
-  const variants = {
+  const variants: Variants = {
     hidden: { opacity: 0, y: -20, height: 0 },
     visible: { 
       opacity: 1, 
       y: 0, 
       height: 'auto',
       transition: {
-        opacity: { duration: 0.3, ease: 'easeOut' },
-        y: { duration: 0.3, ease: 'easeOut' },
-        height: { duration: 0.2, ease: 'easeIn' },
+        duration: 0.3,
+        ease: [0.4, 0, 0.2, 1],
       },
     },
     exit: { 
@@ -64,9 +63,8 @@ export function InlineNotification({
       y: -20, 
       height: 0,
       transition: {
-        opacity: { duration: 0.2, ease: 'easeIn' },
-        y: { duration: 0.2, ease: 'easeIn' },
-        height: { duration: 0.2, ease: 'easeIn' },
+        duration: 0.2,
+        ease: [0.4, 0, 0.2, 1],
       },
     },
   };

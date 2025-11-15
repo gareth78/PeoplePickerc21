@@ -79,7 +79,7 @@ const getInitialOfficeContext = (): OfficeContextState => {
   };
 };
 
-const upsertState = <T,>(setter: React.Dispatch<React.SetStateAction<Record<string, T>>>, key: string, value: T) => {
+const upsertState = <V, T extends V>(setter: React.Dispatch<React.SetStateAction<Record<string, V>>>, key: string, value: T) => {
   setter((prev) => {
     if (prev[key] === value) return prev;
     return { ...prev, [key]: value };

@@ -45,13 +45,11 @@ export function SearchInput({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           onClick={() => onChange('')}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md
-                     hover:bg-slate-100 active:bg-slate-200
-                     transition-all duration-200 flex items-center justify-center
-                     focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-1"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full
+                     hover:bg-slate-100 transition-colors flex items-center justify-center"
           aria-label="Clear search"
         >
-          <X className="text-slate-500 hover:text-slate-700 transition-colors" size={16} />
+          <X className="text-slate-400 hover:text-slate-600" size={14} />
         </motion.button>
       )}
     </div>

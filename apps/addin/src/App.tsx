@@ -12,7 +12,7 @@ import { UserCard } from './components/UserCard';
 import { DetailPanel } from './components/DetailPanel';
 import { EmptyState } from './components/EmptyState';
 import { SkeletonUserCard } from './components/SkeletonLoader';
-import { Toast } from './components/Toast';
+import { InlineNotificationContainer } from './components/InlineNotification';
 
 interface OfficeContextState {
   isCompose: boolean;
@@ -23,9 +23,9 @@ interface OfficeContextState {
   };
 }
 
-interface ToastMessage {
+interface NotificationMessage {
   id: string;
-  type: 'success' | 'error' | 'info';
+  type: 'success' | 'error' | 'info' | 'warning';
   message: string;
 }
 
@@ -245,7 +245,7 @@ export default function App() {
   const [presenceRefreshing, setPresenceRefreshing] = useState(false);
   const [oooError, setOooError] = useState<string | null>(null);
   const [inserting, setInserting] = useState(false);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
 
   const photoCacheRef = useRef<Record<string, string | null>>({});
   const [photoCache, setPhotoCache] = useState<Record<string, string | null>>({});
@@ -272,14 +272,14 @@ export default function App() {
     selectedUserRef.current = selectedUser;
   }, [selectedUser]);
 
-  // Toast utility
-  const showToast = (type: ToastMessage['type'], message: string) => {
+  // Notification utility
+  const showNotification = (type: NotificationMessage['type'], message: string) => {
     const id = Math.random().toString(36).substring(7);
-    setToasts((prev) => [...prev, { id, type, message }]);
+    setNotifications((prev) => [...prev, { id, type, message }]);
   };
 
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+  const removeNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   // Bootstrap
@@ -532,24 +532,24 @@ export default function App() {
 
   const handleInsert = async () => {
     if (!selectedUser) {
-      showToast('error', 'Select a person first.');
+      showNotification('error', 'Select a person first.');
       return;
     }
     if (!officeContext.isCompose) {
-      showToast('error', 'Insert is only available when composing a message.');
+      showNotification('error', 'Insert is only available when composing a message.');
       return;
     }
 
     setInserting(true);
-    showToast('info', 'Inserting details...');
+    showNotification('info', 'Inserting details...');
 
     try {
       const markup = buildInsertMarkup(selectedUser, selectedPresence, selectedOOO);
       await insertHtmlAsync(markup);
-      showToast('success', 'Details inserted successfully!');
+      showNotification('success', 'Details inserted successfully!');
     } catch (error) {
       logDev('Insert failed', error);
-      showToast('error', error instanceof Error ? error.message : 'Unable to insert details.');
+      showNotification('error', error instanceof Error ? error.message : 'Unable to insert details.');
     } finally {
       setInserting(false);
     }
@@ -557,20 +557,20 @@ export default function App() {
 
   const handleAddRecipient = async (kind: 'to' | 'cc' | 'bcc') => {
     if (!selectedUser) {
-      showToast('error', 'Select a person first.');
+      showNotification('error', 'Select a person first.');
       return;
     }
     if (!officeContext.supportsRecipients) {
-      showToast('error', 'Recipients can only be updated while composing.');
+      showNotification('error', 'Recipients can only be updated while composing.');
       return;
     }
 
     try {
       await addRecipientAsync(kind, selectedUser);
-      showToast('success', `${selectedUser.displayName} added to ${kind.toUpperCase()}.`);
+      showNotification('success', `${selectedUser.displayName} added to ${kind.toUpperCase()}.`);
     } catch (error) {
       logDev('Add recipient failed', error);
-      showToast('error', error instanceof Error ? error.message : 'Unable to add recipient.');
+      showNotification('error', error instanceof Error ? error.message : 'Unable to add recipient.');
     }
   };
 
@@ -641,21 +641,6 @@ export default function App() {
 
   return (
     <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
-      {/* Toast Notifications */}
-      <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
-        <AnimatePresence>
-          {toasts.map((toast) => (
-            <div key={toast.id} className="pointer-events-auto">
-              <Toast
-                message={toast.message}
-                type={toast.type}
-                onClose={() => removeToast(toast.id)}
-              />
-            </div>
-          ))}
-        </AnimatePresence>
-      </div>
-
       {/* Main Container */}
       <div className="max-w-2xl mx-auto min-h-full flex flex-col">
         {/* Fixed Blue Header with Search */}
@@ -687,6 +672,13 @@ export default function App() {
               <span>Back to search results</span>
             </motion.button>
           )}
+
+          {/* Inline Notifications - positioned below Back button */}
+          <InlineNotificationContainer
+            notifications={notifications}
+            onClose={removeNotification}
+            maxVisible={3}
+          />
 
           {/* Search Error */}
           {searchError && (

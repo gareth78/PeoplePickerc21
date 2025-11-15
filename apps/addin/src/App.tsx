@@ -253,8 +253,11 @@ export default function App() {
   const [presenceCache, setPresenceCache] = useState<Record<string, PresenceResult | null>>({});
   const oooCacheRef = useRef<Record<string, OOOResult | null>>({});
   const [oooCache, setOooCache] = useState<Record<string, OOOResult | null>>({});
+  const managerCacheRef = useRef<Record<string, EnhancedUser | null>>({});
+  const [managerCache, setManagerCache] = useState<Record<string, EnhancedUser | null>>({});
   const prefillRef = useRef<string | null>(null);
   const selectedUserRef = useRef<EnhancedUser | null>(null);
+  const [navigationStack, setNavigationStack] = useState<EnhancedUser[]>([]);
 
   useEffect(() => {
     photoCacheRef.current = photoCache;
@@ -267,6 +270,10 @@ export default function App() {
   useEffect(() => {
     oooCacheRef.current = oooCache;
   }, [oooCache]);
+
+  useEffect(() => {
+    managerCacheRef.current = managerCache;
+  }, [managerCache]);
 
   useEffect(() => {
     selectedUserRef.current = selectedUser;
@@ -505,11 +512,34 @@ export default function App() {
   const selectedPresence = selectedUser ? presenceCache[selectedUser.email] : undefined;
   const selectedPhoto = selectedUser ? photoCache[selectedUser.email] ?? selectedUser.photo ?? null : null;
   const selectedOOO = selectedUser ? oooCache[selectedUser.email] : undefined;
+  const selectedManager = selectedUser?.managerEmail ? managerCache[selectedUser.managerEmail] : undefined;
 
-  const handleSelectUser = (user: EnhancedUser) => {
+  const handleSelectUser = (user: EnhancedUser, fromManager = false) => {
+    if (fromManager && selectedUser) {
+      // Add current user to navigation stack before navigating to manager
+      setNavigationStack((prev) => [...prev, selectedUser]);
+    } else if (!fromManager) {
+      // Reset navigation stack when selecting from search results
+      setNavigationStack([]);
+    }
     setSelectedUser(user);
     prefetchPhoto(user.email);
     prefetchPresence(user.email);
+    if (user.managerEmail) {
+      prefetchManager(user.managerEmail);
+    }
+  };
+
+  const handleBack = () => {
+    if (navigationStack.length > 0) {
+      // Pop from navigation stack
+      const previousUser = navigationStack[navigationStack.length - 1];
+      setNavigationStack((prev) => prev.slice(0, -1));
+      setSelectedUser(previousUser);
+    } else {
+      // Return to search results
+      setSelectedUser(null);
+    }
   };
 
   const prefetchPhoto = (email: string) => {
@@ -528,6 +558,32 @@ export default function App() {
         upsertState(setPresenceCache, email, presenceResult);
       })
       .catch((error) => logDev('Presence prefetch failed', error));
+  };
+
+  const prefetchManager = (managerEmail: string) => {
+    if (hasCacheValue(managerCacheRef, managerEmail)) return;
+    
+    sdk.users
+      .search(managerEmail, { token: accessToken ?? undefined })
+      .then((result) => {
+        if (result.users.length > 0) {
+          const manager = result.users[0];
+          const enhancedManager: EnhancedUser = {
+            ...manager,
+            photo: photoCacheRef.current[manager.email] ?? manager.avatarUrl,
+            presence: presenceCacheRef.current[manager.email],
+          };
+          upsertState(setManagerCache, managerEmail, enhancedManager);
+          // Prefetch manager's photo
+          prefetchPhoto(manager.email);
+        } else {
+          upsertState(setManagerCache, managerEmail, null);
+        }
+      })
+      .catch((error) => {
+        logDev('Manager lookup failed', error);
+        upsertState(setManagerCache, managerEmail, null);
+      });
   };
 
   const handleInsert = async () => {
@@ -678,11 +734,15 @@ export default function App() {
             <motion.button
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              onClick={() => setSelectedUser(null)}
+              onClick={handleBack}
               className="flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-primary-600 transition-colors mb-4"
             >
               <ArrowLeft size={14} />
-              <span>Back to search results</span>
+              <span>
+                {navigationStack.length > 0
+                  ? `Back to ${navigationStack[navigationStack.length - 1].displayName}`
+                  : 'Back to search results'}
+              </span>
             </motion.button>
           )}
 
@@ -718,6 +778,8 @@ export default function App() {
                   presenceError={presenceError}
                   ooo={selectedOOO}
                   oooError={oooError}
+                  manager={selectedManager}
+                  onManagerClick={(manager) => handleSelectUser(manager, true)}
                   onRefreshPresence={() => {
                     if (!selectedUser) return;
                     setPresenceRefreshing(true);

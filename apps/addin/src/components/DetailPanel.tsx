@@ -27,6 +27,8 @@ interface DetailPanelProps {
   presenceError: string | null;
   ooo: OOOResult | null | undefined;
   oooError: string | null;
+  manager: EnhancedUser | null | undefined;
+  onManagerClick: (manager: EnhancedUser) => void;
   onRefreshPresence: () => void;
   // Action handlers
   isCompose: boolean;
@@ -75,6 +77,8 @@ type DetailItem = {
   hasCopyButton?: boolean;
   copyHandler?: () => Promise<void>;
   copiedState?: boolean;
+  isClickable?: boolean;
+  clickHandler?: () => void;
 };
 
 export function DetailPanel({
@@ -85,6 +89,8 @@ export function DetailPanel({
   presenceError,
   ooo,
   oooError,
+  manager,
+  onManagerClick,
   onRefreshPresence,
   isCompose,
   supportsRecipients,
@@ -285,7 +291,13 @@ export function DetailPanel({
           user.managerEmail && {
             icon: <User size={14} className="text-slate-400 flex-shrink-0" />,
             label: 'Manager:',
-            value: user.managerEmail,
+            value: manager
+              ? manager.displayName
+              : manager === null
+              ? user.managerEmail
+              : 'Loading...',
+            isClickable: manager !== undefined && manager !== null,
+            clickHandler: manager ? () => onManagerClick(manager) : undefined,
           },
           user.organization && {
             icon: <Building2 size={14} className="text-slate-400 flex-shrink-0" />,
@@ -306,11 +318,20 @@ export function DetailPanel({
                 {detail.icon}
                 <span className="text-xs text-slate-600 font-medium">{detail.label}</span>
               </div>
-              {/* Line 2: Full value with copy button if applicable */}
+              {/* Line 2: Full value with copy button or clickable link if applicable */}
               <div className="flex items-start gap-2 pl-6">
-                <div className="text-xs text-slate-900 break-words flex-1">
-                  {detail.value}
-                </div>
+                {detail.isClickable && detail.clickHandler ? (
+                  <button
+                    onClick={detail.clickHandler}
+                    className="text-xs text-primary-600 hover:text-primary-700 underline break-words flex-1 text-left transition-colors"
+                  >
+                    {detail.value}
+                  </button>
+                ) : (
+                  <div className="text-xs text-slate-900 break-words flex-1">
+                    {detail.value}
+                  </div>
+                )}
                 {detail.hasCopyButton && detail.copyHandler && (
                   <button
                     onClick={detail.copyHandler}

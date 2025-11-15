@@ -92,7 +92,7 @@ export function PresenceBadge({
 
   if (hasOutOfOffice) {
     // Always show both presence and OOO indicator when OOO is active
-    displayText = `${label} · 🏖️ Out of Office`;
+    displayText = `${label} · Out of Office`;
   } else if (presence.activity && presence.activity.toLowerCase() !== label.toLowerCase()) {
     // Only show activity if it's different from availability to avoid duplicates like "Offline · Offline"
     displayText = `${label} · ${presence.activity}`;

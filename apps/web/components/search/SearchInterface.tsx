@@ -805,7 +805,7 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
 
                   if (hasOutOfOffice) {
                     // Always show both presence and OOO indicator when OOO is active
-                    displayText = `${config.label} · 🏖️ Out of Office`;
+                    displayText = `${config.label} · Out of Office`;
                   } else if (activity && activity !== selectedUserPresence.availability && activity !== 'Available') {
                     // Only show activity if it's different from availability to avoid duplicates
                     displayText = `${config.label} · ${formatActivity(activity)}`;

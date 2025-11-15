@@ -1,9 +1,10 @@
-import type { PresenceResult } from '@people-picker/sdk';
+import type { PresenceResult, OOOResult } from '@people-picker/sdk';
 import { Circle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface PresenceBadgeProps {
   presence: PresenceResult | null | undefined;
+  ooo?: OOOResult | null | undefined;
   refreshing?: boolean;
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
@@ -58,11 +59,12 @@ const SIZE_CLASSES = {
   lg: 'text-base px-4 py-2',
 };
 
-export function PresenceBadge({ 
-  presence, 
-  refreshing = false, 
+export function PresenceBadge({
+  presence,
+  ooo,
+  refreshing = false,
   size = 'md',
-  showLabel = true 
+  showLabel = true
 }: PresenceBadgeProps) {
   if (presence === undefined) {
     return (
@@ -83,10 +85,18 @@ export function PresenceBadge({
   const availabilityKey = normalize(presence.availability);
   const colors = AVAILABILITY_COLORS[availabilityKey] ?? AVAILABILITY_COLORS.unknown;
   const label = presence.availability ?? 'Unknown';
-  // Only show activity if it's different from availability to avoid duplicates like "Offline · Offline"
-  const activity = presence.activity && presence.activity.toLowerCase() !== label.toLowerCase() 
-    ? ` · ${presence.activity}` 
-    : '';
+  const hasOutOfOffice = ooo?.isOOO === true;
+
+  // Build the display text based on OOO status
+  let displayText = label;
+
+  if (hasOutOfOffice) {
+    // Always show both presence and OOO indicator when OOO is active
+    displayText = `${label} · 🏖️ Out of Office`;
+  } else if (presence.activity && presence.activity.toLowerCase() !== label.toLowerCase()) {
+    // Only show activity if it's different from availability to avoid duplicates like "Offline · Offline"
+    displayText = `${label} · ${presence.activity}`;
+  }
 
   return (
     <motion.span
@@ -94,13 +104,13 @@ export function PresenceBadge({
       animate={{ opacity: 1, scale: 1 }}
       className={`inline-flex items-center gap-1.5 rounded-full ${SIZE_CLASSES[size]} ${colors.bg} ${colors.text} font-medium`}
     >
-      <Circle 
-        size={size === 'sm' ? 8 : size === 'md' ? 10 : 12} 
-        className={`${colors.dot} ${availabilityKey === 'available' ? 'presence-dot-animated' : ''}`} 
+      <Circle
+        size={size === 'sm' ? 8 : size === 'md' ? 10 : 12}
+        className={`${colors.dot} ${availabilityKey === 'available' ? 'presence-dot-animated' : ''}`}
       />
       {showLabel && (
         <span>
-          {refreshing ? 'Refreshing...' : `${label}${activity}`}
+          {refreshing ? 'Refreshing...' : displayText}
         </span>
       )}
     </motion.span>

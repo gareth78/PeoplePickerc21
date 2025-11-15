@@ -54,6 +54,20 @@ const getInitials = (name: string): string => {
     .slice(0, 2);
 };
 
+const stripHtml = (html: string | null | undefined): string => {
+  if (!html) return '';
+  // Remove HTML tags and decode HTML entities
+  return html
+    .replace(/<[^>]*>/g, '') // Remove all HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
+    .replace(/&amp;/g, '&')  // Replace &amp; with &
+    .replace(/&lt;/g, '<')   // Replace &lt; with <
+    .replace(/&gt;/g, '>')   // Replace &gt; with >
+    .replace(/&quot;/g, '"') // Replace &quot; with "
+    .replace(/&#39;/g, "'")  // Replace &#39; with '
+    .trim();
+};
+
 export function DetailPanel({
   user,
   photo,
@@ -144,7 +158,7 @@ export function DetailPanel({
           <div className="text-xs text-red-600">{presenceError}</div>
         ) : (
           <div className="inline-flex flex-col items-center gap-1">
-            <PresenceBadge presence={presence} refreshing={presenceRefreshing} size="md" />
+            <PresenceBadge presence={presence} ooo={ooo} refreshing={presenceRefreshing} size="md" />
             {presence?.fetchedAt && (
               <p className="text-xs text-slate-500">
                 {formatTimestamp(presence.fetchedAt)}
@@ -301,8 +315,8 @@ export function DetailPanel({
               <span>Automatic replies active</span>
             </div>
             {ooo.message && (
-              <p className="text-xs text-amber-800 leading-relaxed">
-                {ooo.message}
+              <p className="text-xs text-amber-800 leading-relaxed whitespace-pre-line">
+                {stripHtml(ooo.message)}
               </p>
             )}
             {(ooo.startTime || ooo.endTime) && (

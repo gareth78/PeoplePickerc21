@@ -1,3 +1,5 @@
+import { useCallback, useRef } from 'react';
+import type { ChangeEvent, KeyboardEvent } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -16,6 +18,27 @@ export function SearchInput({
   placeholder = 'Search people...',
   autoFocus = false,
 }: SearchInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onChange(event.target.value);
+    },
+    [onChange],
+  );
+
+  const handleClear = useCallback(() => {
+    onChange('');
+    inputRef.current?.focus();
+  }, [onChange]);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape' && value) {
+      event.preventDefault();
+      handleClear();
+    }
+  };
+
   return (
     <div className="relative">
       <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -27,9 +50,11 @@ export function SearchInput({
       </div>
 
       <input
-        type="text"
+        ref={inputRef}
+        type="search"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         autoFocus={autoFocus}
         className="w-full pl-10 pr-10 py-2.5 text-sm bg-white border border-slate-200 rounded-lg
@@ -44,7 +69,8 @@ export function SearchInput({
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
-          onClick={() => onChange('')}
+          type="button"
+          onClick={handleClear}
           className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md
                      hover:bg-slate-100 active:bg-slate-200
                      transition-all duration-200 flex items-center justify-center

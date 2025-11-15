@@ -104,3 +104,18 @@
   );
   background-size: 1000px 100%;
 }
+
+/* Remove native search clear buttons so we can render our own */
+.search-input-modern::-webkit-search-decoration,
+.search-input-modern::-webkit-search-cancel-button,
+.search-input-modern::-webkit-search-results-button,
+.search-input-modern::-webkit-search-results-decoration {
+  display: none;
+}
+
+.search-input-modern::-ms-clear,
+.search-input-modern::-ms-reveal {
+  display: none;
+  width: 0;
+  height: 0;
+}

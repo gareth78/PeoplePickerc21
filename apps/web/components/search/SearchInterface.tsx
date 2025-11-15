@@ -499,21 +499,18 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
               setQuery(e.target.value);
             }}
             placeholder="Search by name, title, or location..."
-            className="w-full px-4 py-3 pr-12 text-lg border-2 border-gray-300 rounded-lg outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="w-full px-4 py-3 pr-10 text-lg border-2 border-gray-300 rounded-lg outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
           />
           {query && (
             <button
               onClick={() => {
                 setQuery('');
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md
-                         hover:bg-gray-100 active:bg-gray-200
-                         transition-all duration-200 flex items-center justify-center
-                         focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-1"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Clear search"
             >
               <svg
-                className="w-5 h-5 text-gray-500 hover:text-gray-700 transition-colors"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

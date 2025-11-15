@@ -651,7 +651,13 @@ export default function App() {
         >
           <SearchInput
             value={searchQuery}
-            onChange={setSearchQuery}
+            onChange={(value) => {
+              setSearchQuery(value);
+              // Close detail view when user starts typing
+              if (value && selectedUser) {
+                setSelectedUser(null);
+              }
+            }}
             isSearching={searching}
             placeholder="Search by name, title, or email..."
             autoFocus
@@ -659,7 +665,7 @@ export default function App() {
         </motion.header>
 
         {/* Content */}
-        <main className="flex-1 p-4 space-y-4 custom-scrollbar overflow-y-auto relative">
+        <main className="flex-1 p-4 custom-scrollbar overflow-y-auto relative">
           {/* Overlay Toast Notifications - positioned absolutely at top, zero layout impact */}
           <InlineNotificationContainer
             notifications={notifications}
@@ -673,13 +679,14 @@ export default function App() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               onClick={() => setSelectedUser(null)}
-              className="flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-primary-600 transition-colors"
+              className="flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-primary-600 transition-colors mb-4"
             >
               <ArrowLeft size={14} />
               <span>Back to search results</span>
             </motion.button>
           )}
 
+          <div className="space-y-4">
           {/* Search Error */}
           {searchError && (
             <motion.div
@@ -779,6 +786,7 @@ export default function App() {
               </motion.div>
             ) : null}
           </AnimatePresence>
+          </div>
         </main>
       </div>
     </div>

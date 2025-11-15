@@ -98,6 +98,7 @@ export function OverlayToast({
         right: '16px',
         width: 'calc(100% - 32px)',
         zIndex: zIndex,
+        pointerEvents: 'auto',
       }}
       className={`${colors[type]} border rounded-lg px-4 py-3 flex items-start gap-3 shadow-lg backdrop-blur-sm`}
     >
@@ -133,7 +134,7 @@ export function OverlayToastContainer({
   const visibleNotifications = notifications.slice(0, maxVisible).reverse();
 
   return (
-    <>
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, pointerEvents: 'none', zIndex: 30 }}>
       {/* Semi-transparent backdrop when notifications are visible */}
       {visibleNotifications.length > 0 && (
         <motion.div
@@ -169,7 +170,7 @@ export function OverlayToastContainer({
           />
         ))}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
 

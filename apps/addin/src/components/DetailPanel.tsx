@@ -10,8 +10,11 @@ import {
   Calendar,
   Clock,
   FileText,
-  Loader2
+  Loader2,
+  Copy,
+  Check
 } from 'lucide-react';
+import { useState } from 'react';
 import type { OOOResult, PresenceResult } from '@people-picker/sdk';
 import type { EnhancedUser } from '../types';
 import { PresenceBadge } from './PresenceBadge';
@@ -69,6 +72,32 @@ export function DetailPanel({
   onAddBcc,
 }: DetailPanelProps) {
   const displayPhoto = photo ?? user.photo ?? null;
+  const [emailCopied, setEmailCopied] = useState(false);
+
+  const handleCopyEmail = async () => {
+    if (!user.email) return;
+    try {
+      await navigator.clipboard.writeText(user.email);
+      setEmailCopied(true);
+      setTimeout(() => setEmailCopied(false), 2000);
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = user.email;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setEmailCopied(true);
+        setTimeout(() => setEmailCopied(false), 2000);
+      } catch (err) {
+        // Copy failed
+      }
+      document.body.removeChild(textArea);
+    }
+  };
 
   return (
     <motion.div
@@ -177,6 +206,7 @@ export function DetailPanel({
             icon: <Mail size={14} className="text-slate-400 flex-shrink-0" />,
             label: 'Email:',
             value: user.email,
+            hasCopyButton: true,
           },
           user.mobilePhone && {
             icon: <Phone size={14} className="text-slate-400 flex-shrink-0" />,
@@ -209,7 +239,7 @@ export function DetailPanel({
             value: user.organization,
           },
         ]
-          .filter((item): item is { icon: JSX.Element; label: string; value: string } => Boolean(item))
+          .filter((item): item is { icon: JSX.Element; label: string; value: string; hasCopyButton?: boolean } => Boolean(item))
           .map((detail, index) => (
             <div
               key={index}
@@ -222,9 +252,25 @@ export function DetailPanel({
                 {detail.icon}
                 <span className="text-xs text-slate-600 font-medium">{detail.label}</span>
               </div>
-              {/* Line 2: Full value with NO truncation */}
-              <div className="text-xs text-slate-900 break-words pl-6">
-                {detail.value}
+              {/* Line 2: Full value with copy button if applicable */}
+              <div className="flex items-start gap-2 pl-6">
+                <div className="text-xs text-slate-900 break-words flex-1">
+                  {detail.value}
+                </div>
+                {detail.hasCopyButton && (
+                  <button
+                    onClick={handleCopyEmail}
+                    className="flex-shrink-0 p-1.5 rounded-md hover:bg-slate-200 transition-colors group"
+                    aria-label="Copy email address"
+                    title="Copy email address"
+                  >
+                    {emailCopied ? (
+                      <Check size={14} className="text-emerald-600" />
+                    ) : (
+                      <Copy size={14} className="text-slate-500 group-hover:text-slate-700" />
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           ))}

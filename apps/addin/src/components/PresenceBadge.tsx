@@ -83,7 +83,10 @@ export function PresenceBadge({
   const availabilityKey = normalize(presence.availability);
   const colors = AVAILABILITY_COLORS[availabilityKey] ?? AVAILABILITY_COLORS.unknown;
   const label = presence.availability ?? 'Unknown';
-  const activity = presence.activity ? ` · ${presence.activity}` : '';
+  // Only show activity if it's different from availability to avoid duplicates like "Offline · Offline"
+  const activity = presence.activity && presence.activity.toLowerCase() !== label.toLowerCase() 
+    ? ` · ${presence.activity}` 
+    : '';
 
   return (
     <motion.span

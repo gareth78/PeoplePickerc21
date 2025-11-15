@@ -660,7 +660,7 @@ export default function App() {
 
         {/* Content */}
         <main className="flex-1 p-4 space-y-4 custom-scrollbar overflow-y-auto relative">
-          {/* Overlay Toast Notifications - positioned absolutely at top */}
+          {/* Overlay Toast Notifications - positioned absolutely at top, zero layout impact */}
           <InlineNotificationContainer
             notifications={notifications}
             onRemove={removeNotification}

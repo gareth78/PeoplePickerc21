@@ -7,11 +7,11 @@
   xsi:type="MailApp"
 >
   <Id>c8f4f3c0-1b55-4dd6-a5e6-6b8ad3a4bf5c</Id>
-  <Version>2.0.0.0</Version>
+  <Version>3.0.0.0</Version>
   <ProviderName>Plan International</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="People Picker v2" />
-  <Description DefaultValue="v2 - Search the Plan International directory, view presence, and add recipients without leaving Outlook." />
+  <DisplayName DefaultValue="People Picker v3" />
+  <Description DefaultValue="v3 - Search the Plan International directory, view presence, and add recipients without leaving Outlook." />
   <IconUrl DefaultValue="https://jolly-sky-08c0ccf03.3.azurestaticapps.net/icons/icon-32.png" />
   <HighResolutionIconUrl DefaultValue="https://jolly-sky-08c0ccf03.3.azurestaticapps.net/icons/icon-80.png" />
   <SupportUrl DefaultValue="https://plan-international.org" />

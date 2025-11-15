@@ -659,7 +659,14 @@ export default function App() {
         </motion.header>
 
         {/* Content */}
-        <main className="flex-1 p-4 space-y-4 custom-scrollbar overflow-y-auto">
+        <main className="flex-1 p-4 space-y-4 custom-scrollbar overflow-y-auto relative">
+          {/* Overlay Toast Notifications - positioned absolutely at top */}
+          <InlineNotificationContainer
+            notifications={notifications}
+            onRemove={removeNotification}
+            maxVisible={3}
+          />
+
           {/* Back Button (when user is selected) */}
           {selectedUser && (
             <motion.button
@@ -672,13 +679,6 @@ export default function App() {
               <span>Back to search results</span>
             </motion.button>
           )}
-
-          {/* Inline Notifications - positioned below back button */}
-          <InlineNotificationContainer
-            notifications={notifications}
-            onRemove={removeNotification}
-            maxVisible={3}
-          />
 
           {/* Search Error */}
           {searchError && (

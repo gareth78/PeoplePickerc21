@@ -2,21 +2,25 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react';
 import { useEffect } from 'react';
 
-export interface InlineNotificationProps {
+export interface OverlayToastProps {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info' | 'warning';
   onClose: () => void;
   duration?: number;
+  index: number;
+  maxVisible?: number;
 }
 
-export function InlineNotification({
+export function OverlayToast({
   id,
   message,
   type,
   onClose,
-  duration = 4000,
-}: InlineNotificationProps) {
+  duration = 3000,
+  index,
+  maxVisible = 3,
+}: OverlayToastProps) {
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(onClose, duration);
@@ -47,12 +51,19 @@ export function InlineNotification({
 
   const Icon = icons[type];
 
+  // Slide in from top (-100px), fade out and slide up on exit
   const variants: Variants = {
-    hidden: { opacity: 0, y: -20, height: 0 },
+    hidden: { 
+      opacity: 0, 
+      y: -100,
+      transition: {
+        duration: 0.2,
+        ease: [0.4, 0, 0.2, 1],
+      },
+    },
     visible: { 
       opacity: 1, 
-      y: 0, 
-      height: 'auto',
+      y: 0,
       transition: {
         duration: 0.3,
         ease: [0.4, 0, 0.2, 1],
@@ -60,8 +71,7 @@ export function InlineNotification({
     },
     exit: { 
       opacity: 0, 
-      y: -20, 
-      height: 0,
+      y: -20,
       transition: {
         duration: 0.2,
         ease: [0.4, 0, 0.2, 1],
@@ -69,14 +79,27 @@ export function InlineNotification({
     },
   };
 
+  // Stack offset: each toast offset by 8px down from previous (newest on top)
+  // Newest toast (index 0) appears at top: 60px, subsequent toasts stack below
+  const topOffset = 60 + (index * 8);
+  // Higher z-index for newer toasts so they appear above older ones
+  const zIndex = 30 + (maxVisible - index);
+
   return (
     <motion.div
-      layout
       initial="hidden"
       animate="visible"
       exit="exit"
       variants={variants}
-      className={`${colors[type]} border rounded-lg px-4 py-3 flex items-start gap-3 overflow-hidden`}
+      style={{
+        position: 'absolute',
+        top: `${topOffset}px`,
+        left: '16px',
+        right: '16px',
+        width: 'calc(100% - 32px)',
+        zIndex: zIndex,
+      }}
+      className={`${colors[type]} border rounded-lg px-4 py-3 flex items-start gap-3 shadow-lg backdrop-blur-sm`}
     >
       <Icon className={`${iconColors[type]} flex-shrink-0 mt-0.5`} size={20} />
       <p className="flex-1 text-sm font-medium leading-relaxed break-words">{message}</p>
@@ -91,7 +114,7 @@ export function InlineNotification({
   );
 }
 
-export interface InlineNotificationContainerProps {
+export interface OverlayToastContainerProps {
   notifications: Array<{
     id: string;
     message: string;
@@ -101,32 +124,57 @@ export interface InlineNotificationContainerProps {
   maxVisible?: number;
 }
 
-export function InlineNotificationContainer({
+export function OverlayToastContainer({
   notifications,
   onRemove,
   maxVisible = 3,
-}: InlineNotificationContainerProps) {
-  const visibleNotifications = notifications.slice(0, maxVisible);
+}: OverlayToastContainerProps) {
+  // Show newest notifications first (reverse order for stacking)
+  const visibleNotifications = notifications.slice(0, maxVisible).reverse();
 
   return (
-    <AnimatePresence mode="popLayout">
+    <>
+      {/* Semi-transparent backdrop when notifications are visible */}
       {visibleNotifications.length > 0 && (
         <motion.div
-          initial={false}
-          className="space-y-2"
-        >
-          {visibleNotifications.map((notification) => (
-            <InlineNotification
-              key={notification.id}
-              id={notification.id}
-              message={notification.message}
-              type={notification.type}
-              onClose={() => onRemove(notification.id)}
-              duration={notification.type === 'error' ? 5000 : 4000}
-            />
-          ))}
-        </motion.div>
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          style={{
+            position: 'absolute',
+            top: '60px',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.05)',
+            pointerEvents: 'none',
+            zIndex: 25,
+          }}
+        />
       )}
-    </AnimatePresence>
+
+      {/* Toast notifications */}
+      <AnimatePresence>
+        {visibleNotifications.map((notification, index) => (
+          <OverlayToast
+            key={notification.id}
+            id={notification.id}
+            message={notification.message}
+            type={notification.type}
+            onClose={() => onRemove(notification.id)}
+            duration={notification.type === 'error' ? 5000 : 3000}
+            index={index}
+            maxVisible={maxVisible}
+          />
+        ))}
+      </AnimatePresence>
+    </>
   );
 }
+
+// Keep old exports for backward compatibility during migration
+export interface InlineNotificationProps extends OverlayToastProps {}
+export const InlineNotification = OverlayToast;
+export interface InlineNotificationContainerProps extends OverlayToastContainerProps {}
+export const InlineNotificationContainer = OverlayToastContainer;

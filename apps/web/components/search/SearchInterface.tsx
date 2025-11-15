@@ -796,21 +796,26 @@ export default function SearchInterface({ userOrganization }: SearchInterfacePro
                 </h2>
 
                 {selectedUserPresence?.availability && (() => {
-                  // If OOO is active, use OOO config instead of availability config
-                  const isOOO = selectedUserOOO?.isOOO === true;
-                  const config = isOOO
-                    ? PRESENCE_CONFIG.OutOfOffice
-                    : (PRESENCE_CONFIG[selectedUserPresence.availability] || PRESENCE_CONFIG.Offline);
+                  const hasOutOfOffice = selectedUserOOO?.isOOO === true;
+                  const config = PRESENCE_CONFIG[selectedUserPresence.availability] || PRESENCE_CONFIG.Offline;
                   const activity = selectedUserPresence.activity;
+
+                  // Build the display text based on OOO status
+                  let displayText = config.label;
+
+                  if (hasOutOfOffice) {
+                    // Always show both presence and OOO indicator when OOO is active
+                    displayText = `${config.label} · Out of Office`;
+                  } else if (activity && activity !== selectedUserPresence.availability && activity !== 'Available') {
+                    // Only show activity if it's different from availability to avoid duplicates
+                    displayText = `${config.label} · ${formatActivity(activity)}`;
+                  }
 
                   return (
                     <div className="flex items-center justify-center gap-2 mt-3 mb-2">
                       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${config.badge}`}>
                         <span className={`w-2.5 h-2.5 rounded-full ${config.dot} animate-pulse`} />
-                        <span>{config.label}</span>
-                        {activity && activity !== selectedUserPresence.availability && activity !== 'Available' && (
-                          <span>• {formatActivity(activity)}</span>
-                        )}
+                        <span>{displayText}</span>
                       </div>
                     </div>
                   );

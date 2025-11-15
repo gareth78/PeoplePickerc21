@@ -26,6 +26,20 @@ const formatTimestamp = (value: string | null | undefined) => {
   return `${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
 };
 
+const stripHtml = (html: string | null | undefined): string => {
+  if (!html) return '';
+  // Remove HTML tags and decode HTML entities
+  return html
+    .replace(/<[^>]*>/g, '') // Remove all HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
+    .replace(/&amp;/g, '&')  // Replace &amp; with &
+    .replace(/&lt;/g, '<')   // Replace &lt; with <
+    .replace(/&gt;/g, '>')   // Replace &gt; with >
+    .replace(/&quot;/g, '"') // Replace &quot; with "
+    .replace(/&#39;/g, "'")  // Replace &#39; with '
+    .trim();
+};
+
 export function DetailsTab({
   user,
   photo,
@@ -64,7 +78,7 @@ export function DetailsTab({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <h2 style={{ margin: 0 }}>{user.displayName}</h2>
             <span className="muted">{user.email}</span>
-            <PresenceBadge presence={presence} refreshing={presenceRefreshing} />
+            <PresenceBadge presence={presence} ooo={ooo} refreshing={presenceRefreshing} />
             <small className="muted">Last updated: {formatTimestamp(presence?.fetchedAt)}</small>
           </div>
         </div>
@@ -128,7 +142,7 @@ export function DetailsTab({
         {ooo?.isOOO ? (
           <div className="details-card" style={{ marginTop: 12 }}>
             <p style={{ marginTop: 0, fontWeight: 600 }}>Automatic replies active</p>
-            {ooo.message ? <p style={{ whiteSpace: 'pre-wrap' }}>{ooo.message}</p> : null}
+            {ooo.message ? <p style={{ whiteSpace: 'pre-wrap' }}>{stripHtml(ooo.message)}</p> : null}
             <small className="muted">
               {ooo.startTime ? `Starts: ${new Date(ooo.startTime).toLocaleString()}` : ''}
               {ooo.endTime ? ` · Ends: ${new Date(ooo.endTime).toLocaleString()}` : ''}

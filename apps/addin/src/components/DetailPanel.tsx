@@ -68,6 +68,15 @@ const stripHtml = (html: string | null | undefined): string => {
     .trim();
 };
 
+type DetailItem = {
+  icon: JSX.Element;
+  label: string;
+  value: string;
+  hasCopyButton?: boolean;
+  copyHandler?: () => Promise<void>;
+  copiedState?: boolean;
+};
+
 export function DetailPanel({
   user,
   photo,
@@ -241,7 +250,7 @@ export function DetailPanel({
       {/* Contact Details - Multi-line with Alternating Backgrounds */}
       <div className="bg-white border-b border-slate-200">
         {/* Build array of contact details that exist */}
-        {[
+        {([
           user.email && {
             icon: <Mail size={14} className="text-slate-400 flex-shrink-0" />,
             label: 'Email:',
@@ -283,8 +292,8 @@ export function DetailPanel({
             label: 'Company:',
             value: user.organization,
           },
-        ]
-          .filter((item): item is { icon: JSX.Element; label: string; value: string; hasCopyButton?: boolean; copyHandler?: () => void; copiedState?: boolean } => Boolean(item))
+        ] as (false | DetailItem)[])
+          .filter((item): item is DetailItem => Boolean(item))
           .map((detail, index) => (
             <div
               key={index}

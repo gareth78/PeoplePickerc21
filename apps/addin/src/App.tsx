@@ -380,6 +380,29 @@ export default function App() {
     };
   }, [debouncedQuery, accessToken]);
 
+  // Update search results when photos are loaded
+  useEffect(() => {
+    if (searchResults.length === 0) return;
+
+    setSearchResults((prevResults) => {
+      let updated = false;
+      const updatedResults = prevResults.map((user) => {
+        // Check if photo is now available in cache
+        if (Object.prototype.hasOwnProperty.call(photoCache, user.email)) {
+          const cachedPhoto = photoCache[user.email] ?? undefined;
+          // Only update if the photo value has changed
+          if (user.photo !== cachedPhoto) {
+            updated = true;
+            return { ...user, photo: cachedPhoto };
+          }
+        }
+        return user;
+      });
+
+      return updated ? updatedResults : prevResults;
+    });
+  }, [photoCache]);
+
   // Presence polling for selected user
   useEffect(() => {
     const email = selectedUser?.email;

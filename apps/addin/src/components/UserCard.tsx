@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { EnhancedUser } from '../types';
 
 interface UserCardProps {
@@ -40,19 +40,31 @@ export function UserCard({ user, isSelected, onClick, onHover, index }: UserCard
       <div className="flex items-start gap-3">
         {/* Avatar */}
         <div className="relative flex-shrink-0">
-          {user.photo ? (
-            <img
-              src={user.photo}
-              alt={user.displayName}
-              className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-200"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600
-                          flex items-center justify-center text-white font-semibold text-xs
-                          ring-1 ring-slate-200">
-              {getInitials(user)}
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {user.photo ? (
+              <motion.img
+                key={user.photo}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.2 }}
+                src={user.photo}
+                alt={user.displayName}
+                className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-200"
+              />
+            ) : (
+              <motion.div
+                key={`initials-${user.id}`}
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600
+                            flex items-center justify-center text-white font-semibold text-xs
+                            ring-1 ring-slate-200">
+                {getInitials(user)}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Content - 4 line compact layout */}

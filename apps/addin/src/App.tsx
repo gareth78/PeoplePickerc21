@@ -757,7 +757,6 @@ export default function App() {
                     onClick={() => handleSelectUser(user)}
                     onHover={() => {
                       prefetchPhoto(user.email);
-                      prefetchPresence(user.email);
                     }}
                     index={index}
                   />

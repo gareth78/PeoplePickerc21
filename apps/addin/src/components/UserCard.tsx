@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import type { EnhancedUser } from '../types';
-import { PresenceBadge } from './PresenceBadge';
 
 interface UserCardProps {
   user: EnhancedUser;
@@ -52,11 +51,6 @@ export function UserCard({ user, isSelected, onClick, onHover, index }: UserCard
                           flex items-center justify-center text-white font-semibold text-xs
                           ring-1 ring-slate-200">
               {getInitials(user)}
-            </div>
-          )}
-          {user.presence && (
-            <div className="absolute -bottom-0.5 -right-0.5">
-              <PresenceBadge presence={user.presence} size="sm" />
             </div>
           )}
         </div>

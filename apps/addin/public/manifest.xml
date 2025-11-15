@@ -231,7 +231,7 @@
 
       <WebApplicationInfo>
         <Id>806a3632-99d4-4ee4-8658-994d2056c3a3</Id>
-        <Resource>api://jolly-sky-08c0ccf03.3.azurestaticapps.net/806a3632-99d4-4ee4-8658-994d2056c3a3</Resource>
+        <Resource>api://806a3632-99d4-4ee4-8658-994d2056c3a3</Resource>
         <Scopes>
           <Scope>openid</Scope>
           <Scope>profile</Scope>

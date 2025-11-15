@@ -87,6 +87,7 @@ export function DetailPanel({
 }: DetailPanelProps) {
   const displayPhoto = photo ?? user.photo ?? null;
   const [emailCopied, setEmailCopied] = useState(false);
+  const [phoneCopied, setPhoneCopied] = useState(false);
 
   const handleCopyEmail = async () => {
     if (!user.email) return;
@@ -106,6 +107,31 @@ export function DetailPanel({
         document.execCommand('copy');
         setEmailCopied(true);
         setTimeout(() => setEmailCopied(false), 2000);
+      } catch (err) {
+        // Copy failed
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
+  const handleCopyPhone = async () => {
+    if (!user.mobilePhone) return;
+    try {
+      await navigator.clipboard.writeText(user.mobilePhone);
+      setPhoneCopied(true);
+      setTimeout(() => setPhoneCopied(false), 2000);
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = user.mobilePhone;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setPhoneCopied(true);
+        setTimeout(() => setPhoneCopied(false), 2000);
       } catch (err) {
         // Copy failed
       }
@@ -221,11 +247,16 @@ export function DetailPanel({
             label: 'Email:',
             value: user.email,
             hasCopyButton: true,
+            copyHandler: handleCopyEmail,
+            copiedState: emailCopied,
           },
           user.mobilePhone && {
             icon: <Phone size={14} className="text-slate-400 flex-shrink-0" />,
             label: 'Phone:',
             value: user.mobilePhone,
+            hasCopyButton: true,
+            copyHandler: handleCopyPhone,
+            copiedState: phoneCopied,
           },
           user.title && {
             icon: <Briefcase size={14} className="text-slate-400 flex-shrink-0" />,
@@ -253,7 +284,7 @@ export function DetailPanel({
             value: user.organization,
           },
         ]
-          .filter((item): item is { icon: JSX.Element; label: string; value: string; hasCopyButton?: boolean } => Boolean(item))
+          .filter((item): item is { icon: JSX.Element; label: string; value: string; hasCopyButton?: boolean; copyHandler?: () => void; copiedState?: boolean } => Boolean(item))
           .map((detail, index) => (
             <div
               key={index}
@@ -271,14 +302,14 @@ export function DetailPanel({
                 <div className="text-xs text-slate-900 break-words flex-1">
                   {detail.value}
                 </div>
-                {detail.hasCopyButton && (
+                {detail.hasCopyButton && detail.copyHandler && (
                   <button
-                    onClick={handleCopyEmail}
+                    onClick={detail.copyHandler}
                     className="flex-shrink-0 p-1.5 rounded-md hover:bg-slate-200 transition-colors group"
-                    aria-label="Copy email address"
-                    title="Copy email address"
+                    aria-label={`Copy ${detail.label.toLowerCase().replace(':', '')}`}
+                    title={`Copy ${detail.label.toLowerCase().replace(':', '')}`}
                   >
-                    {emailCopied ? (
+                    {detail.copiedState ? (
                       <Check size={14} className="text-emerald-600" />
                     ) : (
                       <Copy size={14} className="text-slate-500 group-hover:text-slate-700" />

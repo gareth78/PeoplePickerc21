@@ -97,31 +97,16 @@ const htmlEscape = (value: string) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 
-const buildInsertMarkup = (user: EnhancedUser, presence: PresenceResult | null | undefined, ooo: OOOResult | null | undefined) => {
+const buildInsertMarkup = (user: EnhancedUser) => {
+  // Simple 3-line format: Name, Job Title, Email
+  // Using plain text to inherit email composition font/size
   const lines = [
-    `<strong>${htmlEscape(user.displayName)}</strong>`,
-    user.title ? htmlEscape(user.title) : null,
-    htmlEscape(user.email),
+    user.displayName,
+    user.title || '',
+    user.email,
   ].filter(Boolean);
 
-  const presenceLine = presence?.availability
-    ? `Presence: ${htmlEscape(presence.availability)}${presence.activity ? ` (${htmlEscape(presence.activity)})` : ''}`
-    : 'Presence: Not available';
-
-  const oooLine =
-    ooo && ooo.isOOO
-      ? `Out of office: ${ooo.message ? htmlEscape(ooo.message) : 'Enabled'}`
-      : null;
-
-  return `<div style="font-family: 'Inter', 'SF Pro Display', sans-serif; line-height: 1.6; padding: 12px 0;">
-    <div style="margin-bottom: 8px;">${lines.join('<br />')}</div>
-    <div style="color: #64748b; font-size: 14px;">${presenceLine}</div>
-    ${
-      oooLine
-        ? `<div style="margin-top: 8px; padding: 12px; background-color: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 8px; color: #92400e;">${oooLine}</div>`
-        : ''
-    }
-  </div>`;
+  return lines.join('\n');
 };
 
 const addRecipientAsync = (kind: 'to' | 'cc' | 'bcc', user: EnhancedUser) =>
@@ -149,7 +134,7 @@ const addRecipientAsync = (kind: 'to' | 'cc' | 'bcc', user: EnhancedUser) =>
     }
   });
 
-const insertHtmlAsync = (markup: string) =>
+const insertTextAsync = (text: string) =>
   new Promise<void>((resolve, reject) => {
     try {
       const item = Office.context?.mailbox?.item as Office.MessageCompose | undefined;
@@ -158,9 +143,10 @@ const insertHtmlAsync = (markup: string) =>
         return;
       }
 
+      // Insert as plain text to inherit email composition font and formatting
       item.body.setSelectedDataAsync(
-        markup,
-        { coercionType: Office.CoercionType.Html },
+        text,
+        { coercionType: Office.CoercionType.Text },
         (result) => {
           if (result.status === Office.AsyncResultStatus.Succeeded) {
             resolve();
@@ -600,8 +586,8 @@ export default function App() {
     showNotification('info', 'Inserting details...');
 
     try {
-      const markup = buildInsertMarkup(selectedUser, selectedPresence, selectedOOO);
-      await insertHtmlAsync(markup);
+      const text = buildInsertMarkup(selectedUser);
+      await insertTextAsync(text);
       showNotification('success', 'Details inserted successfully!');
     } catch (error) {
       logDev('Insert failed', error);

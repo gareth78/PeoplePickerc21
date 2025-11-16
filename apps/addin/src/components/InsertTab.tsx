@@ -40,17 +40,11 @@ export function InsertTab({
         <>
           <div className="details-card">
             <h3 style={{ marginTop: 0 }}>{user.displayName}</h3>
+            <p className="muted">{user.title || '—'}</p>
             <p className="muted">{user.email}</p>
-            <p>{user.title || '—'}</p>
-            <p className="muted">
-              {presence?.availability ? `Presence: ${presence.availability}` : 'Presence unavailable'}
-              {presence?.activity ? ` (${presence.activity})` : ''}
+            <p className="muted" style={{ marginTop: 12, fontSize: '0.85em' }}>
+              Summary will include: Name, Job Title, Email
             </p>
-            {ooo?.isOOO ? (
-              <p className="muted">Out of office message will be included.</p>
-            ) : (
-              <p className="muted">No automatic replies detected.</p>
-            )}
           </div>
 
           <div className="button-row" style={{ marginBottom: 16 }}>

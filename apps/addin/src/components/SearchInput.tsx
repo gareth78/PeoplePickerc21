@@ -1,7 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type { ChangeEvent, KeyboardEvent } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface SearchInputProps {
   value: string;
@@ -39,6 +38,8 @@ export function SearchInput({
     }
   };
 
+  const hasQuery = Boolean(value);
+
   return (
     <div className="relative w-full">
       <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -66,22 +67,24 @@ export function SearchInput({
                    shadow-sm hover:shadow-md"
       />
 
-      {value && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          type="button"
-          onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md
-                     hover:bg-slate-100 active:bg-slate-200
-                     transition-all duration-200 flex items-center justify-center
-                     focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-1"
-          aria-label="Clear search"
-        >
-          <X className="text-slate-500 hover:text-slate-700 transition-colors" size={16} />
-        </motion.button>
-      )}
+      <button
+        type="button"
+        onClick={handleClear}
+        className="absolute right-3 top-1/2 p-1.5 rounded-md
+                   hover:bg-slate-100 active:bg-slate-200
+                   transition-all duration-200 flex items-center justify-center
+                   focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-1"
+        style={{
+          opacity: hasQuery ? 1 : 0,
+          transform: hasQuery
+            ? 'translateY(-50%) scale(1)'
+            : 'translateY(-50%) scale(0.95)',
+          pointerEvents: hasQuery ? 'auto' : 'none',
+        }}
+        aria-label="Clear search"
+      >
+        <X className="text-slate-500 hover:text-slate-700 transition-colors" size={16} />
+      </button>
     </div>
   );
 }
